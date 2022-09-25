@@ -384,6 +384,8 @@ GLuint setupShaders() {
 MyMesh createGround() {
 	MyMesh amesh;
 
+	amesh = createQuad(1000.0f, 1000.0f);
+
 	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
 	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
 	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -476,6 +478,8 @@ void init()
 
 	vector<MyMesh> stones = createStones();
 	myMeshes.insert(myMeshes.end(), stones.begin(), stones.end());
+	
+	
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
