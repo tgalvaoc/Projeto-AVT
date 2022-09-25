@@ -20,6 +20,9 @@ struct MyMesh {
 		GLuint numIndexes;
 		unsigned int type;
 		struct Material mat;
+
+		float x;
+		float z;
 	};
 
 MyMesh createCube();

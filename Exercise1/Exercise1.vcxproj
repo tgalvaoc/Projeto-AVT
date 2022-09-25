@@ -161,6 +161,7 @@
     <ClCompile Include="avtFreeType.cpp" />
     <ClCompile Include="AVTmathLib.cpp" />
     <ClCompile Include="basic_geometry.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="lightDemo.cpp" />
     <ClCompile Include="Texture_Loader.cpp" />
     <ClCompile Include="vsShaderLib.cpp" />

@@ -144,10 +144,9 @@ void renderScene(void) {
 
 	int objId=0; //id of the object mesh - to be used as index of mesh: Mymeshes[objID] means the current mesh
 
-	for (int i = 0 ; i < 2; ++i) {
-		for (int j = 0; j < 3; ++j) {
-
-			if (j==2 && i == 1) continue;
+	//for (int i = 0 ; i < 2; ++i) {
+		for (int j = 0; j < myMeshes.size(); ++j) {
+			//if (j == 2 && i == 1) continue;
 			// send the material
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 			glUniform4fv(loc, 1, myMeshes[objId].mat.ambient);
@@ -158,7 +157,7 @@ void renderScene(void) {
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
 			glUniform1f(loc, myMeshes[objId].mat.shininess);
 			pushMatrix(MODEL);
-			translate(MODEL, i*2.0f, 0.0f, j*2.0f);
+			translate(MODEL, myMeshes[objId].x, 0.0f, myMeshes[objId].z);
 
 			// send matrices to OGL
 			computeDerivedMatrix(PROJ_VIEW_MODEL);
@@ -176,7 +175,7 @@ void renderScene(void) {
 			popMatrix(MODEL);
 			objId++;
 		}
-	}
+	//}
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
@@ -382,14 +381,71 @@ GLuint setupShaders() {
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
+MyMesh createGround() {
+	MyMesh amesh;
+
+	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
+	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
+	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
+	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
+	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
+	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
+
+	amesh.mat.shininess = 100.0f;
+	amesh.mat.texCount = 0;
+
+	amesh.x = 0.0f;
+	amesh.z = 0.0f;
+
+	return amesh;
+}
+
+
+vector<MyMesh> createStones() {
+	vector<MyMesh> stones;
+
+	MyMesh amesh;
+
+	amesh = createCube();
+
+	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
+	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
+	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
+	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
+	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
+	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
+
+	amesh.mat.shininess = 100.0f;
+	amesh.mat.texCount = 0;
+
+	float square_size = 3.0f;
+
+	for (int i = 0; i < 3; i++) {
+		amesh.x = (square_size * (float) rand() / (float) RAND_MAX) - (square_size / 2);
+		amesh.z = (square_size * (float)rand() / (float)RAND_MAX) - (square_size / 2);
+
+		stones.push_back(amesh);
+	}
+
+
+	return stones;
+}
+
+
 // ------------------------------------------------------------
 //
 // Model loading and OpenGL setup
 //
 
+
 void init()
 {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// wireframe
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	MyMesh amesh;
 
@@ -409,81 +465,22 @@ void init()
 	camZ = r * cos(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 	camY = r * sin(beta * 3.14f / 180.0f);
 
+	// -------
 
-	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
-	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
-	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	float shininess = 100.0f;
-	int texcount = 0;
 
-	//create geometry and VAO of cube
-	//cria a malha 
-	amesh = createCube();
-	//cor que o cubo tem quando não está sendo iluminado
-	//amesh.mat.ambient[0] = 0.1f;
-	//amesh.mat.ambient[1] = 0.1f;
-	//amesh.mat.ambient[2] = 0.1f;
-	//amesh.mat.ambient[3] = 0.5f;
-	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
-	amesh.mat.shininess = shininess;
-	amesh.mat.texCount = texcount;
-	myMeshes.push_back(amesh);
+	// place objects in world
 
-	// create geometry and VAO of the pawn
-	amesh = createPawn();
-	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
-	amesh.mat.shininess = shininess;
-	amesh.mat.texCount = texcount;
-	myMeshes.push_back(amesh);
+	srand(0);
 
-	
-	// create geometry and VAO of the sphere
-	amesh = createSphere(1.0f, 20);
-	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
-	amesh.mat.shininess = shininess;
-	amesh.mat.texCount = texcount;
-	myMeshes.push_back(amesh);
+	myMeshes.push_back(createGround());
 
-	float amb1[]= {0.3f, 0.0f, 0.0f, 1.0f};
-	float diff1[] = {0.8f, 0.1f, 0.1f, 1.0f};
-	float spec1[] = {0.9f, 0.9f, 0.9f, 1.0f};
-	shininess=500.0;
-
-	// create geometry and VAO of the cylinder
-	amesh = createCylinder(1.5f, 0.5f, 20);
-	memcpy(amesh.mat.ambient, amb1, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff1, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec1, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
-	amesh.mat.shininess = shininess;
-	amesh.mat.texCount = texcount;
-	myMeshes.push_back(amesh);
-
-	// create geometry and VAO of the 
-	amesh = createCone(1.5f, 0.5f, 20);
-	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
-	amesh.mat.shininess = shininess;
-	amesh.mat.texCount = texcount;
-	myMeshes.push_back(amesh);
-
+	vector<MyMesh> stones = createStones();
+	myMeshes.insert(myMeshes.end(), stones.begin(), stones.end());
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_MULTISAMPLE);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(243.0f / 255.0f, 206.0f / 255.0f, 180.0f / 255.0f, 1.0f);
 
 }
 
