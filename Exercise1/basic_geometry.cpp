@@ -71,20 +71,19 @@ MyMesh createQuad(float size_x, float size_y) {
 MyMesh createCube() {
 
 	MyMesh amesh;
+	//são 18 indices, são 3 por triangulo 
 	amesh.numIndexes = faceCount *3;
 
+	//generate vertex array object name
 	glGenVertexArrays(1, &(amesh.vao));
+	//glBindVertexArray binds the vertex array object with name
 	glBindVertexArray(amesh.vao);
 
-	//VBO - vetex buffer object id
+	//generate vetex buffer object name
 	glGenBuffers(2, VboId);
 	glBindBuffer(GL_ARRAY_BUFFER, VboId[0]);
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices)+sizeof(normals)+sizeof(texCoords)+sizeof(tangents),vertices,GL_STATIC_DRAW);
-	//	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-	//	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(normals), normals);
-	//	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices)+ sizeof(normals), sizeof(texCoords), texCoords);
-	//	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices)+sizeof(normals)+sizeof(texCoords), sizeof(tangents), tangents);
 
 	glEnableVertexAttribArray(VERTEX_COORD_ATTRIB);
 	glVertexAttribPointer(VERTEX_COORD_ATTRIB, 4, GL_FLOAT, 0, 0, 0);
@@ -99,7 +98,7 @@ MyMesh createCube() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VboId[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * amesh.numIndexes, faceIndex , GL_STATIC_DRAW);
 
-// unbind the VAO
+    // unbind the VAO
 	glBindVertexArray(0);
 	
 	amesh.type = GL_TRIANGLES;

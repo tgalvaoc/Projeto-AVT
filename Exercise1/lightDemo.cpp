@@ -34,6 +34,8 @@
 
 #include "avtFreeType.h"
 
+#include "Camera.h"
+
 using namespace std;
 
 #define CAPTION "AVT Demo: Phong Shading and Text rendered with FreeType"
@@ -68,14 +70,18 @@ GLint lPos_uniformId;
 GLint tex_loc, tex_loc1, tex_loc2;
 	
 // Camera Position
-float camX, camY, camZ;
+// isso aqui virou Camera::pos, pos[0] = camX, pos[1] = camY, pos[2] = camZ
+//float camX, camY, camZ;
+
+vector<Camera> cameras;
+int currentCamera;
 
 // Mouse Tracking Variables
 int startX, startY, tracking = 0;
 
 // Camera Spherical Coordinates
-float alpha = 39.0f, beta = 51.0f;
-float r = 10.0f;
+//float alpha = 39.0f, beta = 51.0f;
+//float r = 10.0f;
 
 // Frame counting and FPS computation
 long myTime,timebase = 0,frame = 0;
@@ -125,11 +131,18 @@ void renderScene(void) {
 
 	FrameCount++;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	loadIdentity(PROJECTION);
+
+	cameras[currentCamera].setProjection();
+
 	// load identity matrices
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
 	// set the camera using a function similar to gluLookAt
-	lookAt(camX, camY, camZ, 0,0,0, 0,1,0);
+
+	cameras[currentCamera].cameraLookAt();
+	
 
 	// use our shader
 	
@@ -215,6 +228,44 @@ void refresh(int value)
 	glutTimerFunc(16, refresh, 0); // continua chamando refresh(0)
 }
 
+void specialFunc(int key, int xx, int yy)
+{
+	float amount = 1.0f;
+
+	switch (key) {
+	case GLUT_KEY_UP:
+		//carrinho.mover(amount, 0.0f);
+
+		if (currentCamera = MOVING) {
+			cameras[currentCamera].translateCamera(amount, 0.0f);
+			//cameras[currentCamera].target = 
+		}
+		break;
+	case GLUT_KEY_DOWN:
+		//carrinho.mover(-amount, 0.0f);
+
+		if (currentCamera = MOVING) {
+			cameras[currentCamera].translateCamera(-amount, 0.0f);
+		}
+		break;
+	case GLUT_KEY_LEFT:
+		//carrinho.mover(0.0f, amount);
+
+		if (currentCamera = MOVING) {
+			cameras[currentCamera].translateCamera(0.0f, amount);
+		}
+		break;
+	case GLUT_KEY_RIGHT:
+		//carrinho.mover(0.0f, -amount);
+
+		if (currentCamera = MOVING) {
+			cameras[currentCamera].translateCamera(0.0f, -amount);
+		}
+		break;
+
+	}
+
+}
 
 // ------------------------------------------------------------
 //
@@ -224,13 +275,12 @@ void refresh(int value)
 void processKeys(unsigned char key, int xx, int yy)
 {
 	switch(key) {
-
 		case 27:
 			glutLeaveMainLoop();
 			break;
 
 		case 'c': 
-			printf("Camera Spherical Coordinates (%f, %f, %f)\n", alpha, beta, r);
+			printf("Camera Spherical Coordinates (%f, %f, %f)\n", cameras[currentCamera].alpha, cameras[currentCamera].beta, cameras[currentCamera].r);
 			break;
 		case 'm': glEnable(GL_MULTISAMPLE); break;
 		case 'n': glDisable(GL_MULTISAMPLE); break;
@@ -283,31 +333,10 @@ void processMouseMotion(int xx, int yy)
 	deltaY =    yy - startY;
 
 	// left mouse button: move camera
-	if (tracking == 1) {
-
-
-		alphaAux = alpha + deltaX;
-		betaAux = beta + deltaY;
-
-		if (betaAux > 85.0f)
-			betaAux = 85.0f;
-		else if (betaAux < -85.0f)
-			betaAux = -85.0f;
-		rAux = r;
-	}
-	// right mouse button: zoom
-	else if (tracking == 2) {
-
-		alphaAux = alpha;
-		betaAux = beta;
-		rAux = r + (deltaY * 0.01f);
-		if (rAux < 0.1f)
-			rAux = 0.1f;
+	if (currentCamera == MOVING && tracking == 1) {
+		cameras[currentCamera].rotateCamera(deltaX, deltaY);		
 	}
 
-	camX = rAux * sin(alphaAux * 3.14f / 180.0f) * cos(betaAux * 3.14f / 180.0f);
-	camZ = rAux * cos(alphaAux * 3.14f / 180.0f) * cos(betaAux * 3.14f / 180.0f);
-	camY = rAux *   						       sin(betaAux * 3.14f / 180.0f);
 
 //  uncomment this if not using an idle or refresh func
 //	glutPostRedisplay();
@@ -384,7 +413,7 @@ GLuint setupShaders() {
 MyMesh createGround() {
 	MyMesh amesh;
 
-	amesh = createQuad(1000.0f, 1000.0f);
+	amesh = createQuad(10000.0f, 10000.0f);
 
 	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
 	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
@@ -410,12 +439,13 @@ vector<MyMesh> createStones() {
 
 	MyMesh amesh;
 
-	amesh = createCube();
+	amesh = createSphere(0.1f, 10);
 
 	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
 	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
 	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
 	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
 	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
@@ -424,9 +454,9 @@ vector<MyMesh> createStones() {
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
 
-	float square_size = 3.0f;
+	float square_size = 10.0f;
 
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 10; i++) {
 		amesh.x = (square_size * (float) rand() / (float) RAND_MAX) - (square_size / 2);
 		amesh.z = (square_size * (float)rand() / (float)RAND_MAX) - (square_size / 2);
 
@@ -462,17 +492,15 @@ void init()
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
-	// set the camera position based on its spherical coordinates
-	camX = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
-	camZ = r * cos(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
-	camY = r * sin(beta * 3.14f / 180.0f);
+	cameras = Camera::buildCameras();
+	currentCamera = 0;
 
 	// -------
 
 
 	// place objects in world
 
-	srand(0);
+	//srand(0);
 
 	myMeshes.push_back(createGround());
 
@@ -519,6 +547,7 @@ int main(int argc, char **argv) {
 
 //	Mouse and Keyboard Callbacks
 	glutKeyboardFunc(processKeys);
+	glutSpecialFunc(specialFunc);
 	glutMouseFunc(processMouseButtons);
 	glutMotionFunc(processMouseMotion);
 	glutMouseWheelFunc ( mouseWheel ) ;

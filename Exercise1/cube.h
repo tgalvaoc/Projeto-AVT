@@ -7,10 +7,7 @@ int faceCount = 12;
 float vertices[] = {	//Cube
 
 	// perguntar porque aqui sao 6 quadrados (6 * 4 = 24 vertices), se no final das contas vao ser desenhados 12 triangulos
-	// acho que o opengl transforma automaticamente sei la
-	//
 
-	// se ele tivesse especificando triangulos, seria 12 * 3 vertices = 36
 	0.0f, 1.0f, 1.0f, 1.0f, //cada linha um vértice
 	0.0f, 0.0f, 1.0f, 1.0f,
 	1.0f, 0.0f, 1.0f, 1.0f,
