@@ -48,6 +48,8 @@
 		*/
 		void scale(MatrixTypes aType, float x, float y, float z);
 
+		float* myRotate(float mat[16], float angle, float x, float y, float z);
+
 		/** Similar to glTotate*. 
 		  *
 		  * \param aType any value from MatrixTypes

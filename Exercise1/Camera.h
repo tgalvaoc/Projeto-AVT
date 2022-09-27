@@ -15,11 +15,11 @@ public:
 
 	static std::vector<Camera> buildCameras();
 
-	static Camera moving();
-	static Camera orthogonal();
-	static Camera perspective();
+	static Camera newMoving();
+	static Camera newOrthogonal();
+	static Camera newPerspective();
 
-	void setProjection();
+	void setProjection(float w, float h);
 
 	void cameraLookAt();
 
@@ -29,4 +29,6 @@ public:
 	void translateCamera(float dx, float dy);
 
 	void fixPosition();
+
+	void fixAngles();
 };

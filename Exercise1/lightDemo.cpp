@@ -132,10 +132,6 @@ void renderScene(void) {
 	FrameCount++;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	loadIdentity(PROJECTION);
-
-	cameras[currentCamera].setProjection();
-
 	// load identity matrices
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
@@ -170,7 +166,8 @@ void renderScene(void) {
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
 			glUniform1f(loc, myMeshes[objId].mat.shininess);
 			pushMatrix(MODEL);
-			translate(MODEL, myMeshes[objId].x, 0.0f, myMeshes[objId].z);
+
+			multMatrix(MODEL, myMeshes[objId].transform);
 
 			// send matrices to OGL
 			computeDerivedMatrix(PROJ_VIEW_MODEL);
@@ -284,6 +281,19 @@ void processKeys(unsigned char key, int xx, int yy)
 			break;
 		case 'm': glEnable(GL_MULTISAMPLE); break;
 		case 'n': glDisable(GL_MULTISAMPLE); break;
+
+		case '1':
+			currentCamera = 0;
+			cameras[currentCamera].setProjection((float) WinX, (float) WinY);
+			break;
+		case '2':
+			currentCamera = 1;
+			cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+			break;
+		case '3':
+			currentCamera = 2;
+			cameras[currentCamera].setProjection((float)WinX, (float) WinY);
+			break;
 	}
 }
 
@@ -308,13 +318,13 @@ void processMouseButtons(int button, int state, int xx, int yy)
 	//stop tracking the mouse
 	else if (state == GLUT_UP) {
 		if (tracking == 1) {
-			alpha -= (xx - startX);
-			beta += (yy - startY);
+			//alpha -= (xx - startX);
+			//beta += (yy - startY);
 		}
 		else if (tracking == 2) {
-			r += (yy - startY) * 0.01f;
-			if (r < 0.1f)
-				r = 0.1f;
+			//r += (yy - startY) * 0.01f;
+			//if (r < 0.1f)
+			//	r = 0.1f;
 		}
 		tracking = 0;
 	}
@@ -345,13 +355,14 @@ void processMouseMotion(int xx, int yy)
 
 void mouseWheel(int wheel, int direction, int x, int y) {
 
-	r += direction * 0.1f;
+	/*r += direction * 0.1f;
 	if (r < 0.1f)
 		r = 0.1f;
 
 	camX = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 	camZ = r * cos(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 	camY = r *   						     sin(beta * 3.14f / 180.0f);
+	*/
 
 //  uncomment this if not using an idle or refresh func
 //	glutPostRedisplay();
@@ -494,6 +505,8 @@ void init()
 
 	cameras = Camera::buildCameras();
 	currentCamera = 0;
+
+	cameras[currentCamera].setProjection((float) WinX, (float) WinY);
 
 	// -------
 

@@ -104,6 +104,21 @@ void loadMatrix(MatrixTypes aType, float *aMatrix)
 	memcpy(mMatrix[aType], aMatrix, 16 * sizeof(float));
 }
 
+float* myTranslate(float input[16], float x, float y, float z)
+{
+	float mat[16];
+
+	setIdentityMatrix(mat);
+	mat[12] = x;
+	mat[13] = y;
+	mat[14] = z;
+
+	multMatrix(input, mat);
+
+	return mat;
+}
+
+
 
 // glTranslate implementation with matrix selection
 void translate(MatrixTypes aType, float x, float y, float z) 
@@ -130,6 +145,49 @@ void scale(MatrixTypes aType, float x, float y, float z)
 
 	multMatrix(aType,mat);
 }
+
+float* myRotate(float mat[16], float angle, float x, float y, float z)
+{
+	float v[3];
+
+	v[0] = x;
+	v[1] = y;
+	v[2] = z;
+
+	float radAngle = DegToRad(angle);
+	float co = cos(radAngle);
+	float si = sin(radAngle);
+	normalize(v);
+	float x2 = v[0] * v[0];
+	float y2 = v[1] * v[1];
+	float z2 = v[2] * v[2];
+
+	//	mat[0] = x2 + (y2 + z2) * co; 
+	mat[0] = co + x2 * (1 - co);// + (y2 + z2) * co; 
+	mat[4] = v[0] * v[1] * (1 - co) - v[2] * si;
+	mat[8] = v[0] * v[2] * (1 - co) + v[1] * si;
+	mat[12] = 0.0f;
+
+	mat[1] = v[0] * v[1] * (1 - co) + v[2] * si;
+	//	mat[5] = y2 + (x2 + z2) * co;
+	mat[5] = co + y2 * (1 - co);
+	mat[9] = v[1] * v[2] * (1 - co) - v[0] * si;
+	mat[13] = 0.0f;
+
+	mat[2] = v[0] * v[2] * (1 - co) - v[1] * si;
+	mat[6] = v[1] * v[2] * (1 - co) + v[0] * si;
+	//	mat[10]= z2 + (x2 + y2) * co;
+	mat[10] = co + z2 * (1 - co);
+	mat[14] = 0.0f;
+
+	mat[3] = 0.0f;
+	mat[7] = 0.0f;
+	mat[11] = 0.0f;
+	mat[15] = 1.0f;
+
+	return mat;
+}
+
 
 // glRotate implementation with matrix selection
 void rotate(MatrixTypes aType, float angle, float x, float y, float z)
