@@ -340,8 +340,8 @@ void processMouseMotion(int xx, int yy)
 	float alphaAux, betaAux;
 	float rAux;
 
-	deltaX =  - xx + startX;
-	deltaY =    yy - startY;
+	deltaX = xx - startX;
+	deltaY = yy - startY;
 
 	cout << "teste" << endl;
 
@@ -443,7 +443,7 @@ MyMesh createGround() {
 
 	setIdentityMatrix(amesh.transform, 4);
 
-	float *m = myRotate(amesh.transform, 90.0, 1.0, 0.0, 0.0);
+	float *m = myRotate(amesh.transform, 90.0, 0.0, 0.0, 1.0);
 
 	memcpy(amesh.transform, m, 16 * sizeof(float));
 
@@ -476,10 +476,14 @@ vector<MyMesh> createStones() {
 	float square_size = 50.0f;
 
 	for (int i = 0; i < 300; i++) {
+		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
+		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
+
 		float* m = myTranslate(amesh.transform,
-			(square_size * (float)rand() / (float)RAND_MAX) - (square_size / 2),
+			square_size * r1,
+
 			0.0,
-			(square_size * (float)rand() / (float)RAND_MAX) - (square_size / 2));
+			square_size * r2);
 
 		memcpy(amesh.transform, m, 16 * sizeof(float));
 

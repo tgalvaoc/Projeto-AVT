@@ -8,8 +8,13 @@ using namespace std;
 
 
 void Camera::rotateCamera(float dAlpha, float dBeta) {
-	this->alpha += dAlpha;
-	this->beta += dBeta;
+	this->alpha += dAlpha / 10.0;
+	this->beta += dBeta / 10.0;
+
+	if (this->alpha > 360.0)
+		this->alpha -= 360.0;
+	else if (this->alpha < 0.0)
+		this->alpha += 360.0;
 
 	if (this->beta > 85.0f)
 		this->beta = 85.0f;
@@ -28,11 +33,11 @@ void Camera::setProjection(float w, float h) {
 	case MOVING:
 	case PERSPECTIVE:
 		loadIdentity(PROJECTION);
-		perspective(45.0f, w/h, 0.0001, 1000000);
+		perspective(45.0f, w/h, 0.0001, 1000000.0);
 		break;
 	case ORTHOGONAL:
 		loadIdentity(PROJECTION);
-		ortho(0.0f, w, w, 0.0f, 0.0f, 1.0f);
+		ortho(0.0f, w, w, 0.0f, 0.0001f, 1000000.0);
 		break;
 	}
 		
@@ -74,8 +79,8 @@ vector<Camera> Camera::buildCameras() {
 Camera Camera::newMoving() {
 	Camera camera = Camera();
 
-	camera.r = 10.0f;
-	camera.alpha = -180.0f;
+	camera.r = 5.0f;
+	camera.alpha = 0.0f;
 	camera.beta = -60.0f;
 
 	camera.fixPosition();
@@ -93,8 +98,8 @@ Camera Camera::newPerspective() {
 	Camera camera = Camera();
 
 	camera.r = 100.0f;
-	camera.alpha = -180.0f;
-	camera.beta = 0.00f;
+	camera.alpha = 0.0f;
+	camera.beta = -60.00f;
 
 	camera.fixPosition();
 
@@ -112,7 +117,7 @@ Camera Camera::newOrthogonal() {
 
 	camera.r = 100.0f;
 	camera.alpha = 0.0f;
-	camera.beta = 0.0f;
+	camera.beta = -60.0f;
 
 	camera.fixPosition();
 
