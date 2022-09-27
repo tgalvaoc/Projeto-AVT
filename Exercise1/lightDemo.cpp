@@ -203,8 +203,8 @@ void renderScene(void) {
 	pushMatrix(VIEW);
 	loadIdentity(VIEW);
 	ortho(m_viewport[0], m_viewport[0] + m_viewport[2] - 1, m_viewport[1], m_viewport[1] + m_viewport[3] - 1, -1, 1);
-	RenderText(shaderText, "This is a sample text", 25.0f, 25.0f, 1.0f, 0.5f, 0.8f, 0.2f);
-	RenderText(shaderText, "AVT Light and Text Rendering Demo", 440.0f, 570.0f, 0.5f, 0.3, 0.7f, 0.9f);
+	//RenderText(shaderText, "This is a sample text", 25.0f, 25.0f, 1.0f, 0.5f, 0.8f, 0.2f);
+	//RenderText(shaderText, "AVT Light and Text Rendering Demo", 440.0f, 570.0f, 0.5f, 0.3, 0.7f, 0.9f);
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
@@ -233,7 +233,7 @@ void specialFunc(int key, int xx, int yy)
 	case GLUT_KEY_UP:
 		//carrinho.mover(amount, 0.0f);
 
-		if (currentCamera = MOVING) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(amount, 0.0f);
 			//cameras[currentCamera].target = 
 		}
@@ -241,21 +241,21 @@ void specialFunc(int key, int xx, int yy)
 	case GLUT_KEY_DOWN:
 		//carrinho.mover(-amount, 0.0f);
 
-		if (currentCamera = MOVING) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(-amount, 0.0f);
 		}
 		break;
 	case GLUT_KEY_LEFT:
 		//carrinho.mover(0.0f, amount);
 
-		if (currentCamera = MOVING) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(0.0f, amount);
 		}
 		break;
 	case GLUT_KEY_RIGHT:
 		//carrinho.mover(0.0f, -amount);
 
-		if (currentCamera = MOVING) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(0.0f, -amount);
 		}
 		break;
@@ -318,6 +318,7 @@ void processMouseButtons(int button, int state, int xx, int yy)
 	//stop tracking the mouse
 	else if (state == GLUT_UP) {
 		if (tracking == 1) {
+			cout << "soltando" << endl;
 			//alpha -= (xx - startX);
 			//beta += (yy - startY);
 		}
@@ -342,14 +343,16 @@ void processMouseMotion(int xx, int yy)
 	deltaX =  - xx + startX;
 	deltaY =    yy - startY;
 
+	cout << "teste" << endl;
+
 	// left mouse button: move camera
-	if (currentCamera == MOVING && tracking == 1) {
-		cameras[currentCamera].rotateCamera(deltaX, deltaY);		
+	if (/* currentCamera == 0 && */ tracking == 1) {
+		cameras[currentCamera].rotateCamera(deltaX, deltaY);	
 	}
 
 
 //  uncomment this if not using an idle or refresh func
-//	glutPostRedisplay();
+	glutPostRedisplay();
 }
 
 
@@ -438,8 +441,11 @@ MyMesh createGround() {
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
 
-	amesh.x = 0.0f;
-	amesh.z = 0.0f;
+	setIdentityMatrix(amesh.transform, 4);
+
+	float *m = myRotate(amesh.transform, 90.0, 1.0, 0.0, 0.0);
+
+	memcpy(amesh.transform, m, 16 * sizeof(float));
 
 	return amesh;
 }
@@ -465,11 +471,17 @@ vector<MyMesh> createStones() {
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
 
-	float square_size = 10.0f;
+	setIdentityMatrix(amesh.transform, 4);
 
-	for (int i = 0; i < 10; i++) {
-		amesh.x = (square_size * (float) rand() / (float) RAND_MAX) - (square_size / 2);
-		amesh.z = (square_size * (float)rand() / (float)RAND_MAX) - (square_size / 2);
+	float square_size = 50.0f;
+
+	for (int i = 0; i < 300; i++) {
+		float* m = myTranslate(amesh.transform,
+			(square_size * (float)rand() / (float)RAND_MAX) - (square_size / 2),
+			0.0,
+			(square_size * (float)rand() / (float)RAND_MAX) - (square_size / 2));
+
+		memcpy(amesh.transform, m, 16 * sizeof(float));
 
 		stones.push_back(amesh);
 	}

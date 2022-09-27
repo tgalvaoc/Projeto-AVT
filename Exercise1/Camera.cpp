@@ -2,6 +2,8 @@
 
 #include "AVTmathlib.h"
 
+#include <iostream>
+
 using namespace std;
 
 
@@ -14,6 +16,8 @@ void Camera::rotateCamera(float dAlpha, float dBeta) {
 	else if (this->beta < -85.0f)
 		this->beta = -85.0f;
 
+	cout << "alpha = " << alpha << ", beta = " << beta << endl;
+
 
 	this->fixPosition();
 
@@ -23,9 +27,11 @@ void Camera::setProjection(float w, float h) {
 	switch (this->type) {
 	case MOVING:
 	case PERSPECTIVE:
+		loadIdentity(PROJECTION);
 		perspective(45.0f, w/h, 0.0001, 1000000);
 		break;
 	case ORTHOGONAL:
+		loadIdentity(PROJECTION);
 		ortho(0.0f, w, w, 0.0f, 0.0f, 1.0f);
 		break;
 	}
@@ -58,6 +64,7 @@ void Camera::translateCamera(float dx, float dy) {
 vector<Camera> Camera::buildCameras() {
 	vector<Camera> cameras;
 
+
 	cameras.push_back(Camera::newMoving());
 	cameras.push_back(Camera::newPerspective());
 	cameras.push_back(Camera::newOrthogonal());
@@ -86,7 +93,7 @@ Camera Camera::newPerspective() {
 	Camera camera = Camera();
 
 	camera.r = 100.0f;
-	camera.alpha = 0.0f;
+	camera.alpha = -180.0f;
 	camera.beta = 0.00f;
 
 	camera.fixPosition();

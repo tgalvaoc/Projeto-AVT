@@ -34,6 +34,8 @@
 			PROJ_VIEW_MODEL
 		};
 
+		float* myTranslate(float input[16], float x, float y, float z);
+
 		/** Similar to glTranslate*. 
 		  *
 		  * \param aType any value from MatrixTypes
