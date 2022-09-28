@@ -7,6 +7,23 @@
 using namespace std;
 
 
+Camera::Camera() {};
+
+Camera::Camera(CameraType camType, float r_val, float alpha_val, float beta_val, float targetX_val, float targetY_val, float targetZ_val) {
+
+	r = r_val;
+	alpha = alpha_val;
+	beta = beta_val;
+
+	fixPosition();
+
+	target[0] = targetX_val;
+	target[1] = targetY_val;
+	target[2] = targetZ_val;
+
+	type = camType;
+}
+
 void Camera::rotateCamera(float dAlpha, float dBeta) {
 	this->alpha += dAlpha / 10.0;
 	this->beta += dBeta / 10.0;
@@ -33,14 +50,14 @@ void Camera::setProjection(float w, float h) {
 	case MOVING:
 	case PERSPECTIVE:
 		loadIdentity(PROJECTION);
-		perspective(45.0f, w/h, 0.0001, 1000000.0);
+		perspective(45.0f, w / h, 0.0001, 1000000.0);
 		break;
 	case ORTHOGONAL:
 		loadIdentity(PROJECTION);
 		ortho(0.0f, w, w, 0.0f, 0.0001f, 1000000.0);
 		break;
 	}
-		
+
 }
 
 void Camera::cameraLookAt() {
@@ -66,66 +83,3 @@ void Camera::translateCamera(float dx, float dy) {
 	//this->pos[0] += sin(this->alpha * 3.14f / 180.0f) * sin(this->beta * 3.14f / 180.0f)
 }
 
-vector<Camera> Camera::buildCameras() {
-	vector<Camera> cameras;
-
-
-	cameras.push_back(Camera::newMoving());
-	cameras.push_back(Camera::newPerspective());
-	cameras.push_back(Camera::newOrthogonal());
-	return cameras;
-}
-
-Camera Camera::newMoving() {
-	Camera camera = Camera();
-
-	camera.r = 5.0f;
-	camera.alpha = 0.0f;
-	camera.beta = -60.0f;
-
-	camera.fixPosition();
-
-	camera.target[0] = 0.0f;
-	camera.target[1] = 0.0f;
-	camera.target[2] = 0.0f;
-
-	camera.type = MOVING;
-
-	return camera;
-};
-
-Camera Camera::newPerspective() {
-	Camera camera = Camera();
-
-	camera.r = 100.0f;
-	camera.alpha = 0.0f;
-	camera.beta = -60.00f;
-
-	camera.fixPosition();
-
-	camera.target[0] = 0.0f;
-	camera.target[1] = 0.0f;
-	camera.target[2] = 0.0f;
-
-	camera.type = PERSPECTIVE;
-
-	return camera;
-};
-
-Camera Camera::newOrthogonal() {
-	Camera camera = Camera();
-
-	camera.r = 100.0f;
-	camera.alpha = 0.0f;
-	camera.beta = -60.0f;
-
-	camera.fixPosition();
-
-	camera.target[0] = 0.0f;
-	camera.target[1] = 0.0f;
-	camera.target[2] = 0.0f;
-
-	camera.type = ORTHOGONAL;
-
-	return camera;
-};

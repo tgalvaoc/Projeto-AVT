@@ -73,7 +73,7 @@ GLint tex_loc, tex_loc1, tex_loc2;
 // isso aqui virou Camera::pos, pos[0] = camX, pos[1] = camY, pos[2] = camZ
 //float camX, camY, camZ;
 
-vector<Camera> cameras;
+Camera cameras[3];
 int currentCamera;
 
 // Mouse Tracking Variables
@@ -318,7 +318,7 @@ void processMouseButtons(int button, int state, int xx, int yy)
 	//stop tracking the mouse
 	else if (state == GLUT_UP) {
 		if (tracking == 1) {
-			cout << "soltando" << endl;
+			//cout << "soltando" << endl;
 			//alpha -= (xx - startX);
 			//beta += (yy - startY);
 		}
@@ -342,11 +342,9 @@ void processMouseMotion(int xx, int yy)
 
 	deltaX = xx - startX;
 	deltaY = yy - startY;
-
-	cout << "teste" << endl;
-
+	
 	// left mouse button: move camera
-	if (/* currentCamera == 0 && */ tracking == 1) {
+	if (currentCamera == 3 && tracking == 1) {
 		cameras[currentCamera].rotateCamera(deltaX, deltaY);	
 	}
 
@@ -449,7 +447,12 @@ MyMesh createGround() {
 
 	return amesh;
 }
+/*
+MyMesh createRover() {
+	MyMesh amesh;
 
+	return amesh;
+}*/
 
 vector<MyMesh> createStones() {
 	vector<MyMesh> stones;
@@ -500,6 +503,11 @@ vector<MyMesh> createStones() {
 // Model loading and OpenGL setup
 //
 
+void buildCameras(){
+	cameras[0] = *(new Camera(ORTHOGONAL, 100.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
+	cameras[1] = *(new Camera(PERSPECTIVE, 100.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
+	cameras[2] = *(new Camera(MOVING, 5.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
+}
 
 void init()
 {
@@ -519,9 +527,8 @@ void init()
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
-	cameras = Camera::buildCameras();
-	currentCamera = 0;
-
+	buildCameras();
+	
 	cameras[currentCamera].setProjection((float) WinX, (float) WinY);
 
 	// -------
