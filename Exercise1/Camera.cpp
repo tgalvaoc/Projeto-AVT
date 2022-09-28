@@ -9,19 +9,27 @@ using namespace std;
 
 Camera::Camera() {};
 
-Camera::Camera(CameraType camType, float r_val, float alpha_val, float beta_val, float targetX_val, float targetY_val, float targetZ_val) {
+Camera::Camera(CameraType camType, float x, float y, float z, float r_val, float alpha_val, float beta_val, float targetX_val, float targetY_val, float targetZ_val) {
 
-	r = r_val;
-	alpha = alpha_val;
-	beta = beta_val;
-
-	fixPosition();
+	if(camType = MOVING){
+		r = r_val;
+		alpha = alpha_val;
+		beta = beta_val;
+		fixPosition();
+	}
+	else {
+		pos[0] = x;
+		pos[1] = y;
+		pos[2] = z;
+	}
 
 	target[0] = targetX_val;
 	target[1] = targetY_val;
 	target[2] = targetZ_val;
 
 	type = camType;
+
+	setProjection((float)1024, (float)768);
 }
 
 void Camera::rotateCamera(float dAlpha, float dBeta) {
@@ -40,9 +48,7 @@ void Camera::rotateCamera(float dAlpha, float dBeta) {
 
 	cout << "alpha = " << alpha << ", beta = " << beta << endl;
 
-
 	this->fixPosition();
-
 }
 
 void Camera::setProjection(float w, float h) {
@@ -50,14 +56,13 @@ void Camera::setProjection(float w, float h) {
 	case MOVING:
 	case PERSPECTIVE:
 		loadIdentity(PROJECTION);
-		perspective(45.0f, w / h, 0.0001, 1000000.0);
+		perspective(45.0f, w / h, 0.0001f, 1000000.0f);
 		break;
 	case ORTHOGONAL:
 		loadIdentity(PROJECTION);
-		ortho(0.0f, w, w, 0.0f, 0.0001f, 1000000.0);
+		ortho(-w/2, w/2, -w/2, w/2, 0.0001f, 1000000.0f);
 		break;
 	}
-
 }
 
 void Camera::cameraLookAt() {

@@ -51,6 +51,11 @@ VSShaderLib shaderText;  //render bitmap text
 //File with the font
 const string font_name = "fonts/arial.ttf";
 
+struct Velocity {
+	float angle;
+	float speed;
+};
+
 //Vector with meshes
 vector<struct MyMesh> myMeshes;
 
@@ -74,7 +79,7 @@ GLint tex_loc, tex_loc1, tex_loc2;
 //float camX, camY, camZ;
 
 Camera cameras[3];
-int currentCamera;
+int currentCamera = 0;
 
 // Mouse Tracking Variables
 int startX, startY, tracking = 0;
@@ -138,7 +143,7 @@ void renderScene(void) {
 	// set the camera using a function similar to gluLookAt
 
 	cameras[currentCamera].cameraLookAt();
-	
+	cameras[currentCamera].setProjection((float)WinX, (float)WinY);
 
 	// use our shader
 	
@@ -155,8 +160,7 @@ void renderScene(void) {
 
 	//for (int i = 0 ; i < 2; ++i) {
 		for (int j = 0; j < myMeshes.size(); ++j) {
-			//if (j == 2 && i == 1) continue;
-			// send the material
+
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 			glUniform4fv(loc, 1, myMeshes[objId].mat.ambient);
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
@@ -166,6 +170,9 @@ void renderScene(void) {
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
 			glUniform1f(loc, myMeshes[objId].mat.shininess);
 			pushMatrix(MODEL);
+
+			if (j == 0)
+				translate(MODEL, 0, 0, 50);
 
 			multMatrix(MODEL, myMeshes[objId].transform);
 
@@ -267,8 +274,6 @@ void specialFunc(int key, int xx, int yy)
 // ------------------------------------------------------------
 //
 // Events from the Keyboard
-//
-//AS TECLAS ESTÃO AQUI
 void processKeys(unsigned char key, int xx, int yy)
 {
 	switch(key) {
@@ -292,7 +297,7 @@ void processKeys(unsigned char key, int xx, int yy)
 			break;
 		case '3':
 			currentCamera = 2;
-			cameras[currentCamera].setProjection((float)WinX, (float) WinY);
+			//cameras[currentCamera].setProjection((float)WinX, (float) WinY);
 			break;
 	}
 }
@@ -344,7 +349,7 @@ void processMouseMotion(int xx, int yy)
 	deltaY = yy - startY;
 	
 	// left mouse button: move camera
-	if (currentCamera == 3 && tracking == 1) {
+	if (currentCamera == 2 && tracking == 1) {
 		cameras[currentCamera].rotateCamera(deltaX, deltaY);	
 	}
 
@@ -441,7 +446,7 @@ MyMesh createGround() {
 
 	setIdentityMatrix(amesh.transform, 4);
 
-	float *m = myRotate(amesh.transform, 90.0, 0.0, 0.0, 1.0);
+	float *m = myRotate(amesh.transform, 180.0, 0.0, 0.0, 1.0);
 
 	memcpy(amesh.transform, m, 16 * sizeof(float));
 
@@ -450,6 +455,35 @@ MyMesh createGround() {
 /*
 MyMesh createRover() {
 	MyMesh amesh;
+
+	amesh = createCube();
+
+	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
+	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
+	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	amesh.mat.shininess = 100.0f;
+	amesh.mat.texCount = 0;
+
+	setIdentityMatrix(amesh.transform, 4);
+
+	float square_size = 50.0f;
+
+	for (int i = 0; i < 300; i++) {
+		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
+		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
+
+		float* m = myTranslate(amesh.transform,
+			square_size * r1,
+
+			0.0,
+			square_size * r2);
+
+		memcpy(amesh.transform, m, 16 * sizeof(float));
+
+		stones.push_back(amesh);
+	}
 
 	return amesh;
 }*/
@@ -482,11 +516,8 @@ vector<MyMesh> createStones() {
 		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
 		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
 
-		float* m = myTranslate(amesh.transform,
-			square_size * r1,
-
-			0.0,
-			square_size * r2);
+		float* m = myTranslate(amesh.transform, square_size * r1,
+									0.0, square_size * r2);
 
 		memcpy(amesh.transform, m, 16 * sizeof(float));
 
@@ -503,10 +534,10 @@ vector<MyMesh> createStones() {
 // Model loading and OpenGL setup
 //
 
-void buildCameras(){
-	cameras[0] = *(new Camera(ORTHOGONAL, 100.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
-	cameras[1] = *(new Camera(PERSPECTIVE, 100.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
-	cameras[2] = *(new Camera(MOVING, 5.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
+void createCameras(){
+	cameras[0] = *(new Camera(ORTHOGONAL, 0.0f, 60.0f, 0.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+	cameras[1] = *(new Camera(PERSPECTIVE, 0.0f, 60.0f, 0.0f, 60.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
+	cameras[2] = *(new Camera(MOVING, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
 }
 
 void init()
@@ -527,15 +558,8 @@ void init()
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
-	buildCameras();
+	createCameras();
 	
-	cameras[currentCamera].setProjection((float) WinX, (float) WinY);
-
-	// -------
-
-
-	// place objects in world
-
 	//srand(0);
 
 	myMeshes.push_back(createGround());
