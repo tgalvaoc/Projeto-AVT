@@ -11,17 +11,10 @@ Camera::Camera() {};
 
 Camera::Camera(CameraType camType, float x, float y, float z, float r_val, float alpha_val, float beta_val, float targetX_val, float targetY_val, float targetZ_val) {
 
-	if(camType = MOVING){
-		r = r_val;
-		alpha = alpha_val;
-		beta = beta_val;
-		fixPosition();
-	}
-	else {
-		pos[0] = x;
-		pos[1] = y;
-		pos[2] = z;
-	}
+	r = r_val;
+	alpha = alpha_val;
+	beta = beta_val;
+	fixPosition();
 
 	target[0] = targetX_val;
 	target[1] = targetY_val;

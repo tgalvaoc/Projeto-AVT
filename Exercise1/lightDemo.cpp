@@ -38,7 +38,7 @@
 
 using namespace std;
 
-#define CAPTION "AVT Demo: Phong Shading and Text rendered with FreeType"
+#define CAPTION "Projeto AVT"
 int WindowHandle = 0;
 int WinX = 1024, WinY = 768;
 
@@ -432,8 +432,8 @@ MyMesh createGround() {
 
 	amesh = createQuad(10000.0f, 10000.0f);
 
-	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
-	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
+	float amb[] = { 0.2f, 1.0f, 0.1f, 1.0f };
+	float diff[] = { 1.0f, 0.6f, 0.4f, 1.0f };
 	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
@@ -446,7 +446,7 @@ MyMesh createGround() {
 
 	setIdentityMatrix(amesh.transform, 4);
 
-	float *m = myRotate(amesh.transform, 180.0, 0.0, 0.0, 1.0);
+	float *m = myRotate(amesh.transform, 45.0, 45.0,45.0, 1.0);
 
 	memcpy(amesh.transform, m, 16 * sizeof(float));
 
