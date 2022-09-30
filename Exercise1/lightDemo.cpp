@@ -40,7 +40,7 @@ using namespace std;
 
 #define CAPTION "Projeto AVT"
 int WindowHandle = 0;
-int WinX = 1024, WinY = 768;
+int WinX = 1280, WinY = 720;
 
 unsigned int FrameCount = 0;
 
@@ -85,14 +85,20 @@ int currentCamera = 0;
 int startX, startY, tracking = 0;
 
 // Camera Spherical Coordinates
-//float alpha = 39.0f, beta = 51.0f;
-//float r = 10.0f;
+float alpha = 39.0f, beta = 51.0f;
+float r = 10.0f;
 
 // Frame counting and FPS computation
 long myTime,timebase = 0,frame = 0;
 char s[32];
 float lightPos[4] = {4.0f, 6.0f, 2.0f, 1.0f};
 
+
+void fixPosition(Camera c, float alpha, float beta, float r) { // seno e cosseno estavam invertidos
+	c.pos[0] = r * cosf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
+	c.pos[1] = r * cosf(beta * 3.14f / 180.0f);
+	c.pos[2] = r * sinf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
+}
 
 void timer(int value)
 {
@@ -142,8 +148,8 @@ void renderScene(void) {
 	loadIdentity(MODEL);
 	// set the camera using a function similar to gluLookAt
 
-	cameras[currentCamera].cameraLookAt();
 	cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+	cameras[currentCamera].cameraLookAt();
 
 	// use our shader
 	
@@ -297,7 +303,7 @@ void processKeys(unsigned char key, int xx, int yy)
 			break;
 		case '3':
 			currentCamera = 2;
-			//cameras[currentCamera].setProjection((float)WinX, (float) WinY);
+			cameras[currentCamera].setProjection((float)WinX, (float) WinY);
 			break;
 	}
 }
@@ -350,7 +356,18 @@ void processMouseMotion(int xx, int yy)
 	
 	// left mouse button: move camera
 	if (currentCamera == 2 && tracking == 1) {
-		cameras[currentCamera].rotateCamera(deltaX, deltaY);	
+		alphaAux = alpha + deltaX;
+		betaAux = beta + deltaY;
+
+		if (betaAux > 85.0f)
+			betaAux = 85.0f;
+		else if (betaAux < -85.0f)
+			betaAux = -85.0f;
+		rAux = r;
+
+		//cameras[currentCamera].rotateCamera(deltaX, deltaY);	
+		fixPosition(cameras[currentCamera], alphaAux, betaAux, rAux);
+		
 	}
 
 
@@ -430,7 +447,7 @@ GLuint setupShaders() {
 MyMesh createGround() {
 	MyMesh amesh;
 
-	amesh = createQuad(10000.0f, 10000.0f);
+	amesh = createQuad(5.0f, 5.0f);
 
 	float amb[] = { 0.2f, 1.0f, 0.1f, 1.0f };
 	float diff[] = { 1.0f, 0.6f, 0.4f, 1.0f };
@@ -493,7 +510,7 @@ vector<MyMesh> createStones() {
 
 	MyMesh amesh;
 
-	amesh = createSphere(0.1f, 10);
+	amesh = createSphere(1.0f, 10);
 
 	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
 	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
@@ -512,7 +529,7 @@ vector<MyMesh> createStones() {
 
 	float square_size = 50.0f;
 
-	for (int i = 0; i < 300; i++) {
+	for (int i = 0; i < 10; i++) {
 		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
 		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
 
@@ -535,9 +552,9 @@ vector<MyMesh> createStones() {
 //
 
 void createCameras(){
-	cameras[0] = *(new Camera(ORTHOGONAL, 0.0f, 60.0f, 0.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-	cameras[1] = *(new Camera(PERSPECTIVE, 0.0f, 60.0f, 0.0f, 60.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
-	cameras[2] = *(new Camera(MOVING, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f));
+	cameras[0] = *(new Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+	cameras[1] = *(new Camera(PERSPECTIVE, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+	cameras[2] = *(new Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f));
 }
 
 void init()
@@ -559,7 +576,10 @@ void init()
 	freeType_init(font_name);
 
 	createCameras();
-	
+	fixPosition(cameras[2], alpha, beta, r);
+
+
+
 	//srand(0);
 
 	myMeshes.push_back(createGround());

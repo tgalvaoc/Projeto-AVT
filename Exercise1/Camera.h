@@ -16,7 +16,7 @@ public:
 
 	CameraType type;
 	Camera();
-	Camera(CameraType camType, float x, float y, float z, float r_val, float alpha_val, float beta_val, float targetX_val, float targetY_val, float targetZ_val);
+	Camera(CameraType camType, float x, float y, float z, float targetX_val, float targetY_val, float targetZ_val);
 
 	void setProjection(float w, float h);
 
@@ -25,8 +25,6 @@ public:
     void rotateCamera(float dAlpha, float dBeta);
 
 	void translateCamera(float dx, float dy);
-
-	void fixPosition();
 
 	void fixAngles();
 };
