@@ -111,6 +111,17 @@ void timer(int value)
     glutTimerFunc(1000, timer, value + 1);
 }
 
+
+void refresh(int value)
+{
+	// atualizar a tela a 60fps significa 60 frames por segundo, ou seja, com um intervalo de 1 / 60 = 16.6666 ms a cada frame
+
+	// por causa disso, a funcao refresh vai ser chamada daqui a 16 ms pelo glutTimerFunc
+	glutPostRedisplay(); //desenha a janela
+	glutTimerFunc(1000/60, refresh, 0); // continua chamando refresh(0)
+}
+
+
 // ------------------------------------------------------------
 //
 // Reshape Callback Function
@@ -227,17 +238,6 @@ void renderScene(void) {
 	glutSwapBuffers();
 }
 
-void refresh(int value)
-{
-	renderScene();
-
-	// atualizar a tela a 60fps significa 60 frames por segundo, ou seja, com um intervalo de 1 / 60 = 16.6666 ms a cada frame
-
-	// por causa disso, a funcao refresh vai ser chamada daqui a 16 ms pelo glutTimerFunc
-	glutPostRedisplay(); //desenha a janela
-	glutTimerFunc(16, refresh, 0); // continua chamando refresh(0)
-}
-
 void specialFunc(int key, int xx, int yy)
 {
 	float amount = 1.0f;
@@ -246,7 +246,7 @@ void specialFunc(int key, int xx, int yy)
 	case GLUT_KEY_UP:
 		//carrinho.mover(amount, 0.0f);
 
-		if (currentCamera == 0) {
+		if (currentCamera == 2) {
 			cameras[currentCamera].translateCamera(amount, 0.0f);
 			//cameras[currentCamera].target = 
 		}
@@ -254,21 +254,21 @@ void specialFunc(int key, int xx, int yy)
 	case GLUT_KEY_DOWN:
 		//carrinho.mover(-amount, 0.0f);
 
-		if (currentCamera == 0) {
+		if (currentCamera == 2) {
 			cameras[currentCamera].translateCamera(-amount, 0.0f);
 		}
 		break;
 	case GLUT_KEY_LEFT:
 		//carrinho.mover(0.0f, amount);
 
-		if (currentCamera == 0) {
+		if (currentCamera == 2) {
 			cameras[currentCamera].translateCamera(0.0f, amount);
 		}
 		break;
 	case GLUT_KEY_RIGHT:
 		//carrinho.mover(0.0f, -amount);
 
-		if (currentCamera == 0) {
+		if (currentCamera == 2) {
 			cameras[currentCamera].translateCamera(0.0f, -amount);
 		}
 		break;
@@ -288,22 +288,22 @@ void processKeys(unsigned char key, int xx, int yy)
 			break;
 
 		case 'c': 
-			printf("Camera Spherical Coordinates (%f, %f, %f)\n", cameras[currentCamera].alpha, cameras[currentCamera].beta, cameras[currentCamera].r);
+			//printf("Camera Spherical Coordinates (%f, %f, %f)\n", cameras[currentCamera].alpha, cameras[currentCamera].beta, cameras[currentCamera].r);
 			break;
 		case 'm': glEnable(GL_MULTISAMPLE); break;
 		case 'n': glDisable(GL_MULTISAMPLE); break;
 
 		case '1':
 			currentCamera = 0;
-			cameras[currentCamera].setProjection((float) WinX, (float) WinY);
+			//cameras[currentCamera].setProjection((float) WinX, (float) WinY);
 			break;
 		case '2':
 			currentCamera = 1;
-			cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+			//cameras[currentCamera].setProjection((float)WinX, (float)WinY);
 			break;
 		case '3':
 			currentCamera = 2;
-			cameras[currentCamera].setProjection((float)WinX, (float) WinY);
+			//cameras[currentCamera].setProjection((float)WinX, (float) WinY);
 			break;
 	}
 }
@@ -329,7 +329,7 @@ void processMouseButtons(int button, int state, int xx, int yy)
 	//stop tracking the mouse
 	else if (state == GLUT_UP) {
 		if (tracking == 1) {
-			//cout << "soltando" << endl;
+			cout << "soltando" << endl;
 			//alpha -= (xx - startX);
 			//beta += (yy - startY);
 		}
@@ -351,11 +351,12 @@ void processMouseMotion(int xx, int yy)
 	float alphaAux, betaAux;
 	float rAux;
 
-	deltaX = xx - startX;
+	deltaX = -xx + startX;
 	deltaY = yy - startY;
 	
 	// left mouse button: move camera
-	if (currentCamera == 2 && tracking == 1) {
+	if (/*currentCamera == 2 &&*/ tracking == 1) {
+		
 		alphaAux = alpha + deltaX;
 		betaAux = beta + deltaY;
 
@@ -364,6 +365,18 @@ void processMouseMotion(int xx, int yy)
 		else if (betaAux < -85.0f)
 			betaAux = -85.0f;
 		rAux = r;
+		/*alpha += deltaX / 10.0;
+		beta += deltaY / 10.0;
+
+		if (alpha > 360.0)
+			alpha -= 360.0;
+		else if (alpha < 0.0)
+			alpha += 360.0;
+
+		if (beta > 85.0f)
+			beta = 85.0f;
+		else if (beta < -85.0f)
+			beta = -85.0f;*/
 
 		//cameras[currentCamera].rotateCamera(deltaX, deltaY);	
 		fixPosition(cameras[currentCamera], alphaAux, betaAux, rAux);
@@ -553,8 +566,8 @@ vector<MyMesh> createStones() {
 
 void createCameras(){
 	cameras[0] = *(new Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-	cameras[1] = *(new Camera(PERSPECTIVE, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-	cameras[2] = *(new Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f));
+	cameras[1] = *(new Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+	cameras[2] = *(new Camera(MOVING, 0.0f, 20.0f, 5.0f, 0.0f, 0.0f, 0.0f));
 }
 
 void init()

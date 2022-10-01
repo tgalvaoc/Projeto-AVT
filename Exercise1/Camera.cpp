@@ -24,8 +24,8 @@ Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val,
 	setProjection((float)1024, (float)768);
 }
 
-/*void Camera::rotateCamera(float dAlpha, float dBeta) {
-	this->alpha += dAlpha / 10.0;
+void Camera::rotateCamera(float dAlpha, float dBeta) {
+/*	this->alpha += dAlpha / 10.0;
 	this->beta += dBeta / 10.0;
 
 	if (this->alpha > 360.0)
@@ -42,8 +42,8 @@ Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val,
 
 	cout << "alpha = " << alpha << ", beta = " << beta << endl;
 
-	this->fixPosition();
-}*/
+	this->fixPosition();*/
+}
 
 void Camera::setProjection(float w, float h) {
 	int factor = 3;
@@ -70,7 +70,7 @@ void Camera::cameraLookAt() {
 }
 
 void Camera::fixAngles() {
-	this->r = sqrtf(this->pos[0] * this->pos[0] + this->pos[0] * this->pos[0] + this->pos[0] * this->pos[0]);
+	//this->r = sqrtf(this->pos[0] * this->pos[0] + this->pos[0] * this->pos[0] + this->pos[0] * this->pos[0]);
 }
 
 

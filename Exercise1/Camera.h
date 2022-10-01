@@ -12,7 +12,6 @@ public:
 
 	float pos[3];
 	float target[3];
-	float alpha, beta, r;
 
 	CameraType type;
 	Camera();
