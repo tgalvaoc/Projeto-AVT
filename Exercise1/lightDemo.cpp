@@ -35,6 +35,7 @@
 #include "avtFreeType.h"
 
 #include "Camera.h"
+#include "Rover.h"
 
 using namespace std;
 
@@ -52,7 +53,7 @@ VSShaderLib shaderText;  //render bitmap text
 const string font_name = "fonts/arial.ttf";
 
 //Vector with meshes
-vector<struct MyMesh> myMeshes;
+vector<struct Model> myModels;
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -69,20 +70,13 @@ GLint normal_uniformId;
 GLint lPos_uniformId;
 GLint tex_loc, tex_loc1, tex_loc2;
 
-// Camera Position
-// isso aqui virou Camera::pos, pos[0] = camX, pos[1] = camY, pos[2] = camZ
-//float camX, camY, camZ;
-
+Rover rover;
 
 Camera cameras[3];
 int currentCamera = 0;
 
 // Mouse Tracking Variables
 int startX, startY, tracking = 0;
-
-// Camera Spherical Coordinates
-//float alpha = 39.0f, beta = 51.0f;
-//float r = 10.0f;
 
 // Frame counting and FPS computation
 long myTime, timebase = 0, frame = 0;
@@ -91,9 +85,9 @@ float lightPos[4] = { 4.0f, 6.0f, 2.0f, 1.0f };
 
 
 void createCameras() {
-	cameras[0] = *(new Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-	cameras[1] = *(new Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-	cameras[2] = *(new Camera(MOVING, 0.0f, 20.0f, 10.0f, 0.0f, 0.0f, 0.0f));
+	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	cameras[1] = Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
 }
 
 
@@ -170,6 +164,8 @@ void renderScene(void) {
 
 	int objId = 0; //id of the object mesh - to be used as index of mesh: Mymeshes[objID] means the current mesh
 
+	for (int i = 0; i < models.)
+
 	//for (int i = 0 ; i < 2; ++i) {
 	for (int j = 0; j < myMeshes.size(); ++j) {
 		//if (j == 2 && i == 1) continue;
@@ -238,32 +234,15 @@ void specialFunc(int key, int xx, int yy)
 	switch (key) {
 	case GLUT_KEY_UP:
 		//carrinho.mover(amount, 0.0f);
-
-		if (currentCamera == 0) {
-			cameras[currentCamera].translateCamera(amount, 0.0f);
-			//cameras[currentCamera].target = 
-		}
 		break;
 	case GLUT_KEY_DOWN:
 		//carrinho.mover(-amount, 0.0f);
-
-		if (currentCamera == 0) {
-			cameras[currentCamera].translateCamera(-amount, 0.0f);
-		}
 		break;
 	case GLUT_KEY_LEFT:
 		//carrinho.mover(0.0f, amount);
-
-		if (currentCamera == 0) {
-			cameras[currentCamera].translateCamera(0.0f, amount);
-		}
 		break;
 	case GLUT_KEY_RIGHT:
 		//carrinho.mover(0.0f, -amount);
-
-		if (currentCamera == 0) {
-			cameras[currentCamera].translateCamera(0.0f, -amount);
-		}
 		break;
 
 	}
@@ -427,10 +406,11 @@ GLuint setupShaders() {
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
-MyMesh createGround() {
-	MyMesh amesh;
+Model createGround() {
+	Model amodel;
+	setIdentityMatrix(amodel.view, 4);
 
-	amesh = createQuad(20.0f, 20.0f);
+	MyMesh amesh = createQuad(1000.0f, 1000.0f);
 
 	float amb[] = { 0.2f, 1.0f, 0.1f, 1.0f };
 	float diff[] = { 1.0f, 0.6f, 0.4f, 1.0f };
@@ -446,20 +426,21 @@ MyMesh createGround() {
 
 	setIdentityMatrix(amesh.transform, 4);
 
-	float* m = myRotate(amesh.transform, 0.0, 0.0, 0.0, 1.0);
+	float* m = myRotate(amesh.transform, -90.0, 1.0, 0.0, 0.0);
 
 	memcpy(amesh.transform, m, 16 * sizeof(float));
 
-	return amesh;
+	amodel.meshes.push_back(amesh);
+
+
+	return amodel;
 }
 
 
-vector<MyMesh> createStones() {
-	vector<MyMesh> stones;
+vector<Model> createStones() {
+	vector<Model> stones;
 
-	MyMesh amesh;
-
-	amesh = createSphere(1.0f, 10);
+	MyMesh amesh = createSphere(1.0f, 10);
 
 	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
 	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
@@ -482,19 +463,31 @@ vector<MyMesh> createStones() {
 		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
 		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
 
-		float* m = myTranslate(amesh.transform,
+		Model stone;
+
+		setIdentityMatrix(stone.view, 4);
+
+		float* m = myTranslate(stone.view,
 			square_size * r1,
 
-			0.0,
+			0.5,
 			square_size * r2);
 
-		memcpy(amesh.transform, m, 16 * sizeof(float));
+		memcpy(stone.view, m, 16 * sizeof(float));
 
-		stones.push_back(amesh);
+
+		stone.meshes.push_back(amesh);
+
+		stones.push_back(stone);
 	}
 
-
 	return stones;
+}
+
+Model createRover() {
+	Model rover;
+
+	return rover;
 }
 
 

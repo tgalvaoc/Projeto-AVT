@@ -75,11 +75,3 @@ void Camera::cameraLookAt() {
 		0, 1, 0);
 }
 
-void Camera::fixAngles() {
-	//this->r = sqrtf(this->pos[0] * this->pos[0] + this->pos[0] * this->pos[0] + this->pos[0] * this->pos[0]);
-}
-
-
-void Camera::translateCamera(float dx, float dy) {
-	//this->pos[0] += sin(this->alpha * 3.14f / 180.0f) * sin(this->beta * 3.14f / 180.0f)
-}

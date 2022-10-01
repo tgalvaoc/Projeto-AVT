@@ -11,13 +11,21 @@ struct Material{
 	float shininess;
 	int texCount;
 };
+
+
+struct Model {
+	float view[16]; // view matrix (posiciona o model no mundo)
+
+	vector<MyMesh> meshes;
+};
+
 // A model can be made of many meshes. Each is stored  in the following structure
 struct MyMesh {
 	//vertex array objects
 		GLuint vao;
 		GLuint texUnits[MAX_TEXTURES];
 		texType texTypes[4];
-		float transform[16];
+		float transform[16]; // model matrix (posiciona a mesh no seu model)
 	//indexes
 		GLuint numIndexes;
 		unsigned int type;

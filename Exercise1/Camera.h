@@ -25,9 +25,5 @@ public:
 
 	void rotateCamera(float dAlpha, float dBeta);
 
-	void translateCamera(float dx, float dy);
-
 	void fixPosition();
-
-	void fixAngles();
 };
