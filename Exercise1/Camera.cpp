@@ -6,7 +6,6 @@
 
 using namespace std;
 
-
 Camera::Camera() {};
 
 Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val, float targetY_val, float targetZ_val) {
@@ -14,18 +13,18 @@ Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val,
 	pos[0] = x;
 	pos[1] = y;
 	pos[2] = z;
-	
+
 	target[0] = targetX_val;
 	target[1] = targetY_val;
 	target[2] = targetZ_val;
 
 	type = camType;
 
-	setProjection((float)1024, (float)768);
 }
 
+
 void Camera::rotateCamera(float dAlpha, float dBeta) {
-/*	this->alpha += dAlpha / 10.0;
+	this->alpha += dAlpha / 10.0;
 	this->beta += dBeta / 10.0;
 
 	if (this->alpha > 360.0)
@@ -38,11 +37,11 @@ void Camera::rotateCamera(float dAlpha, float dBeta) {
 	else if (this->beta < -85.0f)
 		this->beta = -85.0f;
 
-	rAux = r;
-
 	cout << "alpha = " << alpha << ", beta = " << beta << endl;
 
-	this->fixPosition();*/
+
+	this->fixPosition();
+
 }
 
 void Camera::setProjection(float w, float h) {
@@ -61,6 +60,13 @@ void Camera::setProjection(float w, float h) {
 		ortho(-16 * factor, 16 * factor, -9 * factor, 9 * factor, -1, 1000000.0f);
 		break;
 	}
+
+}
+
+void Camera::fixPosition() { // seno e cosseno estavam invertidos
+	pos[0] = r * cosf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
+	pos[1] = r * cosf(beta * 3.14f / 180.0f);
+	pos[2] = r * sinf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
 }
 
 void Camera::cameraLookAt() {
@@ -77,4 +83,3 @@ void Camera::fixAngles() {
 void Camera::translateCamera(float dx, float dy) {
 	//this->pos[0] += sin(this->alpha * 3.14f / 180.0f) * sin(this->beta * 3.14f / 180.0f)
 }
-

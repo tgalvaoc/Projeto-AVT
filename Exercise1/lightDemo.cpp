@@ -1,4 +1,4 @@
-//
+ï»¿//
 // AVT: Phong Shading and Text rendered with FreeType library
 // The text rendering was based on https://learnopengl.com/In-Practice/Text-Rendering
 // This demo was built for learning purposes only.
@@ -8,7 +8,7 @@
 // The code comes with no warranties, use it at your own risk.
 // You may use it, or parts of it, wherever you want.
 // 
-// Author: João Madeiras Pereira
+// Author: Joï¿½o Madeiras Pereira
 //
 
 #include <math.h>
@@ -38,7 +38,7 @@
 
 using namespace std;
 
-#define CAPTION "Projeto AVT"
+#define CAPTION "Projecto AVT"
 int WindowHandle = 0;
 int WinX = 1280, WinY = 720;
 
@@ -50,11 +50,6 @@ VSShaderLib shaderText;  //render bitmap text
 
 //File with the font
 const string font_name = "fonts/arial.ttf";
-
-struct Velocity {
-	float angle;
-	float speed;
-};
 
 //Vector with meshes
 vector<struct MyMesh> myMeshes;
@@ -73,10 +68,11 @@ GLint vm_uniformId;
 GLint normal_uniformId;
 GLint lPos_uniformId;
 GLint tex_loc, tex_loc1, tex_loc2;
-	
+
 // Camera Position
 // isso aqui virou Camera::pos, pos[0] = camX, pos[1] = camY, pos[2] = camZ
 //float camX, camY, camZ;
+
 
 Camera cameras[3];
 int currentCamera = 0;
@@ -85,20 +81,21 @@ int currentCamera = 0;
 int startX, startY, tracking = 0;
 
 // Camera Spherical Coordinates
-float alpha = 39.0f, beta = 51.0f;
-float r = 10.0f;
+//float alpha = 39.0f, beta = 51.0f;
+//float r = 10.0f;
 
 // Frame counting and FPS computation
-long myTime,timebase = 0,frame = 0;
+long myTime, timebase = 0, frame = 0;
 char s[32];
-float lightPos[4] = {4.0f, 6.0f, 2.0f, 1.0f};
+float lightPos[4] = { 4.0f, 6.0f, 2.0f, 1.0f };
 
 
-void fixPosition(Camera c, float alpha, float beta, float r) { // seno e cosseno estavam invertidos
-	c.pos[0] = r * cosf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
-	c.pos[1] = r * cosf(beta * 3.14f / 180.0f);
-	c.pos[2] = r * sinf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
+void createCameras() {
+	cameras[0] = *(new Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+	cameras[1] = *(new Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+	cameras[2] = *(new Camera(MOVING, 0.0f, 20.0f, 10.0f, 0.0f, 0.0f, 0.0f));
 }
+
 
 void timer(int value)
 {
@@ -107,10 +104,9 @@ void timer(int value)
 	std::string s = oss.str();
 	glutSetWindow(WindowHandle);
 	glutSetWindowTitle(s.c_str());
-    FrameCount = 0;
-    glutTimerFunc(1000, timer, value + 1);
+	FrameCount = 0;
+	glutTimerFunc(1000, timer, value + 1);
 }
-
 
 void refresh(int value)
 {
@@ -118,9 +114,8 @@ void refresh(int value)
 
 	// por causa disso, a funcao refresh vai ser chamada daqui a 16 ms pelo glutTimerFunc
 	glutPostRedisplay(); //desenha a janela
-	glutTimerFunc(1000/60, refresh, 0); // continua chamando refresh(0)
+	glutTimerFunc(1000 / 60, refresh, 0); // continua chamando refresh(0)
 }
-
 
 // ------------------------------------------------------------
 //
@@ -131,7 +126,7 @@ void changeSize(int w, int h) {
 
 	float ratio;
 	// Prevent a divide by zero, when window is too short
-	if(h == 0)
+	if (h == 0)
 		h = 1;
 	// set the viewport to be the entire window
 	glViewport(0, 0, w, h);
@@ -163,58 +158,56 @@ void renderScene(void) {
 	cameras[currentCamera].cameraLookAt();
 
 	// use our shader
-	
+
 	glUseProgram(shader.getProgramIndex());
 
-		//send the light position in eye coordinates
-		//glUniform4fv(lPos_uniformId, 1, lightPos); //efeito capacete do mineiro, ou seja lighPos foi definido em eye coord 
+	//send the light position in eye coordinates
+	//glUniform4fv(lPos_uniformId, 1, lightPos); //efeito capacete do mineiro, ou seja lighPos foi definido em eye coord 
 
-		float res[4];
-		multMatrixPoint(VIEW, lightPos,res);   //lightPos definido em World Coord so is converted to eye space
-		glUniform4fv(lPos_uniformId, 1, res);
+	float res[4];
+	multMatrixPoint(VIEW, lightPos, res);   //lightPos definido em World Coord so is converted to eye space
+	glUniform4fv(lPos_uniformId, 1, res);
 
-	int objId=0; //id of the object mesh - to be used as index of mesh: Mymeshes[objID] means the current mesh
+	int objId = 0; //id of the object mesh - to be used as index of mesh: Mymeshes[objID] means the current mesh
 
 	//for (int i = 0 ; i < 2; ++i) {
-		for (int j = 0; j < myMeshes.size(); ++j) {
+	for (int j = 0; j < myMeshes.size(); ++j) {
+		//if (j == 2 && i == 1) continue;
+		// send the material
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+		glUniform4fv(loc, 1, myMeshes[objId].mat.ambient);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+		glUniform4fv(loc, 1, myMeshes[objId].mat.diffuse);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+		glUniform4fv(loc, 1, myMeshes[objId].mat.specular);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+		glUniform1f(loc, myMeshes[objId].mat.shininess);
+		pushMatrix(MODEL);
 
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-			glUniform4fv(loc, 1, myMeshes[objId].mat.ambient);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-			glUniform4fv(loc, 1, myMeshes[objId].mat.diffuse);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-			glUniform4fv(loc, 1, myMeshes[objId].mat.specular);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-			glUniform1f(loc, myMeshes[objId].mat.shininess);
-			pushMatrix(MODEL);
+		multMatrix(MODEL, myMeshes[objId].transform);
 
-			if (j == 0)
-				translate(MODEL, 0, 0, 50);
+		// send matrices to OGL
+		computeDerivedMatrix(PROJ_VIEW_MODEL);
+		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+		computeNormalMatrix3x3();
+		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
-			multMatrix(MODEL, myMeshes[objId].transform);
+		// Render mesh
+		glBindVertexArray(myMeshes[objId].vao);
 
-			// send matrices to OGL
-			computeDerivedMatrix(PROJ_VIEW_MODEL);
-			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-			computeNormalMatrix3x3();
-			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+		glDrawElements(myMeshes[objId].type, myMeshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
-			// Render mesh
-			glBindVertexArray(myMeshes[objId].vao);
-			
-			glDrawElements(myMeshes[objId].type, myMeshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
-			glBindVertexArray(0);
-
-			popMatrix(MODEL);
-			objId++;
-		}
+		popMatrix(MODEL);
+		objId++;
+	}
 	//}
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
 	//the glyph contains transparent background colors and non-transparent for the actual character pixels. So we use the blending
-	glEnable(GL_BLEND);  
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	int m_viewport[4];
 	glGetIntegerv(GL_VIEWPORT, m_viewport);
@@ -246,7 +239,7 @@ void specialFunc(int key, int xx, int yy)
 	case GLUT_KEY_UP:
 		//carrinho.mover(amount, 0.0f);
 
-		if (currentCamera == 2) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(amount, 0.0f);
 			//cameras[currentCamera].target = 
 		}
@@ -254,21 +247,21 @@ void specialFunc(int key, int xx, int yy)
 	case GLUT_KEY_DOWN:
 		//carrinho.mover(-amount, 0.0f);
 
-		if (currentCamera == 2) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(-amount, 0.0f);
 		}
 		break;
 	case GLUT_KEY_LEFT:
 		//carrinho.mover(0.0f, amount);
 
-		if (currentCamera == 2) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(0.0f, amount);
 		}
 		break;
 	case GLUT_KEY_RIGHT:
 		//carrinho.mover(0.0f, -amount);
 
-		if (currentCamera == 2) {
+		if (currentCamera == 0) {
 			cameras[currentCamera].translateCamera(0.0f, -amount);
 		}
 		break;
@@ -280,31 +273,30 @@ void specialFunc(int key, int xx, int yy)
 // ------------------------------------------------------------
 //
 // Events from the Keyboard
+//
+//AS TECLAS ESTï¿½O AQUI
 void processKeys(unsigned char key, int xx, int yy)
 {
-	switch(key) {
-		case 27:
-			glutLeaveMainLoop();
-			break;
+	switch (key) {
+	case 27:
+		glutLeaveMainLoop();
+		break;
 
-		case 'c': 
-			//printf("Camera Spherical Coordinates (%f, %f, %f)\n", cameras[currentCamera].alpha, cameras[currentCamera].beta, cameras[currentCamera].r);
-			break;
-		case 'm': glEnable(GL_MULTISAMPLE); break;
-		case 'n': glDisable(GL_MULTISAMPLE); break;
+	case 'c':
+		printf("Camera Spherical Coordinates (%f, %f, %f)\n", cameras[currentCamera].alpha, cameras[currentCamera].beta, cameras[currentCamera].r);
+		break;
+	case 'm': glEnable(GL_MULTISAMPLE); break;
+	case 'n': glDisable(GL_MULTISAMPLE); break;
 
-		case '1':
-			currentCamera = 0;
-			//cameras[currentCamera].setProjection((float) WinX, (float) WinY);
-			break;
-		case '2':
-			currentCamera = 1;
-			//cameras[currentCamera].setProjection((float)WinX, (float)WinY);
-			break;
-		case '3':
-			currentCamera = 2;
-			//cameras[currentCamera].setProjection((float)WinX, (float) WinY);
-			break;
+	case '1':
+		currentCamera = 0;
+		break;
+	case '2':
+		currentCamera = 1;
+		break;
+	case '3':
+		currentCamera = 2;
+		break;
 	}
 }
 
@@ -317,7 +309,7 @@ void processKeys(unsigned char key, int xx, int yy)
 void processMouseButtons(int button, int state, int xx, int yy)
 {
 	// start tracking the mouse
-	if (state == GLUT_DOWN)  {
+	if (state == GLUT_DOWN) {
 		startX = xx;
 		startY = yy;
 		if (button == GLUT_LEFT_BUTTON)
@@ -351,40 +343,18 @@ void processMouseMotion(int xx, int yy)
 	float alphaAux, betaAux;
 	float rAux;
 
-	deltaX = -xx + startX;
+	deltaX = xx - startX;
 	deltaY = yy - startY;
-	
+
+	cout << "teste" << endl;
+
 	// left mouse button: move camera
-	if (/*currentCamera == 2 &&*/ tracking == 1) {
-		
-		alphaAux = alpha + deltaX;
-		betaAux = beta + deltaY;
-
-		if (betaAux > 85.0f)
-			betaAux = 85.0f;
-		else if (betaAux < -85.0f)
-			betaAux = -85.0f;
-		rAux = r;
-		/*alpha += deltaX / 10.0;
-		beta += deltaY / 10.0;
-
-		if (alpha > 360.0)
-			alpha -= 360.0;
-		else if (alpha < 0.0)
-			alpha += 360.0;
-
-		if (beta > 85.0f)
-			beta = 85.0f;
-		else if (beta < -85.0f)
-			beta = -85.0f;*/
-
-		//cameras[currentCamera].rotateCamera(deltaX, deltaY);	
-		fixPosition(cameras[currentCamera], alphaAux, betaAux, rAux);
-		
+	if (currentCamera == 2 && tracking == 1) {
+		cameras[currentCamera].rotateCamera(deltaX, deltaY);
 	}
 
 
-//  uncomment this if not using an idle or refresh func
+	//  uncomment this if not using an idle or refresh func
 	glutPostRedisplay();
 }
 
@@ -400,8 +370,8 @@ void mouseWheel(int wheel, int direction, int x, int y) {
 	camY = r *   						     sin(beta * 3.14f / 180.0f);
 	*/
 
-//  uncomment this if not using an idle or refresh func
-//	glutPostRedisplay();
+	//  uncomment this if not using an idle or refresh func
+	//	glutPostRedisplay();
 }
 
 // --------------------------------------------------------
@@ -418,7 +388,7 @@ GLuint setupShaders() {
 	shader.loadShader(VSShaderLib::FRAGMENT_SHADER, "shaders/pointlight.frag");
 
 	// set semantics for the shader variables
-	glBindFragDataLocation(shader.getProgramIndex(), 0,"colorOut");
+	glBindFragDataLocation(shader.getProgramIndex(), 0, "colorOut");
 	glBindAttribLocation(shader.getProgramIndex(), VERTEX_COORD_ATTRIB, "position");
 	glBindAttribLocation(shader.getProgramIndex(), NORMAL_ATTRIB, "normal");
 	//glBindAttribLocation(shader.getProgramIndex(), TEXTURE_COORD_ATTRIB, "texCoord");
@@ -438,7 +408,7 @@ GLuint setupShaders() {
 	tex_loc = glGetUniformLocation(shader.getProgramIndex(), "texmap");
 	tex_loc1 = glGetUniformLocation(shader.getProgramIndex(), "texmap1");
 	tex_loc2 = glGetUniformLocation(shader.getProgramIndex(), "texmap2");
-	
+
 	printf("InfoLog for Per Fragment Phong Lightning Shader\n%s\n\n", shader.getAllInfoLogs().c_str());
 
 	// Shader for bitmap Text
@@ -453,14 +423,14 @@ GLuint setupShaders() {
 		printf("GLSL Text Program Not Valid!\n");
 		exit(1);
 	}
-	
+
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
 MyMesh createGround() {
 	MyMesh amesh;
 
-	amesh = createQuad(5.0f, 5.0f);
+	amesh = createQuad(20.0f, 20.0f);
 
 	float amb[] = { 0.2f, 1.0f, 0.1f, 1.0f };
 	float diff[] = { 1.0f, 0.6f, 0.4f, 1.0f };
@@ -476,47 +446,13 @@ MyMesh createGround() {
 
 	setIdentityMatrix(amesh.transform, 4);
 
-	float *m = myRotate(amesh.transform, 45.0, 45.0,45.0, 1.0);
+	float* m = myRotate(amesh.transform, 0.0, 0.0, 0.0, 1.0);
 
 	memcpy(amesh.transform, m, 16 * sizeof(float));
 
 	return amesh;
 }
-/*
-MyMesh createRover() {
-	MyMesh amesh;
 
-	amesh = createCube();
-
-	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
-	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
-	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-	amesh.mat.shininess = 100.0f;
-	amesh.mat.texCount = 0;
-
-	setIdentityMatrix(amesh.transform, 4);
-
-	float square_size = 50.0f;
-
-	for (int i = 0; i < 300; i++) {
-		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
-		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
-
-		float* m = myTranslate(amesh.transform,
-			square_size * r1,
-
-			0.0,
-			square_size * r2);
-
-		memcpy(amesh.transform, m, 16 * sizeof(float));
-
-		stones.push_back(amesh);
-	}
-
-	return amesh;
-}*/
 
 vector<MyMesh> createStones() {
 	vector<MyMesh> stones;
@@ -546,8 +482,11 @@ vector<MyMesh> createStones() {
 		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
 		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
 
-		float* m = myTranslate(amesh.transform, square_size * r1,
-									0.0, square_size * r2);
+		float* m = myTranslate(amesh.transform,
+			square_size * r1,
+
+			0.0,
+			square_size * r2);
 
 		memcpy(amesh.transform, m, 16 * sizeof(float));
 
@@ -564,11 +503,6 @@ vector<MyMesh> createStones() {
 // Model loading and OpenGL setup
 //
 
-void createCameras(){
-	cameras[0] = *(new Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-	cameras[1] = *(new Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-	cameras[2] = *(new Camera(MOVING, 0.0f, 20.0f, 5.0f, 0.0f, 0.0f, 0.0f));
-}
 
 void init()
 {
@@ -589,9 +523,11 @@ void init()
 	freeType_init(font_name);
 
 	createCameras();
-	fixPosition(cameras[2], alpha, beta, r);
+
+	// -------
 
 
+	// place objects in world
 
 	//srand(0);
 
@@ -599,8 +535,8 @@ void init()
 
 	vector<MyMesh> stones = createStones();
 	myMeshes.insert(myMeshes.end(), stones.begin(), stones.end());
-	
-	
+
+
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -615,22 +551,22 @@ void init()
 //
 
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 
-//  GLUT initialization
+	//  GLUT initialization
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA|GLUT_MULTISAMPLE);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE);
 
-	glutInitContextVersion (4, 3);
-	glutInitContextProfile (GLUT_CORE_PROFILE );
+	glutInitContextVersion(4, 3);
+	glutInitContextProfile(GLUT_CORE_PROFILE);
 	glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
 
-	glutInitWindowPosition(100,100);
+	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(WinX, WinY);
 	WindowHandle = glutCreateWindow(CAPTION);
 
 
-//  Callback Registration
+	//  Callback Registration
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
 
@@ -638,25 +574,25 @@ int main(int argc, char **argv) {
 	//glutIdleFunc(renderScene);  // Use it for maximum performance
 	glutTimerFunc(0, refresh, 0);    //use it to to get 60 FPS whatever
 
-//	Mouse and Keyboard Callbacks
+	//	Mouse and Keyboard Callbacks
 	glutKeyboardFunc(processKeys);
 	glutSpecialFunc(specialFunc);
 	glutMouseFunc(processMouseButtons);
 	glutMotionFunc(processMouseMotion);
-	glutMouseWheelFunc ( mouseWheel ) ;
-	
+	glutMouseWheelFunc(mouseWheel);
 
-//	return from main loop
+
+	//	return from main loop
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
-//	Init GLEW
+	//	Init GLEW
 	glewExperimental = GL_TRUE;
 	glewInit();
 
-	printf ("Vendor: %s\n", glGetString (GL_VENDOR));
-	printf ("Renderer: %s\n", glGetString (GL_RENDERER));
-	printf ("Version: %s\n", glGetString (GL_VERSION));
-	printf ("GLSL: %s\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
+	printf("Vendor: %s\n", glGetString(GL_VENDOR));
+	printf("Renderer: %s\n", glGetString(GL_RENDERER));
+	printf("Version: %s\n", glGetString(GL_VERSION));
+	printf("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 	if (!setupShaders())
 		return(1);
@@ -668,6 +604,5 @@ int main(int argc, char **argv) {
 
 	return(0);
 }
-
 
 
