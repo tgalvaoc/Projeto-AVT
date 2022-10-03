@@ -1,0 +1,15 @@
+﻿  lightDemo.cpp
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,103): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,70): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,53): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,20): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(353,47): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(353,39): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(344,8): warning C4101: 'rAux': variável local não referenciada
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(343,18): warning C4101: 'betaAux': variável local não referenciada
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(343,8): warning C4101: 'alphaAux': variável local não referenciada
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(482,12): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(483,12): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(512,9): warning C4101: 'amesh': variável local não referenciada
+  Exercise1.vcxproj -> C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\x64\Debug\Exercise1.exe
+  0 File(s) copied
