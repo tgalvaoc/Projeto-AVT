@@ -52,8 +52,8 @@ VSShaderLib shaderText;  //render bitmap text
 //File with the font
 const string font_name = "fonts/arial.ttf";
 
-//Vector with meshes
-vector<struct Model> myModels;
+//Vector with objects, and each object can have one or more meshes
+vector<struct MyObject> myObjects;
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -146,6 +146,7 @@ void renderScene(void) {
 	// load identity matrices
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
+
 	// set the camera using a function similar to gluLookAt
 
 	cameras[currentCamera].setProjection((float)WinX, (float)WinY);
@@ -162,43 +163,48 @@ void renderScene(void) {
 	multMatrixPoint(VIEW, lightPos, res);   //lightPos definido em World Coord so is converted to eye space
 	glUniform4fv(lPos_uniformId, 1, res);
 
-	int objId = 0; //id of the object mesh - to be used as index of mesh: Mymeshes[objID] means the current mesh
+	
+	for (int i = 0; i < myObjects.size(); i++) {
 
-	for (int i = 0; i < models.)
+		vector<MyMesh> meshes = myObjects[i].meshes;
 
-	//for (int i = 0 ; i < 2; ++i) {
-	for (int j = 0; j < myMeshes.size(); ++j) {
-		//if (j == 2 && i == 1) continue;
-		// send the material
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-		glUniform4fv(loc, 1, myMeshes[objId].mat.ambient);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-		glUniform4fv(loc, 1, myMeshes[objId].mat.diffuse);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-		glUniform4fv(loc, 1, myMeshes[objId].mat.specular);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-		glUniform1f(loc, myMeshes[objId].mat.shininess);
 		pushMatrix(MODEL);
 
-		multMatrix(MODEL, myMeshes[objId].transform);
+		multMatrix(MODEL, myObjects[i].objectTransform);
 
-		// send matrices to OGL
-		computeDerivedMatrix(PROJ_VIEW_MODEL);
-		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-		computeNormalMatrix3x3();
-		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+		for (int objId = 0; objId < meshes.size(); objId++) {
+			//if (j == 2 && i == 1) continue;
+			// send the material
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+			glUniform4fv(loc, 1, meshes[objId].mat.specular);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+			glUniform1f(loc, meshes[objId].mat.shininess);
+			pushMatrix(MODEL);
 
-		// Render mesh
-		glBindVertexArray(myMeshes[objId].vao);
+			multMatrix(MODEL, meshes[objId].meshTransform);
 
-		glDrawElements(myMeshes[objId].type, myMeshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+			// send matrices to OGL
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			// Render mesh
+			glBindVertexArray(meshes[objId].vao);
+
+			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+
+			popMatrix(MODEL);
+		}
 
 		popMatrix(MODEL);
-		objId++;
 	}
-	//}
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
@@ -406,9 +412,9 @@ GLuint setupShaders() {
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
-Model createGround() {
-	Model amodel;
-	setIdentityMatrix(amodel.view, 4);
+MyObject createGround() {
+	MyObject amodel;
+	setIdentityMatrix(amodel.objectTransform, 4);
 
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
 
@@ -424,11 +430,11 @@ Model createGround() {
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
 
-	setIdentityMatrix(amesh.transform, 4);
+	setIdentityMatrix(amesh.meshTransform, 4);
 
-	float* m = myRotate(amesh.transform, -90.0, 1.0, 0.0, 0.0);
+	float* m = myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
 
-	memcpy(amesh.transform, m, 16 * sizeof(float));
+	memcpy(amesh.meshTransform, m, 16 * sizeof(float));
 
 	amodel.meshes.push_back(amesh);
 
@@ -437,8 +443,8 @@ Model createGround() {
 }
 
 
-vector<Model> createStones() {
-	vector<Model> stones;
+vector<MyObject> createStones() {
+	vector<MyObject> stones;
 
 	MyMesh amesh = createSphere(1.0f, 10);
 
@@ -455,7 +461,7 @@ vector<Model> createStones() {
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
 
-	setIdentityMatrix(amesh.transform, 4);
+	setIdentityMatrix(amesh.meshTransform, 4);
 
 	float square_size = 50.0f;
 
@@ -463,17 +469,17 @@ vector<Model> createStones() {
 		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
 		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
 
-		Model stone;
+		MyObject stone;
 
-		setIdentityMatrix(stone.view, 4);
+		setIdentityMatrix(stone.objectTransform, 4);
 
-		float* m = myTranslate(stone.view,
+		float* m = myTranslate(stone.objectTransform,
 			square_size * r1,
 
 			0.5,
 			square_size * r2);
 
-		memcpy(stone.view, m, 16 * sizeof(float));
+		memcpy(stone.objectTransform, m, 16 * sizeof(float));
 
 
 		stone.meshes.push_back(amesh);
@@ -484,8 +490,8 @@ vector<Model> createStones() {
 	return stones;
 }
 
-Model createRover() {
-	Model rover;
+MyObject createRover() {
+	MyObject rover;
 
 	return rover;
 }
@@ -524,10 +530,10 @@ void init()
 
 	//srand(0);
 
-	myMeshes.push_back(createGround());
+	myObjects.push_back(createGround());
 
-	vector<MyMesh> stones = createStones();
-	myMeshes.insert(myMeshes.end(), stones.begin(), stones.end());
+	vector<MyObject> stones = createStones();
+	myObjects.insert(myObjects.end(), stones.begin(), stones.end());
 
 
 	// some GL settings
