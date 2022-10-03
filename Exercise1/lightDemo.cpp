@@ -412,6 +412,23 @@ GLuint setupShaders() {
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
+void setMeshColor(MyMesh* amesh, float r, float g, float b)
+{
+	float amb[] = { r / 4.0, g / 4.0, b / 4.0, 1.0f };
+	float diff[] = { r, g, b, 1.0f };
+	float spec[] = { r, g, b, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	memcpy(amesh->mat.ambient, amb, 4 * sizeof(float));
+	memcpy(amesh->mat.diffuse, diff, 4 * sizeof(float));
+	memcpy(amesh->mat.specular, spec, 4 * sizeof(float));
+	memcpy(amesh->mat.emissive, emissive, 4 * sizeof(float));
+
+	amesh->mat.shininess = 100.0f;
+	amesh->mat.texCount = 0;
+
+}
+
 MyObject createGround() {
 	MyObject amodel;
 	setIdentityMatrix(amodel.objectTransform, 4);
@@ -432,9 +449,7 @@ MyObject createGround() {
 
 	setIdentityMatrix(amesh.meshTransform, 4);
 
-	float* m = myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
-
-	memcpy(amesh.meshTransform, m, 16 * sizeof(float));
+	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
 
 	amodel.meshes.push_back(amesh);
 
@@ -473,13 +488,11 @@ vector<MyObject> createStones() {
 
 		setIdentityMatrix(stone.objectTransform, 4);
 
-		float* m = myTranslate(stone.objectTransform,
+		myTranslate(stone.objectTransform,
 			square_size * r1,
 
 			0.5,
 			square_size * r2);
-
-		memcpy(stone.objectTransform, m, 16 * sizeof(float));
 
 
 		stone.meshes.push_back(amesh);
@@ -492,6 +505,31 @@ vector<MyObject> createStones() {
 
 MyObject createRover() {
 	MyObject rover;
+	setIdentityMatrix(rover.objectTransform, 4);
+
+
+	MyMesh corpo = createCube();
+	setMeshColor(&corpo, 0.5, 0.5, 0.5);
+
+	// =        = 0.25
+	// =|------|=
+	// =|------|=
+	// =|------|= 1.0
+	// =|------|=
+	// =        = 0.25
+
+	// altura da roda: 0.25 + 1.0 + 0.25 = 1.5
+	// altura do corpo: 1.0
+	// distancia do corpo pro chao: 0.25
+
+	setIdentityMatrix(corpo.meshTransform, 4);
+	myScale(corpo.meshTransform, 3.0, 1.0, 1.5);
+    myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0);
+
+
+	//MyMesh roda1 = createTorus(1.5, 1.3, 30, 30);
+
+	rover.meshes.push_back(corpo);
 
 	return rover;
 }
@@ -535,6 +573,7 @@ void init()
 	vector<MyObject> stones = createStones();
 	myObjects.insert(myObjects.end(), stones.begin(), stones.end());
 
+	myObjects.push_back(createRover());
 
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);
