@@ -30,7 +30,7 @@
 #include "VSShaderlib.h"
 #include "AVTmathLib.h"
 #include "VertexAttrDef.h"
-#include "geometry.h"
+//#include "geometry.h"
 
 #include "avtFreeType.h"
 
@@ -53,7 +53,8 @@ VSShaderLib shaderText;  //render bitmap text
 const string font_name = "fonts/arial.ttf";
 
 //Vector with meshes
-vector<struct Model> myModels;
+vector<Model> myModels;
+vector<MyMesh> myMeshes;
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -70,7 +71,7 @@ GLint normal_uniformId;
 GLint lPos_uniformId;
 GLint tex_loc, tex_loc1, tex_loc2;
 
-Rover rover;
+Model rover;
 
 Camera cameras[3];
 int currentCamera = 0;
@@ -164,7 +165,7 @@ void renderScene(void) {
 
 	int objId = 0; //id of the object mesh - to be used as index of mesh: Mymeshes[objID] means the current mesh
 
-	for (int i = 0; i < models.)
+	//for (int i = 0; i < models.)
 
 	//for (int i = 0 ; i < 2; ++i) {
 	for (int j = 0; j < myMeshes.size(); ++j) {
@@ -477,7 +478,7 @@ vector<Model> createStones() {
 
 
 		stone.meshes.push_back(amesh);
-
+		myModels.push_back(stone);
 		stones.push_back(stone);
 	}
 
@@ -486,6 +487,43 @@ vector<Model> createStones() {
 
 Model createRover() {
 	Model rover;
+
+	MyMesh amesh = createCube();
+
+	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
+	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
+	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
+	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
+	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
+	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
+
+	amesh.mat.shininess = 100.0f;
+	amesh.mat.texCount = 0;
+
+	setIdentityMatrix(amesh.transform, 4);
+
+	float square_size = 50.0f;
+
+	float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
+	float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
+
+	setIdentityMatrix(rover.view, 4);
+
+	float* m = myTranslate(rover.view,
+		square_size * r1,
+
+		0.5,
+		square_size * r2);
+
+	memcpy(rover.view, m, 16 * sizeof(float));
+
+
+	rover.meshes.push_back(amesh);
+
+	myModels.push_back(rover);
 
 	return rover;
 }
@@ -502,7 +540,7 @@ void init()
 	// wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	MyMesh amesh;
+	//MyMesh amesh;
 
 	/* Initialization of DevIL */
 	if (ilGetInteger(IL_VERSION_NUM) < IL_VERSION)
@@ -517,16 +555,14 @@ void init()
 
 	createCameras();
 
-	// -------
-
-
 	// place objects in world
 
 	//srand(0);
 
-	myMeshes.push_back(createGround());
+	myModels.push_back(createGround());
 
-	vector<MyMesh> stones = createStones();
+	vector<Model> stones = createStones();
+	rover = createRover();
 	myMeshes.insert(myMeshes.end(), stones.begin(), stones.end());
 
 

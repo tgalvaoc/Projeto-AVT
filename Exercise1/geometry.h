@@ -1,3 +1,6 @@
+#include <vector>
+#include <GL/glew.h>
+#include <GL/freeglut.h>
 
 #define MAX_TEXTURES 8
 
@@ -13,12 +16,6 @@ struct Material{
 };
 
 
-struct Model {
-	float view[16]; // view matrix (posiciona o model no mundo)
-
-	vector<MyMesh> meshes;
-};
-
 // A model can be made of many meshes. Each is stored  in the following structure
 struct MyMesh {
 	//vertex array objects
@@ -29,8 +26,15 @@ struct MyMesh {
 	//indexes
 		GLuint numIndexes;
 		unsigned int type;
-		struct Material mat;
+		Material mat;
 	};
+
+
+struct Model {
+	float view[16]; // view matrix (posiciona o model no mundo)
+	std::vector<MyMesh> meshes;
+};
+
 
 MyMesh createCube();
 MyMesh createQuad(float size_x, float size_y);

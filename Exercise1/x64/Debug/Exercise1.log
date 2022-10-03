@@ -1,15 +1,85 @@
 ﻿  lightDemo.cpp
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,103): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,70): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,53): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(222,20): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(353,47): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(353,39): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(344,8): warning C4101: 'rAux': variável local não referenciada
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(343,18): warning C4101: 'betaAux': variável local não referenciada
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(343,8): warning C4101: 'alphaAux': variável local não referenciada
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(482,12): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(483,12): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
-C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(512,9): warning C4101: 'amesh': variável local não referenciada
-  Exercise1.vcxproj -> C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\x64\Debug\Exercise1.exe
-  0 File(s) copied
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(219,103): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(219,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(219,53): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(219,20): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(333,47): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(333,39): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(324,8): warning C4101: 'rAux': unreferenced local variable
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(323,18): warning C4101: 'betaAux': unreferenced local variable
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(323,8): warning C4101: 'alphaAux': unreferenced local variable
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(464,12): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(465,12): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(510,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(511,11): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\xmemory(681,1): error C2664: 'MyMesh::MyMesh(const MyMesh &)': cannot convert argument 1 from 'Model' to 'const MyMesh &'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\xmemory(681,1): message : Reason: cannot convert from 'Model' to 'const MyMesh'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\xmemory(681,68): message : No user-defined-conversion operator available that can perform this conversion, or the operator cannot be called
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\geometry.h(30,2): message : see declaration of 'MyMesh::MyMesh'
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\xmemory(1620): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,Model&>(_Alloc &,_Objty *const ,Model &)' being compiled
+          with
+          [
+              _Alloc=std::allocator<MyMesh>,
+              _Ty=MyMesh,
+              _Objty=MyMesh
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\xmemory(1620): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,Model&>(_Alloc &,_Objty *const ,Model &)' being compiled
+          with
+          [
+              _Alloc=std::allocator<MyMesh>,
+              _Ty=MyMesh,
+              _Objty=MyMesh
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\xmemory(1659): message : see reference to function template instantiation 'void std::_Uninitialized_backout_al<_Alloc>::_Emplace_back<Model&>(Model &)' being compiled
+          with
+          [
+              _Alloc=std::allocator<MyMesh>
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\xmemory(1659): message : see reference to function template instantiation 'void std::_Uninitialized_backout_al<_Alloc>::_Emplace_back<Model&>(Model &)' being compiled
+          with
+          [
+              _Alloc=std::allocator<MyMesh>
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\vector(1641): message : see reference to function template instantiation 'MyMesh *std::_Uninitialized_copy<_Iter,std::allocator<MyMesh>>(const _InIt,const _InIt,MyMesh *,_Alloc &)' being compiled
+          with
+          [
+              _Iter=Model *,
+              _InIt=Model *,
+              _Alloc=std::allocator<MyMesh>
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\vector(966): message : see reference to function template instantiation 'MyMesh *std::vector<MyMesh,std::allocator<MyMesh>>::_Ucopy<_Iter>(_Iter,_Iter,MyMesh *)' being compiled
+          with
+          [
+              _Iter=Model *
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\vector(966): message : see reference to function template instantiation 'MyMesh *std::vector<MyMesh,std::allocator<MyMesh>>::_Ucopy<_Iter>(_Iter,_Iter,MyMesh *)' being compiled
+          with
+          [
+              _Iter=Model *
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\vector(1058): message : see reference to function template instantiation 'void std::vector<MyMesh,std::allocator<MyMesh>>::_Insert_range<Model*>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,_Iter,_Iter,std::forward_iterator_tag)' being compiled
+          with
+          [
+              _Ty=MyMesh,
+              _Iter=Model *
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include\vector(1058): message : see reference to function template instantiation 'void std::vector<MyMesh,std::allocator<MyMesh>>::_Insert_range<Model*>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,_Iter,_Iter,std::forward_iterator_tag)' being compiled
+          with
+          [
+              _Ty=MyMesh,
+              _Iter=Model *
+          ]
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(566): message : see reference to function template instantiation 'std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>> std::vector<_Ty,std::allocator<_Ty>>::insert<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Model>>>,0>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,_Iter,_Iter)' being compiled
+          with
+          [
+              _Ty=MyMesh,
+              _Iter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Model>>>
+          ]
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(566): message : see reference to function template instantiation 'std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>> std::vector<_Ty,std::allocator<_Ty>>::insert<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Model>>>,0>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,_Iter,_Iter)' being compiled
+          with
+          [
+              _Ty=MyMesh,
+              _Iter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Model>>>
+          ]
+  Rover.cpp
+  Generating Code...
