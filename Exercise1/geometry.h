@@ -39,6 +39,16 @@ struct MyObject {
 	vector<MyMesh> meshes;
 };
 
+
+struct RollingRock {
+	MyObject object;
+	float directionX;
+	float directionZ;
+	float speed;
+	float posX;
+	float posZ;
+};
+
 MyMesh createCube();
 MyMesh createQuad(float size_x, float size_y);
 MyMesh createSphere(float radius, int divisions);

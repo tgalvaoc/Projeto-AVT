@@ -36,6 +36,7 @@
 
 #include "Camera.h"
 #include "Rover.h"
+#include <list>
 
 using namespace std;
 
@@ -55,6 +56,10 @@ const string font_name = "fonts/arial.ttf";
 //Vector with objects, and each object can have one or more meshes
 vector<MyObject> myObjects;
 
+MyObject ground;
+Rover rover;
+vector<RollingRock> rollingRocks;
+
 //External array storage defined in AVTmathLib.cpp
 
 /// The storage for matrices
@@ -70,7 +75,6 @@ GLint normal_uniformId;
 GLint lPos_uniformId;
 GLint tex_loc, tex_loc1, tex_loc2;
 
-Rover rover;
 
 Camera cameras[3];
 int currentCamera = 0;
@@ -90,6 +94,93 @@ void createCameras() {
 	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
 }
 
+
+vector<RollingRock> createRollingRocks(int numToCreate) {
+
+	MyMesh amesh = createSphere(1.0f, 10);
+	MyObject stone;
+	RollingRock rock;
+	vector<RollingRock> rocks;
+	int low, high;
+
+	float square_size = 50.0f;
+
+	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
+	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
+	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
+	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
+	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
+	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
+
+	amesh.mat.shininess = 100.0f;
+	amesh.mat.texCount = 0;
+
+	setIdentityMatrix(amesh.meshTransform, 4);
+
+	for (int i = 0; i < numToCreate; i++) {
+
+		low = -25;
+		high = 25;
+
+		float r1 = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		float r2 = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		//std::cout << "R1: " << r1 << " r2: " << r2 << "\n";
+
+		low = -1;
+		high = 1;
+
+		rock.speed = rand() / static_cast<float>(RAND_MAX);
+		rock.directionX = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		rock.directionZ = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		rock.posX = r1;
+		rock.posZ = r2;
+
+		//std::cout << "speed: " << stone.speed << " dir0 " << stone.direction[0] << "\n";
+		setIdentityMatrix(stone.objectTransform, 4);
+
+		myTranslate(stone.objectTransform, r1, 1, r2);
+
+		stone.meshes.push_back(amesh);
+		rock.object = stone;
+		rollingRocks.push_back(rock);
+	}
+	return rocks;
+}
+
+void updateRoverCamera() {
+	cameras[2].target[0] = rover.position[0];
+	cameras[2].target[1] = rover.position[1];
+	cameras[2].target[2] = rover.position[2];
+
+}
+
+void animateRocks() {
+	vector<RollingRock> rocks;
+	vector<RollingRock> aux;
+	for (int i = 0; i < rollingRocks.size(); i++) {
+		float translateX = rollingRocks[i].speed * rollingRocks[i].directionX;
+		float translateZ = rollingRocks[i].speed * rollingRocks[i].directionZ;
+
+		myTranslate(rollingRocks[i].object.objectTransform, translateX, 0, translateZ);
+		rollingRocks[i].posX += translateX;
+		rollingRocks[i].posZ += translateZ;
+
+		// TODO: melhorar barreiras
+		if (rollingRocks[i].posX > 50 || rollingRocks[i].posZ > 50 ||
+			rollingRocks[i].posX < -50 || rollingRocks[i].posZ < -50) {
+			rollingRocks.erase(rollingRocks.begin() + i);
+			aux = createRollingRocks(1);
+			if(!aux.empty())
+				rocks.push_back(aux[0]);
+			//std::cout << "speed: " << rollingRocks[i].speed << " posX: " << rollingRocks[i].posX << " posX: " << rollingRocks[i].posZ << "\n";
+		}
+	}
+	for (int j = 0; j < rocks.size(); j++)
+		myObjects.push_back(rocks[j].object);
+}
 
 void timer(int value)
 {
@@ -162,9 +253,17 @@ void renderScene(void) {
 	float res[4];
 	multMatrixPoint(VIEW, lightPos, res);   //lightPos definido em World Coord so is converted to eye space
 	glUniform4fv(lPos_uniformId, 1, res);
+	
 
-	myObjects.pop_back();
-	myObjects.push_back(rover.rover);
+	animateRocks();
+	rover.updatePosition(NONE);
+	
+
+	myObjects.clear();
+
+	myObjects.push_back(ground);
+	for (int j = 0; j < rollingRocks.size(); j++)
+		myObjects.push_back(rollingRocks[j].object);
 
 	for (int i = 0; i < myObjects.size(); i++) {
 
@@ -208,7 +307,48 @@ void renderScene(void) {
 		popMatrix(MODEL);
 	}
 
-	rover.updatePosition(NONE);
+	// Rover ---------------------------------------------------
+	// separei para o rover pq dava problema de insercao/remoção muita rápida
+
+	vector<MyMesh> meshes = rover.rover.meshes;
+
+	pushMatrix(MODEL);
+
+	multMatrix(MODEL, rover.rover.objectTransform);
+
+	for (int objId = 0; objId < meshes.size(); objId++) {
+		//if (j == 2 && i == 1) continue;
+		// send the material
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+		glUniform4fv(loc, 1, meshes[objId].mat.ambient);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+		glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+		glUniform4fv(loc, 1, meshes[objId].mat.specular);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+		glUniform1f(loc, meshes[objId].mat.shininess);
+		pushMatrix(MODEL);
+
+		multMatrix(MODEL, meshes[objId].meshTransform);
+
+		// send matrices to OGL
+		computeDerivedMatrix(PROJ_VIEW_MODEL);
+		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+		computeNormalMatrix3x3();
+		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+		// Render mesh
+		glBindVertexArray(meshes[objId].vao);
+
+		glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		popMatrix(MODEL);
+	}
+	popMatrix(MODEL);
+
+
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
 	//the glyph contains transparent background colors and non-transparent for the actual character pixels. So we use the blending
@@ -272,10 +412,12 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'q':
 	case'Q':
 		rover.updatePosition(FRONT);
+		updateRoverCamera();
 		break;
 	case 'a':
 	case'A':
 		rover.updatePosition(BACK);
+		updateRoverCamera();
 		break;
 	case 'o':
 	case'O':
@@ -324,7 +466,7 @@ void processMouseButtons(int button, int state, int xx, int yy)
 	//stop tracking the mouse
 	else if (state == GLUT_UP) {
 		if (tracking == 1) {
-			cout << "soltando" << endl;
+			//cout << "soltando" << endl;
 			//alpha -= (xx - startX);
 			//beta += (yy - startY);
 		}
@@ -349,7 +491,7 @@ void processMouseMotion(int xx, int yy)
 	deltaX = xx - startX;
 	deltaY = yy - startY;
 
-	cout << "teste" << endl;
+	// cout << "teste" << endl;
 
 	// left mouse button: move camera
 	if (currentCamera == 2 && tracking == 1) {
@@ -446,9 +588,9 @@ void setMeshColor(MyMesh* amesh, float r, float g, float b)
 	amesh->mat.texCount = 0;
 }
 
-MyObject createGround() {
-	MyObject amodel;
-	setIdentityMatrix(amodel.objectTransform, 4);
+void createGround() {
+
+	setIdentityMatrix(ground.objectTransform, 4);
 
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
 
@@ -469,57 +611,8 @@ MyObject createGround() {
 
 	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
 
-	amodel.meshes.push_back(amesh);
-
-
-	return amodel;
-}
-
-
-vector<MyObject> createStones() {
-	vector<MyObject> stones;
-
-	MyMesh amesh = createSphere(1.0f, 10);
-
-	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
-	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
-	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
-
-	amesh.mat.shininess = 100.0f;
-	amesh.mat.texCount = 0;
-
-	setIdentityMatrix(amesh.meshTransform, 4);
-
-	float square_size = 50.0f;
-
-	for (int i = 0; i < 10; i++) {
-		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
-		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
-
-		MyObject stone;
-
-		setIdentityMatrix(stone.objectTransform, 4);
-
-		myTranslate(stone.objectTransform,
-			square_size * r1,
-
-			0.5,
-			square_size * r2);
-
-		myTranslate(stone.objectTransform, 0, 0.5, 0);
-
-		stone.meshes.push_back(amesh);
-
-		stones.push_back(stone);
-	}
-
-	return stones;
+	ground.meshes.push_back(amesh);
+	myObjects.push_back(ground);
 }
 
 void createRover() {
@@ -585,11 +678,13 @@ void init()
 
 	//srand(0);
 
-	myObjects.push_back(createGround());
-
-	vector<MyObject> stones = createStones();
-	myObjects.insert(myObjects.end(), stones.begin(), stones.end());
+	createGround();
 	createRover();
+	createRollingRocks(10);
+
+
+	//myObjects.insert(myObjects.end(), rollingRocks.begin(), stones.end());
+	
 
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);

@@ -1,9 +1,20 @@
-﻿  Rover.cpp
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(45,30): warning C4305: '-=': truncation from 'double' to 'float'
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(50,30): warning C4305: '+=': truncation from 'double' to 'float'
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(54,33): warning C4305: '+=': truncation from 'double' to 'float'
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(56,33): warning C4305: '-=': truncation from 'double' to 'float'
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(64,35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(65,35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+﻿  lightDemo.cpp
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(367,103): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(367,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(367,53): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(367,20): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(498,47): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(498,39): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(489,8): warning C4101: 'rAux': unreferenced local variable
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(488,18): warning C4101: 'betaAux': unreferenced local variable
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(488,8): warning C4101: 'alphaAux': unreferenced local variable
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(577,20): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(577,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(577,29): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(577,29): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(577,38): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(577,38): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(609,36): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(659,9): warning C4101: 'amesh': unreferenced local variable
   Exercise1.vcxproj -> C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\x64\Debug\Exercise1.exe
   0 File(s) copied

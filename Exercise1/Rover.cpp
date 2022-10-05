@@ -52,12 +52,17 @@ void Rover::updatePosition(Key key) {
 	case NONE:
 		if (this->velocity.speed < 0)
 			this->velocity.speed += 0.002;
-		else
+		else if(this->velocity.speed != 0)
 			this->velocity.speed -= 0.002;
 		break;
 	}
+	//TODO : fix angles
+	float translateX = this->velocity.speed * this->velocity.direction[0];
+	float translateY = this->velocity.speed * this->velocity.direction[2];
+	position[0] += translateX;
+	position[1] += translateY;
 
-	myTranslate(this->rover.objectTransform, this->velocity.speed * this->velocity.direction[0], this->velocity.speed * this->velocity.direction[2], 0);
+	myTranslate(this->rover.objectTransform, translateX, translateY, 0);
 }
 
 void Rover::updateDirection() {
