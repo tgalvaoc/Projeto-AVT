@@ -30,7 +30,7 @@
 #include "VSShaderlib.h"
 #include "AVTmathLib.h"
 #include "VertexAttrDef.h"
-//#include "geometry.h"
+#include "geometry.h"
 
 #include "avtFreeType.h"
 
@@ -52,9 +52,8 @@ VSShaderLib shaderText;  //render bitmap text
 //File with the font
 const string font_name = "fonts/arial.ttf";
 
-//Vector with meshes
-vector<Model> myModels;
-vector<MyMesh> myMeshes;
+//Vector with objects, and each object can have one or more meshes
+vector<MyObject> myObjects;
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -71,7 +70,7 @@ GLint normal_uniformId;
 GLint lPos_uniformId;
 GLint tex_loc, tex_loc1, tex_loc2;
 
-Model rover;
+Rover rover;
 
 Camera cameras[3];
 int currentCamera = 0;
@@ -147,6 +146,7 @@ void renderScene(void) {
 	// load identity matrices
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
+
 	// set the camera using a function similar to gluLookAt
 
 	cameras[currentCamera].setProjection((float)WinX, (float)WinY);
@@ -163,44 +163,52 @@ void renderScene(void) {
 	multMatrixPoint(VIEW, lightPos, res);   //lightPos definido em World Coord so is converted to eye space
 	glUniform4fv(lPos_uniformId, 1, res);
 
-	int objId = 0; //id of the object mesh - to be used as index of mesh: Mymeshes[objID] means the current mesh
+	myObjects.pop_back();
+	myObjects.push_back(rover.rover);
 
-	//for (int i = 0; i < models.)
+	for (int i = 0; i < myObjects.size(); i++) {
 
-	//for (int i = 0 ; i < 2; ++i) {
-	for (int j = 0; j < myMeshes.size(); ++j) {
-		//if (j == 2 && i == 1) continue;
-		// send the material
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-		glUniform4fv(loc, 1, myMeshes[objId].mat.ambient);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-		glUniform4fv(loc, 1, myMeshes[objId].mat.diffuse);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-		glUniform4fv(loc, 1, myMeshes[objId].mat.specular);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-		glUniform1f(loc, myMeshes[objId].mat.shininess);
+		vector<MyMesh> meshes = myObjects[i].meshes;
+
 		pushMatrix(MODEL);
 
-		multMatrix(MODEL, myMeshes[objId].transform);
+		multMatrix(MODEL, myObjects[i].objectTransform);
 
-		// send matrices to OGL
-		computeDerivedMatrix(PROJ_VIEW_MODEL);
-		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-		computeNormalMatrix3x3();
-		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+		for (int objId = 0; objId < meshes.size(); objId++) {
+			//if (j == 2 && i == 1) continue;
+			// send the material
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+			glUniform4fv(loc, 1, meshes[objId].mat.specular);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+			glUniform1f(loc, meshes[objId].mat.shininess);
+			pushMatrix(MODEL);
 
-		// Render mesh
-		glBindVertexArray(myMeshes[objId].vao);
+			multMatrix(MODEL, meshes[objId].meshTransform);
 
-		glDrawElements(myMeshes[objId].type, myMeshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+			// send matrices to OGL
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			// Render mesh
+			glBindVertexArray(meshes[objId].vao);
+
+			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+
+			popMatrix(MODEL);
+		}
 
 		popMatrix(MODEL);
-		objId++;
 	}
-	//}
 
+	rover.updatePosition(NONE);
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
 	//the glyph contains transparent background colors and non-transparent for the actual character pixels. So we use the blending
@@ -261,7 +269,22 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 27:
 		glutLeaveMainLoop();
 		break;
-
+	case 'q':
+	case'Q':
+		rover.updatePosition(FRONT);
+		break;
+	case 'a':
+	case'A':
+		rover.updatePosition(BACK);
+		break;
+	case 'o':
+	case'O':
+		rover.rotateRover(LEFT);
+		break;
+	case 'p':
+	case'P':
+		rover.rotateRover(RIGHT);
+		break;
 	case 'c':
 		printf("Camera Spherical Coordinates (%f, %f, %f)\n", cameras[currentCamera].alpha, cameras[currentCamera].beta, cameras[currentCamera].r);
 		break;
@@ -407,9 +430,25 @@ GLuint setupShaders() {
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
-Model createGround() {
-	Model amodel;
-	setIdentityMatrix(amodel.view, 4);
+void setMeshColor(MyMesh* amesh, float r, float g, float b)
+{
+	float amb[] = { r / 4.0, g / 4.0, b / 4.0, 1.0f };
+	float diff[] = { r, g, b, 1.0f };
+	float spec[] = { r, g, b, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	memcpy(amesh->mat.ambient, amb, 4 * sizeof(float));
+	memcpy(amesh->mat.diffuse, diff, 4 * sizeof(float));
+	memcpy(amesh->mat.specular, spec, 4 * sizeof(float));
+	memcpy(amesh->mat.emissive, emissive, 4 * sizeof(float));
+
+	amesh->mat.shininess = 100.0f;
+	amesh->mat.texCount = 0;
+}
+
+MyObject createGround() {
+	MyObject amodel;
+	setIdentityMatrix(amodel.objectTransform, 4);
 
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
 
@@ -425,11 +464,10 @@ Model createGround() {
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
 
-	setIdentityMatrix(amesh.transform, 4);
+	setMeshColor(&amesh, 0.9, 0.8, 0.9);
+	setIdentityMatrix(amesh.meshTransform, 4);
 
-	float* m = myRotate(amesh.transform, -90.0, 1.0, 0.0, 0.0);
-
-	memcpy(amesh.transform, m, 16 * sizeof(float));
+	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
 
 	amodel.meshes.push_back(amesh);
 
@@ -438,8 +476,8 @@ Model createGround() {
 }
 
 
-vector<Model> createStones() {
-	vector<Model> stones;
+vector<MyObject> createStones() {
+	vector<MyObject> stones;
 
 	MyMesh amesh = createSphere(1.0f, 10);
 
@@ -456,7 +494,7 @@ vector<Model> createStones() {
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
 
-	setIdentityMatrix(amesh.transform, 4);
+	setIdentityMatrix(amesh.meshTransform, 4);
 
 	float square_size = 50.0f;
 
@@ -464,68 +502,53 @@ vector<Model> createStones() {
 		float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
 		float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
 
-		Model stone;
+		MyObject stone;
 
-		setIdentityMatrix(stone.view, 4);
+		setIdentityMatrix(stone.objectTransform, 4);
 
-		float* m = myTranslate(stone.view,
+		myTranslate(stone.objectTransform,
 			square_size * r1,
 
 			0.5,
 			square_size * r2);
 
-		memcpy(stone.view, m, 16 * sizeof(float));
-
+		myTranslate(stone.objectTransform, 0, 0.5, 0);
 
 		stone.meshes.push_back(amesh);
-		myModels.push_back(stone);
+
 		stones.push_back(stone);
 	}
 
 	return stones;
 }
 
-Model createRover() {
-	Model rover;
+void createRover() {
+	MyObject roverObj;
+	setIdentityMatrix(roverObj.objectTransform, 4);
 
-	MyMesh amesh = createCube();
+	MyMesh corpo = createCube();
+	setMeshColor(&corpo, 0.5, 0.5, 0.5);
 
-	float amb[] = { 0.2f, 0.15f, 0.1f, 1.0f };
-	float diff[] = { 0.8f, 0.6f, 0.4f, 1.0f };
-	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	// =        = 0.25
+	// =|------|=
+	// =|------|=
+	// =|------|= 1.0
+	// =|------|=
+	// =        = 0.25
 
-	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
+	// altura da roda: 0.25 + 1.0 + 0.25 = 1.5
+	// altura do corpo: 1.0
+	// distancia do corpo pro chao: 0.25
 
-	amesh.mat.shininess = 100.0f;
-	amesh.mat.texCount = 0;
-
-	setIdentityMatrix(amesh.transform, 4);
-
-	float square_size = 50.0f;
-
-	float r1 = ((float)rand() / (float)RAND_MAX) - 0.5;
-	float r2 = ((float)rand() / (float)RAND_MAX) - 0.5;
-
-	setIdentityMatrix(rover.view, 4);
-
-	float* m = myTranslate(rover.view,
-		square_size * r1,
-
-		0.5,
-		square_size * r2);
-
-	memcpy(rover.view, m, 16 * sizeof(float));
+	setIdentityMatrix(corpo.meshTransform, 4);
+	myScale(corpo.meshTransform, 3.0, 1.5, 1.5);
+    myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0);
 
 
-	rover.meshes.push_back(amesh);
+	//MyMesh roda1 = createTorus(1.5, 1.3, 30, 30);
 
-	myModels.push_back(rover);
-
-	return rover;
+	roverObj.meshes.push_back(corpo);
+	rover = *new Rover(roverObj);
 }
 
 
@@ -540,7 +563,7 @@ void init()
 	// wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	//MyMesh amesh;
+	MyMesh amesh;
 
 	/* Initialization of DevIL */
 	if (ilGetInteger(IL_VERSION_NUM) < IL_VERSION)
@@ -555,16 +578,18 @@ void init()
 
 	createCameras();
 
+	// -------
+
+
 	// place objects in world
 
 	//srand(0);
 
-	myModels.push_back(createGround());
+	myObjects.push_back(createGround());
 
-	vector<Model> stones = createStones();
-	rover = createRover();
-	myMeshes.insert(myMeshes.end(), stones.begin(), stones.end());
-
+	vector<MyObject> stones = createStones();
+	myObjects.insert(myObjects.end(), stones.begin(), stones.end());
+	createRover();
 
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);

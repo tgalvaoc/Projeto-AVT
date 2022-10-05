@@ -34,7 +34,7 @@
 			PROJ_VIEW_MODEL
 		};
 
-		float* myTranslate(float input[16], float x, float y, float z);
+		void myTranslate(float *input, float x, float y, float z);
 
 		/** Similar to glTranslate*. 
 		  *
@@ -43,6 +43,8 @@
 		*/
 		void translate(MatrixTypes aType, float x, float y, float z);
 
+		void myScale(float *mat, float x, float y, float z);
+
 		/** Similar to glScale*.
 		  *
 		  * \param aType any value from MatrixTypes
@@ -50,7 +52,8 @@
 		*/
 		void scale(MatrixTypes aType, float x, float y, float z);
 
-		float* myRotate(float mat[16], float angle, float x, float y, float z);
+
+		void myRotate(float* mat, float angle, float x, float y, float z);
 
 		/** Similar to glTotate*. 
 		  *

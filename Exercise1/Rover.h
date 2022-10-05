@@ -1,13 +1,27 @@
 #pragma once
+#include "geometry.h"
 
-#include <vector>
+enum Key { FRONT, BACK, LEFT, RIGHT, NONE };
 
-#include <geometry.h>
+struct Velocity {
+	int angle;
+	float speed;
+	float direction[3];
+};
 
-using namespace std;
+class Rover {
+public: 
+	MyObject rover;
+	Velocity velocity;
+	float position[3];
 
-class Rover
-{
-	vector<MyMesh*> meshes;
+	Rover();
+	Rover(MyObject obj);
+
+	void rotateRover(Key key);
+
+	void updatePosition(Key key);
+
+	void updateDirection();
 };
 

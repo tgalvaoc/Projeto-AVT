@@ -1,8 +1,11 @@
+#pragma once
+
+#define MAX_TEXTURES 8
 #include <vector>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
-#define MAX_TEXTURES 8
+using namespace std;
 
 enum texType {DIFFUSE, SPECULAR, NORMALS, BUMP};
 
@@ -16,25 +19,25 @@ struct Material{
 };
 
 
+
 // A model can be made of many meshes. Each is stored  in the following structure
 struct MyMesh {
 	//vertex array objects
 		GLuint vao;
 		GLuint texUnits[MAX_TEXTURES];
 		texType texTypes[4];
-		float transform[16]; // model matrix (posiciona a mesh no seu model)
+		float meshTransform[16]; // posiciona a mesh em relacao ao centro do objeto
 	//indexes
 		GLuint numIndexes;
 		unsigned int type;
-		Material mat;
+		struct Material mat;
 	};
 
 
-struct Model {
-	float view[16]; // view matrix (posiciona o model no mundo)
-	std::vector<MyMesh> meshes;
+struct MyObject {
+	float objectTransform[16]; // posiciona o objeto em relacao ao centro do mundo
+	vector<MyMesh> meshes;
 };
-
 
 MyMesh createCube();
 MyMesh createQuad(float size_x, float size_y);

@@ -22,7 +22,6 @@ public:
 
 	void cameraLookAt();
 
-
 	void rotateCamera(float dAlpha, float dBeta);
 
 	void fixPosition();
