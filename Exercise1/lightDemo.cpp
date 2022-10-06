@@ -101,7 +101,7 @@ float directionalLightPos[4] = { 4.0f, 6.0f, 2.0f, 1.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f},
 	{4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f},
 	{4.0f, 6.0f, 2.0f, 1.0f} };
-float spotlightPos[NUMBER_SPOT_LIGHTS][4];
+float spotlightPos[NUMBER_SPOT_LIGHTS][4] = { {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f} };
 
 void createCameras() {
 	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -165,11 +165,12 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 	return rocks;
 }
 
-void updateRoverCamera() {
+void updateRoverCamera(float vx, float vy) {
 	cameras[2].target[0] = rover.position[0];
 	cameras[2].target[1] = rover.position[1];
 	cameras[2].target[2] = rover.position[2];
-
+	cameras[2].pos[0] += vx;
+	cameras[2].pos[1] += vy;
 }
 
 void animateRocks() {
@@ -497,19 +498,20 @@ void specialFunc(int key, int xx, int yy)
 //AS TECLAS EST�O AQUI
 void processKeys(unsigned char key, int xx, int yy)
 {
+	std::tuple<float, float> aux;
 	switch (key) {
 	case 27:
 		glutLeaveMainLoop();
 		break;
 	case 'q':
 	case'Q':
-		rover.updatePosition(FRONT);
-		updateRoverCamera();
+		aux = rover.updatePosition(FRONT);
+		updateRoverCamera(std::get<0>(aux), std::get<1>(aux));
 		break;
 	case 'a':
 	case'A':
-		rover.updatePosition(BACK);
-		updateRoverCamera();
+		aux = rover.updatePosition(BACK);
+		updateRoverCamera(std::get<0>(aux), std::get<1>(aux));
 		break;
 	case 'o':
 	case'O':
@@ -665,6 +667,7 @@ GLuint setupShaders() {
 	tex_loc1 = glGetUniformLocation(shader.getProgramIndex(), "texmap1");
 	tex_loc2 = glGetUniformLocation(shader.getProgramIndex(), "texmap2");
 
+
 	printf("InfoLog for Per Fragment Phong Lightning Shader\n%s\n\n", shader.getAllInfoLogs().c_str());
 
 	// Shader for bitmap Text
@@ -776,9 +779,9 @@ void init()
 	ilInit();
 
 	glGenTextures(3, TextureArray);
-	Texture2D_Loader(TextureArray, "mars_texture.tga", 0);
-	Texture2D_Loader(TextureArray, "steel_texture.tga", 1);
-	Texture2D_Loader(TextureArray, "rock_texture.tga", 2);
+	Texture2D_Loader(TextureArray, "mars_texture.jpg", 0);
+	Texture2D_Loader(TextureArray, "steel_texture.jpg", 1);
+	Texture2D_Loader(TextureArray, "rock_texture.jpg", 2);
 
 
 	/// Initialization of freetype library with font_name file
@@ -796,8 +799,6 @@ void init()
 	createGround();
 	createRover();
 	createRollingRocks(10);
-
-
 
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);

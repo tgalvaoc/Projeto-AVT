@@ -20,7 +20,7 @@ public:
 
 	void rotateRover(Key key);
 
-	void updatePosition(Key key);
+	tuple<float, float> updatePosition(Key key);
 
 	void updateDirection();
 };

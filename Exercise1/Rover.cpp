@@ -2,6 +2,7 @@
 
 #include "AVTmathlib.h"
 #include <iostream>
+#include <tuple>
 
 using namespace std;
 
@@ -36,7 +37,7 @@ void Rover::rotateRover(Key key) {
 	updateDirection();
 }
 
-void Rover::updatePosition(Key key) {
+std::tuple<float, float> Rover::updatePosition(Key key) {
 	updateDirection();
 	switch (key) {
 	case FRONT:
@@ -63,6 +64,7 @@ void Rover::updatePosition(Key key) {
 	position[1] += translateY;
 
 	myTranslate(this->rover.objectTransform, translateX, translateY, 0);
+	return { translateX, translateY };
 }
 
 void Rover::updateDirection() {
