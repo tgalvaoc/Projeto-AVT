@@ -1,5 +1,11 @@
 #version 430
 
+uniform sampler2D texmap;
+uniform sampler2D texmap1;
+uniform sampler2D texmap2;
+
+uniform int texMode;
+
 out vec4 colorOut;
 
 struct Materials {
@@ -17,9 +23,12 @@ in Data {
 	vec3 normal;
 	vec3 eye;
 	vec3 lightDir;
+	vec2 tex_coord;
 } DataIn;
 
 void main() {
+	
+	vec4 texel, texel1; 
 
 	vec4 spec = vec4(0.0);
 

@@ -8,11 +8,13 @@ uniform vec4 l_pos;
 
 in vec4 position;
 in vec4 normal;    //por causa do gerador de geometria
+in vec4 texCoord;
 
 out Data {
 	vec3 normal;
 	vec3 eye;
 	vec3 lightDir;
+	vec2 tex_coord;
 } DataOut;
 
 void main () {

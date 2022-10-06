@@ -31,6 +31,7 @@
 #include "AVTmathLib.h"
 #include "VertexAttrDef.h"
 #include "geometry.h"
+#include "Texture_Loader.h"
 
 #include "avtFreeType.h"
 
@@ -59,6 +60,11 @@ vector<MyObject> myObjects;
 MyObject ground;
 Rover rover;
 vector<RollingRock> rollingRocks;
+bool spotlight_mode = false;
+bool sun_mode = true;
+bool point_lights_mode = false;
+
+GLuint TextureArray[3];
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -72,9 +78,9 @@ extern float mNormal3x3[9];
 GLint pvm_uniformId;
 GLint vm_uniformId;
 GLint normal_uniformId;
-GLint lPos_uniformId;
+GLint lPos_uniformId; // ?
 GLint tex_loc, tex_loc1, tex_loc2;
-
+GLint texMode_uniformId;
 
 Camera cameras[3];
 int currentCamera = 0;
@@ -85,8 +91,17 @@ int startX, startY, tracking = 0;
 // Frame counting and FPS computation
 long myTime, timebase = 0, frame = 0;
 char s[32];
-float lightPos[4] = { 4.0f, 6.0f, 2.0f, 1.0f };
 
+#define NUMBER_POINT_LIGHTS 6
+#define NUMBER_SPOT_LIGHTS 2
+
+
+float lights[9][4];
+float directionalLightPos[4] = { 4.0f, 6.0f, 2.0f, 1.0f };
+float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f},
+	{4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f},
+	{4.0f, 6.0f, 2.0f, 1.0f} };
+float spotlightPos[NUMBER_SPOT_LIGHTS][4];
 
 void createCameras() {
 	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -250,14 +265,85 @@ void renderScene(void) {
 	//send the light position in eye coordinates
 	//glUniform4fv(lPos_uniformId, 1, lightPos); //efeito capacete do mineiro, ou seja lighPos foi definido em eye coord 
 
-	float res[4];
-	multMatrixPoint(VIEW, lightPos, res);   //lightPos definido em World Coord so is converted to eye space
-	glUniform4fv(lPos_uniformId, 1, res);
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
+	if (sun_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "point_lights_mode");
+	if (point_lights_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "spotlight_mode");
+	if (spotlight_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+
+	//Associar os Texture Units aos Objects Texture
+	//stone.tga loaded in TU0; checker.tga loaded in TU1;  lightwood.tga loaded in TU2
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, TextureArray[1]);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, TextureArray[2]);
+
+	//Indicar aos tres samplers do GLSL quais os Texture Units a serem usados
+	glUniform1i(tex_loc, 0);
+	glUniform1i(tex_loc1, 1);
+	glUniform1i(tex_loc2, 2);
+
+
+	float res[4];	//lightPos definido em World Coord so is converted to eye space
+	multMatrixPoint(VIEW, pointLightPos[0], res);   
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"pointLights[0].position");
+	glUniform4fv(loc, 1, res);
 	
+	multMatrixPoint(VIEW, pointLightPos[1], res);
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"pointLights[1].position");
+	glUniform4fv(loc, 1, res);
+	
+	multMatrixPoint(VIEW, pointLightPos[2], res);
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"pointLights[2].position");
+	glUniform4fv(loc, 1, res);
+	
+	multMatrixPoint(VIEW, pointLightPos[3], res);
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"pointLights[3].position");
+	glUniform4fv(loc, 1, res);
+	
+	multMatrixPoint(VIEW, pointLightPos[4], res);
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"pointLights[4].position");
+	glUniform4fv(loc, 1, res);	
+	
+	multMatrixPoint(VIEW, pointLightPos[5], res);
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"pointLights[5].position");
+	glUniform4fv(loc, 1, res);
+
+	multMatrixPoint(VIEW, directionalLightPos, res);
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"directionalLight.position");
+	glUniform4fv(loc, 1, res);
+
 
 	animateRocks();
 	rover.updatePosition(NONE);
-	
 
 	myObjects.clear();
 
@@ -296,8 +382,13 @@ void renderScene(void) {
 			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
 			// Render mesh
-			glBindVertexArray(meshes[objId].vao);
 
+			if (i == 0) 
+				glUniform1i(texMode_uniformId, 0); // textura para a superficie
+			else 
+				glUniform1i(texMode_uniformId, 2); // textura para as rolling rocks
+
+			glBindVertexArray(meshes[objId].vao);
 			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 
@@ -339,8 +430,9 @@ void renderScene(void) {
 		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
 		// Render mesh
-		glBindVertexArray(meshes[objId].vao);
+		glUniform1i(texMode_uniformId, 1); // textura para o corpo do rover
 
+		glBindVertexArray(meshes[objId].vao);
 		glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
@@ -427,11 +519,9 @@ void processKeys(unsigned char key, int xx, int yy)
 	case'P':
 		rover.rotateRover(RIGHT);
 		break;
-	case 'c':
-		printf("Camera Spherical Coordinates (%f, %f, %f)\n", cameras[currentCamera].alpha, cameras[currentCamera].beta, cameras[currentCamera].r);
-		break;
-	case 'm': glEnable(GL_MULTISAMPLE); break;
-	case 'n': glDisable(GL_MULTISAMPLE); break;
+	
+	//case 'm': glEnable(GL_MULTISAMPLE); break;
+	//case 'n': glDisable(GL_MULTISAMPLE); break;
 
 	case '1':
 		currentCamera = 0;
@@ -441,6 +531,27 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case '3':
 		currentCamera = 2;
+		break;
+	case 'c':
+	case 'C':
+		if (!point_lights_mode)
+			point_lights_mode = true;
+		else
+			point_lights_mode = false;
+		break;
+	case 'h':
+	case 'H':
+		if (!spotlight_mode)
+			spotlight_mode = true;
+		else
+			spotlight_mode = false;
+		break;
+	case 'n':
+	case 'N':
+		if (!sun_mode)
+			sun_mode = true;
+		else
+			sun_mode = false;
 		break;
 	}
 }
@@ -536,7 +647,7 @@ GLuint setupShaders() {
 	glBindFragDataLocation(shader.getProgramIndex(), 0, "colorOut");
 	glBindAttribLocation(shader.getProgramIndex(), VERTEX_COORD_ATTRIB, "position");
 	glBindAttribLocation(shader.getProgramIndex(), NORMAL_ATTRIB, "normal");
-	//glBindAttribLocation(shader.getProgramIndex(), TEXTURE_COORD_ATTRIB, "texCoord");
+	glBindAttribLocation(shader.getProgramIndex(), TEXTURE_COORD_ATTRIB, "texCoord");
 
 	glLinkProgram(shader.getProgramIndex());
 	printf("InfoLog for Model Rendering Shader\n%s\n\n", shaderText.getAllInfoLogs().c_str());
@@ -656,8 +767,6 @@ void init()
 	// wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	MyMesh amesh;
-
 	/* Initialization of DevIL */
 	if (ilGetInteger(IL_VERSION_NUM) < IL_VERSION)
 	{
@@ -665,6 +774,12 @@ void init()
 		exit(0);
 	}
 	ilInit();
+
+	glGenTextures(3, TextureArray);
+	Texture2D_Loader(TextureArray, "mars_texture.tga", 0);
+	Texture2D_Loader(TextureArray, "steel_texture.tga", 1);
+	Texture2D_Loader(TextureArray, "rock_texture.tga", 2);
+
 
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
@@ -683,8 +798,6 @@ void init()
 	createRollingRocks(10);
 
 
-	//myObjects.insert(myObjects.end(), rollingRocks.begin(), stones.end());
-	
 
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);
