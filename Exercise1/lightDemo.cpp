@@ -96,12 +96,11 @@ char s[32];
 #define NUMBER_SPOT_LIGHTS 2
 
 
-float lights[9][4];
-float directionalLightPos[4] = { 4.0f, 6.0f, 2.0f, 1.0f };
-float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f},
-	{4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f},
-	{4.0f, 6.0f, 2.0f, 1.0f} };
-float spotlightPos[NUMBER_SPOT_LIGHTS][4] = { {4.0f, 6.0f, 2.0f, 1.0f}, {4.0f, 6.0f, 2.0f, 1.0f} };
+float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 0.0f };
+float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 4.0f, -35.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f},
+	{0.0f, 0.0f, -10.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f},
+	{0.0f, 0.0f, -10.0f, 1.0f} };
+float spotlightPos[NUMBER_SPOT_LIGHTS][4];
 
 void createCameras() {
 	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -171,6 +170,19 @@ void updateRoverCamera(float vx, float vy) {
 	cameras[2].target[2] = rover.position[2];
 	cameras[2].pos[0] += vx;
 	cameras[2].pos[1] += vy;
+}
+
+void updateSpotlightPos() {
+
+	spotlightPos[0][0] = rover.position[0] + 0.5; rover.position[1] - 0.2;
+	spotlightPos[0][1] = rover.position[1] - 0.2;
+	spotlightPos[0][2] = rover.position[2];
+	spotlightPos[0][3] = 1;
+
+	spotlightPos[1][0] = rover.position[0] + 0.5; rover.position[1] - 0.2;
+	spotlightPos[1][1] = rover.position[1] + 0.2;
+	spotlightPos[1][2] = rover.position[2];
+	spotlightPos[1][3] = 1;
 }
 
 void animateRocks() {
@@ -307,39 +319,17 @@ void renderScene(void) {
 
 
 	float res[4];	//lightPos definido em World Coord so is converted to eye space
-	multMatrixPoint(VIEW, pointLightPos[0], res);   
-	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"pointLights[0].position");
-	glUniform4fv(loc, 1, res);
-	
-	multMatrixPoint(VIEW, pointLightPos[1], res);
-	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"pointLights[1].position");
-	glUniform4fv(loc, 1, res);
-	
-	multMatrixPoint(VIEW, pointLightPos[2], res);
-	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"pointLights[2].position");
-	glUniform4fv(loc, 1, res);
-	
-	multMatrixPoint(VIEW, pointLightPos[3], res);
-	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"pointLights[3].position");
-	glUniform4fv(loc, 1, res);
-	
-	multMatrixPoint(VIEW, pointLightPos[4], res);
-	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"pointLights[4].position");
-	glUniform4fv(loc, 1, res);	
-	
-	multMatrixPoint(VIEW, pointLightPos[5], res);
-	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"pointLights[5].position");
-	glUniform4fv(loc, 1, res);
+
+	for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+		multMatrixPoint(VIEW, pointLightPos[i], res);
+		loc = glGetUniformLocation(shader.getProgramIndex(),
+			(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
+		glUniform4fv(loc, 1, res);
+	}
 
 	multMatrixPoint(VIEW, directionalLightPos, res);
 	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"directionalLight.position");
+		"dirLight.position");
 	glUniform4fv(loc, 1, res);
 
 
@@ -507,11 +497,13 @@ void processKeys(unsigned char key, int xx, int yy)
 	case'Q':
 		aux = rover.updatePosition(FRONT);
 		updateRoverCamera(std::get<0>(aux), std::get<1>(aux));
+		updateSpotlightPos();
 		break;
 	case 'a':
 	case'A':
 		aux = rover.updatePosition(BACK);
 		updateRoverCamera(std::get<0>(aux), std::get<1>(aux));
+		updateSpotlightPos();
 		break;
 	case 'o':
 	case'O':
@@ -707,7 +699,7 @@ void createGround() {
 	setIdentityMatrix(ground.objectTransform, 4);
 
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
-
+	/*
 	float amb[] = { 0.2f, 1.0f, 0.1f, 1.0f };
 	float diff[] = { 1.0f, 0.6f, 0.4f, 1.0f };
 	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -719,7 +711,7 @@ void createGround() {
 
 	amesh.mat.shininess = 100.0f;
 	amesh.mat.texCount = 0;
-
+	*/
 	setMeshColor(&amesh, 0.9, 0.8, 0.9);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
@@ -749,13 +741,14 @@ void createRover() {
 
 	setIdentityMatrix(corpo.meshTransform, 4);
 	myScale(corpo.meshTransform, 3.0, 1.5, 1.5);
-    myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0);
+	myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0);
 
 
 	//MyMesh roda1 = createTorus(1.5, 1.3, 30, 30);
 
 	roverObj.meshes.push_back(corpo);
 	rover = *new Rover(roverObj);
+	updateSpotlightPos();
 }
 
 

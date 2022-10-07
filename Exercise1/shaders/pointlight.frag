@@ -12,7 +12,7 @@ uniform int texMode;
 out vec4 colorOut;
 
 struct DirectionalLight {
-    vec3 direction;
+    vec4 position;
   
     vec3 ambient;
     vec3 diffuse;
@@ -20,19 +20,15 @@ struct DirectionalLight {
 };
 
 struct PointLight {    
-    vec3 position;
+    vec4 position;
     
-    float constant;
-    float linear;
-    float quadratic;  
-
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
 };
 
 struct SpotLight {
-	vec3 position;
+	vec4 position;
 	vec4 coneDir;
 	float spotCosCutOff;
 
@@ -50,56 +46,61 @@ struct Materials {
 	int texCount;
 };
 
+uniform bool sun_mode;
+uniform bool point_lights_mode;
+uniform bool spotlight_mode;
 
 uniform PointLight pointLights[NUMBER_POINT_LIGHTS];
 uniform SpotLight spotLights[NUMBER_SPOT_LIGHTS];
 uniform DirectionalLight dirLight;
 
 uniform Materials mat;
+vec4 auxColorOut = { 0.0, 0.0, 0.0, 0.0};
 
 in Data {
+	vec4 pos;
 	vec3 normal;
 	vec3 eye;
-	vec3 lightDir;
-	vec2 tex_coord;
 } DataIn;
 
 void main() {
+
+	if(sun_mode){
+		
+		vec4 spec = vec4(0.0);
+		vec3 lightDir = vec3(dirLight.position - DataIn.pos);
+		vec3 n = normalize(DataIn.normal);
+		vec3 l = normalize(lightDir);
+		vec3 e = normalize(DataIn.eye);
+
+		float intensity = max(dot(n,l), 0.0);
 	
-	vec4 texel, texel1; 
+		if (intensity > 0.0) {
+			vec3 h = normalize(l + e);
+			float intSpec = max(dot(h,n), 0.0);
+			spec = mat.specular * pow(intSpec, mat.shininess);
+		}
+		auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient);
+	}
+	if(point_lights_mode){
+		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
+			vec4 spec = vec4(0.0);
+			vec3 lightDir = vec3(pointLights[i].position - DataIn.pos);
+			vec3 n = normalize(DataIn.normal);
+			vec3 l = normalize(lightDir);
+			vec3 e = normalize(DataIn.eye);
 
-	vec4 spec = vec4(0.0);
-
-	vec3 n = normalize(DataIn.normal);
-	vec3 l = normalize(DataIn.lightDir);
-	vec3 e = normalize(DataIn.eye);
-
-	float intensity = max(dot(n,l), 0.0);
-
+			float intensity = max(dot(n,l), 0.0);
 	
-	if (intensity > 0.0) {
+			if (intensity > 0.0) {
+				vec3 h = normalize(l + e);
+				float intSpec = max(dot(h,n), 0.0);
+				spec = mat.specular * pow(intSpec, mat.shininess);
+			}
+			auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient);
 
-		vec3 h = normalize(l + e);
-		float intSpec = max(dot(h,n), 0.0);
-		spec = mat.specular * pow(intSpec, mat.shininess);
+		}
 	}
-	
-	// colorOut = max(intensity * mat.diffuse + spec, mat.ambient);
-
-	if(texMode == 0) // mars texture
-	{
-		texel = texture(texmap, DataIn.tex_coord);  // texel from lighwood.tga
-		colorOut = max(intensity * mat.diffuse * texel + spec,0.07 * texel);
-	}
-	else if (texMode == 1) // steel texture
-	{
-		texel = texture(texmap1, DataIn.tex_coord);  // texel from stone.tga
-		colorOut = max(intensity * mat.diffuse * texel + spec,0.07 * texel);
-	}
-	else  if (texMode == 2) // rock texture
-	{
-		texel = texture(texmap2, DataIn.tex_coord);  // texel from checker.tga
-		colorOut = max(intensity * mat.diffuse * texel + spec,0.07 * texel);
-	}
+	colorOut = auxColorOut;
 
 }
