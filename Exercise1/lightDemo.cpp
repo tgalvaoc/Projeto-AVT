@@ -727,7 +727,17 @@ void createRover() {
 
 	MyMesh corpo = createCube();
 	setMeshColor(&corpo, 0.5, 0.5, 0.5);
+	setIdentityMatrix(corpo.meshTransform, 4);
+	myTranslate(corpo.meshTransform, -0.5, -0.5, -0.5); // move o cubo pro centro
+	myScale(corpo.meshTransform, 3.0, 1.0, 1.5); // ajusta as dimensoes
+	myTranslate(corpo.meshTransform, -0.75/2, 0.5, -0.75/4); // coloca o corpo no centro, tocando no chao
+	myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0); // tira o corpo do chao
 
+	//myTranslate(corpo.meshTransform, -0.5 2.5, -0.5);
+
+
+
+	// vista de frente
 	// =        = 0.25
 	// =|------|=
 	// =|------|=
@@ -739,15 +749,28 @@ void createRover() {
 	// altura do corpo: 1.0
 	// distancia do corpo pro chao: 0.25
 
-	setIdentityMatrix(corpo.meshTransform, 4);
-	myScale(corpo.meshTransform, 3.0, 1.5, 1.5);
-	myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0);
+	
+
+	MyMesh roda1 = createTorus(0.5, 0.75, 80, 80);
+	setIdentityMatrix(roda1.meshTransform, 4);
+	myTranslate(roda1.meshTransform, 1.2, 0.85, -0.75); // coloca a roda no lugar
+	myRotate(roda1.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
+
+	MyMesh roda2 = createTorus(0.5, 0.75, 80, 80);
+	setIdentityMatrix(roda2.meshTransform, 4);
+	myTranslate(roda2.meshTransform, -1.2, -0.85, -0.75); // coloca a roda no lugar
+	myRotate(roda2.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 
-	//MyMesh roda1 = createTorus(1.5, 1.3, 30, 30);
 
+
+	
 	roverObj.meshes.push_back(corpo);
-	rover = *new Rover(roverObj);
+	roverObj.meshes.push_back(roda1);
+	roverObj.meshes.push_back(roda2);
+	//roverObj.meshes.push_back(roda3);
+	//roverObj.meshes.push_back(roda4);
+	rover = Rover(roverObj);
 	updateSpotlightPos();
 }
 

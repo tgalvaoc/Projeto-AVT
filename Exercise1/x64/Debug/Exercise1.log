@@ -1,25 +1,27 @@
 ﻿  lightDemo.cpp
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(177,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(177,66): warning C4552: '-': result of expression not used
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(178,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(182,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(182,66): warning C4552: '-': result of expression not used
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(183,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(450,103): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(450,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(450,53): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(450,20): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(603,47): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(603,39): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(594,8): warning C4101: 'rAux': unreferenced local variable
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(593,18): warning C4101: 'betaAux': unreferenced local variable
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(593,8): warning C4101: 'alphaAux': unreferenced local variable
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(683,20): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(683,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(683,29): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(683,29): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(683,38): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(683,38): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\lightDemo.cpp(715,36): warning C4305: 'argument': truncation from 'double' to 'float'
-  Exercise1.vcxproj -> C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\x64\Debug\Exercise1.exe
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(177,41): warning C4244: '=': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(177,66): warning C4552: '-': o resultado da expressão não é usado
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(178,41): warning C4244: '=': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(182,41): warning C4244: '=': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(182,66): warning C4552: '-': o resultado da expressão não é usado
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(183,41): warning C4244: '=': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(450,103): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(450,70): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(450,53): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(450,20): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(603,47): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(603,39): warning C4244: 'argumento': conversão de 'int' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(594,8): warning C4101: 'rAux': variável local não referenciada
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(593,18): warning C4101: 'betaAux': variável local não referenciada
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(593,8): warning C4101: 'alphaAux': variável local não referenciada
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(683,20): warning C4838: a conversão de 'double' em 'float' requer uma conversão de restrição
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(683,20): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(683,29): warning C4838: a conversão de 'double' em 'float' requer uma conversão de restrição
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(683,29): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(683,38): warning C4838: a conversão de 'double' em 'float' requer uma conversão de restrição
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(683,38): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(715,36): warning C4305: 'argumento': truncamento de 'double' para 'float'
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(756,51): warning C4305: 'argumento': truncamento de 'double' para 'float'
+C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\Exercise1\lightDemo.cpp(761,53): warning C4305: 'argumento': truncamento de 'double' para 'float'
+  Exercise1.vcxproj -> C:\Users\Carol\OneDrive\Documentos\IST\tri1\AVT\Práticas\Exercise1\x64\Debug\Exercise1.exe
   0 File(s) copied
