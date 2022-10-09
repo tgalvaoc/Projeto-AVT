@@ -47,6 +47,9 @@ int WinX = 1280, WinY = 720;
 
 unsigned int FrameCount = 0;
 
+float alpha = 39.0f, beta = 51.0f;
+float r = 10.0f;
+
 //shaders
 VSShaderLib shader;  //geometry
 VSShaderLib shaderText;  //render bitmap text
@@ -165,11 +168,13 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 }
 
 void updateRoverCamera(float vx, float vy) {
+	cameras[2].pos[0] = rover.position[0] + vx;
+	cameras[2].pos[1] = rover.position[1] + vy;
+	cameras[2].pos[2] = rover.position[2];
+
 	cameras[2].target[0] = rover.position[0];
 	cameras[2].target[1] = rover.position[1];
 	cameras[2].target[2] = rover.position[2];
-	cameras[2].pos[0] += vx;
-	cameras[2].pos[1] += vy;
 }
 
 void updateSpotlightPos() {
@@ -266,6 +271,9 @@ void renderScene(void) {
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
 
+	if (tracking == 0)
+		updateRoverCamera(10, 5);
+
 	// set the camera using a function similar to gluLookAt
 
 	cameras[currentCamera].setProjection((float)WinX, (float)WinY);
@@ -351,7 +359,7 @@ void renderScene(void) {
 		multMatrix(MODEL, myObjects[i].objectTransform);
 
 		for (int objId = 0; objId < meshes.size(); objId++) {
-			//if (j == 2 && i == 1) continue;
+			
 			// send the material
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
@@ -399,7 +407,7 @@ void renderScene(void) {
 	multMatrix(MODEL, rover.rover.objectTransform);
 
 	for (int objId = 0; objId < meshes.size(); objId++) {
-		//if (j == 2 && i == 1) continue;
+		
 		// send the material
 		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 		glUniform4fv(loc, 1, meshes[objId].mat.ambient);
@@ -496,18 +504,19 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'q':
 	case'Q':
 		aux = rover.updatePosition(FRONT);
-		updateRoverCamera(std::get<0>(aux), std::get<1>(aux));
+		
 		updateSpotlightPos();
 		break;
 	case 'a':
 	case'A':
 		aux = rover.updatePosition(BACK);
-		updateRoverCamera(std::get<0>(aux), std::get<1>(aux));
 		updateSpotlightPos();
 		break;
 	case 'o':
 	case'O':
 		rover.rotateRover(LEFT);
+		/*camera[2].rotateCamera(LEFT);
+		camera[2].translateCamera(RIGHT);*/
 		break;
 	case 'p':
 	case'P':
@@ -593,16 +602,27 @@ void processMouseMotion(int xx, int yy)
 	float alphaAux, betaAux;
 	float rAux;
 
-	deltaX = xx - startX;
+	deltaX = - xx + startX;
 	deltaY = yy - startY;
 
 	// cout << "teste" << endl;
 
 	// left mouse button: move camera
 	if (currentCamera == 2 && tracking == 1) {
-		cameras[currentCamera].rotateCamera(deltaX, deltaY);
+		alphaAux = alpha + deltaX;
+		betaAux = beta + deltaY;
+
+		if (betaAux > 85.0f)
+			betaAux = 85.0f;
+		else if (betaAux < -85.0f)
+			betaAux = -85.0f;
+		rAux = r;
+		//cameras[currentCamera].rotateCamera(deltaX, deltaY);
 	}
 
+	cameras[currentCamera].pos[0] = rAux * sin(alphaAux * 3.14f / 180.0f) * cos(betaAux * 3.14f / 180.0f);
+	cameras[currentCamera].pos[2] = rAux * cos(alphaAux * 3.14f / 180.0f) * cos(betaAux * 3.14f / 180.0f);
+	cameras[currentCamera].pos[1] = rAux * sin(betaAux * 3.14f / 180.0f);
 
 	//  uncomment this if not using an idle or refresh func
 	glutPostRedisplay();
