@@ -12,6 +12,7 @@
 //
 
 #include <math.h>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -38,6 +39,7 @@
 #include "Camera.h"
 #include "Rover.h"
 #include <list>
+#define _USE_MATH_DEFINES
 
 using namespace std;
 
@@ -47,7 +49,7 @@ int WinX = 1280, WinY = 720;
 
 unsigned int FrameCount = 0;
 
-float alpha = 39.0f, beta = 51.0f;
+float alpha = 90.0f, beta = 45.0f;
 float r = 10.0f;
 
 //shaders
@@ -168,13 +170,25 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 }
 
 void updateRoverCamera(float vx, float vy) {
+	float pi = 3.1415;
 	cameras[2].pos[0] = rover.position[0] + vx;
 	cameras[2].pos[1] = rover.position[1] + vy;
 	cameras[2].pos[2] = rover.position[2];
 
-	cameras[2].target[0] = rover.position[0];
-	cameras[2].target[1] = rover.position[1];
-	cameras[2].target[2] = rover.position[2];
+	std::copy(rover.position, rover.position + 3, cameras[2].target);
+
+	cout << "before r: " << r << "; before alpha: " << alpha << "; before beta: " << beta << "\n";
+	cout << "x: " << cameras[2].pos[0] << "y: " << cameras[2].pos[1] << "z: " << cameras[2].pos[2] << "\n";
+
+	
+	// alpha rotacao abertura do chao
+	// beta 
+
+	//r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
+	//beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
+	//alpha = atan(cameras[2].pos[0] / cameras[2].pos[2]) * 180.0 / pi;
+
+	cout << "after r: " << r << "; after alpha: " << alpha << "; after beta: " << beta << "\n";
 }
 
 void updateSpotlightPos() {
@@ -467,27 +481,6 @@ void renderScene(void) {
 	glutSwapBuffers();
 }
 
-void specialFunc(int key, int xx, int yy)
-{
-	float amount = 1.0f;
-
-	switch (key) {
-	case GLUT_KEY_UP:
-		//carrinho.mover(amount, 0.0f);
-		break;
-	case GLUT_KEY_DOWN:
-		//carrinho.mover(-amount, 0.0f);
-		break;
-	case GLUT_KEY_LEFT:
-		//carrinho.mover(0.0f, amount);
-		break;
-	case GLUT_KEY_RIGHT:
-		//carrinho.mover(0.0f, -amount);
-		break;
-
-	}
-
-}
 
 // ------------------------------------------------------------
 //
@@ -515,8 +508,7 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'o':
 	case'O':
 		rover.rotateRover(LEFT);
-		/*camera[2].rotateCamera(LEFT);
-		camera[2].translateCamera(RIGHT);*/
+		
 		break;
 	case 'p':
 	case'P':
@@ -573,22 +565,10 @@ void processMouseButtons(int button, int state, int xx, int yy)
 		startY = yy;
 		if (button == GLUT_LEFT_BUTTON)
 			tracking = 1;
-		else if (button == GLUT_RIGHT_BUTTON)
-			tracking = 2;
 	}
 
 	//stop tracking the mouse
 	else if (state == GLUT_UP) {
-		if (tracking == 1) {
-			//cout << "soltando" << endl;
-			//alpha -= (xx - startX);
-			//beta += (yy - startY);
-		}
-		else if (tracking == 2) {
-			//r += (yy - startY) * 0.01f;
-			//if (r < 0.1f)
-			//	r = 0.1f;
-		}
 		tracking = 0;
 	}
 }
@@ -605,8 +585,6 @@ void processMouseMotion(int xx, int yy)
 	deltaX = - xx + startX;
 	deltaY = yy - startY;
 
-	// cout << "teste" << endl;
-
 	// left mouse button: move camera
 	if (currentCamera == 2 && tracking == 1) {
 		alphaAux = alpha + deltaX;
@@ -617,32 +595,15 @@ void processMouseMotion(int xx, int yy)
 		else if (betaAux < -85.0f)
 			betaAux = -85.0f;
 		rAux = r;
-		//cameras[currentCamera].rotateCamera(deltaX, deltaY);
-	}
 
-	cameras[currentCamera].pos[0] = rAux * sin(alphaAux * 3.14f / 180.0f) * cos(betaAux * 3.14f / 180.0f);
-	cameras[currentCamera].pos[2] = rAux * cos(alphaAux * 3.14f / 180.0f) * cos(betaAux * 3.14f / 180.0f);
-	cameras[currentCamera].pos[1] = rAux * sin(betaAux * 3.14f / 180.0f);
+		cameras[currentCamera].fixPosition(alphaAux, betaAux, rAux);
+	}
 
 	//  uncomment this if not using an idle or refresh func
 	glutPostRedisplay();
 }
 
 
-void mouseWheel(int wheel, int direction, int x, int y) {
-
-	/*r += direction * 0.1f;
-	if (r < 0.1f)
-		r = 0.1f;
-
-	camX = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
-	camZ = r * cos(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
-	camY = r *   						     sin(beta * 3.14f / 180.0f);
-	*/
-
-	//  uncomment this if not using an idle or refresh func
-	//	glutPostRedisplay();
-}
 
 // --------------------------------------------------------
 //
@@ -719,19 +680,7 @@ void createGround() {
 	setIdentityMatrix(ground.objectTransform, 4);
 
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
-	/*
-	float amb[] = { 0.2f, 1.0f, 0.1f, 1.0f };
-	float diff[] = { 1.0f, 0.6f, 0.4f, 1.0f };
-	float spec[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	memcpy(amesh.mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh.mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh.mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh.mat.emissive, emissive, 4 * sizeof(float));
-
-	amesh.mat.shininess = 100.0f;
-	amesh.mat.texCount = 0;
-	*/
+	
 	setMeshColor(&amesh, 0.9, 0.8, 0.9);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
@@ -753,10 +702,6 @@ void createRover() {
 	myTranslate(corpo.meshTransform, -0.75/2, 0.5, -0.75/4); // coloca o corpo no centro, tocando no chao
 	myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0); // tira o corpo do chao
 
-	//myTranslate(corpo.meshTransform, -0.5 2.5, -0.5);
-
-
-
 	// vista de frente
 	// =        = 0.25
 	// =|------|=
@@ -773,23 +718,30 @@ void createRover() {
 
 	MyMesh roda1 = createTorus(0.5, 0.75, 80, 80);
 	setIdentityMatrix(roda1.meshTransform, 4);
-	myTranslate(roda1.meshTransform, 1.2, 0.85, -0.75); // coloca a roda no lugar
+	myTranslate(roda1.meshTransform, 1.2, 0.85, 0.75); // coloca a roda no lugar
 	myRotate(roda1.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh roda2 = createTorus(0.5, 0.75, 80, 80);
 	setIdentityMatrix(roda2.meshTransform, 4);
-	myTranslate(roda2.meshTransform, -1.2, -0.85, -0.75); // coloca a roda no lugar
+	myTranslate(roda2.meshTransform, 1.2, 0.85, -0.75); // coloca a roda no lugar
 	myRotate(roda2.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
+	MyMesh roda3 = createTorus(0.5, 0.75, 80, 80);
+	setIdentityMatrix(roda3.meshTransform, 4);
+	myTranslate(roda3.meshTransform, -1.2, 0.85, 0.75); // coloca a roda no lugar
+	myRotate(roda3.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
-
-
+	MyMesh roda4 = createTorus(0.5, 0.75, 80, 80);
+	setIdentityMatrix(roda4.meshTransform, 4);
+	myTranslate(roda4.meshTransform, -1.2, 0.85, -0.75); // coloca a roda no lugar
+	myRotate(roda4.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 	
 	roverObj.meshes.push_back(corpo);
 	roverObj.meshes.push_back(roda1);
 	roverObj.meshes.push_back(roda2);
 	//roverObj.meshes.push_back(roda3);
 	//roverObj.meshes.push_back(roda4);
+
 	rover = Rover(roverObj);
 	updateSpotlightPos();
 }
@@ -830,7 +782,6 @@ void init()
 
 	// place objects in world
 
-	//srand(0);
 
 	createGround();
 	createRover();
@@ -875,10 +826,8 @@ int main(int argc, char** argv) {
 
 	//	Mouse and Keyboard Callbacks
 	glutKeyboardFunc(processKeys);
-	glutSpecialFunc(specialFunc);
 	glutMouseFunc(processMouseButtons);
 	glutMotionFunc(processMouseMotion);
-	glutMouseWheelFunc(mouseWheel);
 
 
 	//	return from main loop

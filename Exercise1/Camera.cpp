@@ -22,28 +22,6 @@ Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val,
 
 }
 
-
-void Camera::rotateCamera(float dAlpha, float dBeta) {
-	this->alpha += dAlpha / 10.0;
-	this->beta += dBeta / 10.0;
-
-	if (this->alpha > 360.0)
-		this->alpha -= 360.0;
-	else if (this->alpha < 0.0)
-		this->alpha += 360.0;
-
-	if (this->beta > 85.0f)
-		this->beta = 85.0f;
-	else if (this->beta < -85.0f)
-		this->beta = -85.0f;
-
-	cout << "alpha = " << alpha << ", beta = " << beta << endl;
-
-
-	this->fixPosition();
-
-}
-
 void Camera::setProjection(float w, float h) {
 	int factor = 3;
 	switch (this->type) {
@@ -63,7 +41,7 @@ void Camera::setProjection(float w, float h) {
 
 }
 
-void Camera::fixPosition() { // seno e cosseno estavam invertidos
+void Camera::fixPosition(float alpha, float beta, float r) { // seno e cosseno estavam invertidos
 	pos[0] = r * cosf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
 	pos[1] = r * cosf(beta * 3.14f / 180.0f);
 	pos[2] = r * sinf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);

@@ -9,10 +9,6 @@ public:
 	float pos[3];
 	float target[3];
 
-	// Camera Spherical Coordinates
-	float alpha = 39.0f, beta = 51.0f;
-	float r = 10.0f;
-
 	CameraType type;
 
 	Camera();
@@ -22,7 +18,5 @@ public:
 
 	void cameraLookAt();
 
-	void rotateCamera(float dAlpha, float dBeta);
-
-	void fixPosition();
+	void fixPosition(float alpha, float beta, float r);
 };
