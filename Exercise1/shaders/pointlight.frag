@@ -80,7 +80,7 @@ void main() {
 			float intSpec = max(dot(h,n), 0.0);
 			spec = mat.specular * pow(intSpec, mat.shininess);
 		}
-		auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient);
+		auxColorOut += max(intensity * mat.diffuse, mat.ambient);
 	}
 	if(point_lights_mode){
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){

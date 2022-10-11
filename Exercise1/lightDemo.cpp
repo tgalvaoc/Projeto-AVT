@@ -116,7 +116,7 @@ void createCameras() {
 
 vector<RollingRock> createRollingRocks(int numToCreate) {
 
-	MyMesh amesh = createSphere(1.0f, 10);
+	MyMesh amesh = createSphere(1.0f, 10); // podemos randomizar tamanho no futuro
 	MyObject stone;
 	RollingRock rock;
 	vector<RollingRock> rocks;
@@ -156,6 +156,12 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 		rock.directionZ = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		rock.posX = r1;
 		rock.posZ = r2;
+		rock.radius = 1.0f;
+
+		rock.maxX = rock.posX + rock.radius;
+		rock.minX = rock.posX - rock.radius;
+		rock.maxZ = rock.posZ + rock.radius;
+		rock.minZ = rock.posZ - rock.radius;
 
 		//std::cout << "speed: " << stone.speed << " dir0 " << stone.direction[0] << "\n";
 		setIdentityMatrix(stone.objectTransform, 4);
@@ -215,6 +221,11 @@ void animateRocks() {
 		rollingRocks[i].posX += translateX;
 		rollingRocks[i].posZ += translateZ;
 
+		rollingRocks[i].maxX = rollingRocks[i].posX + rollingRocks[i].radius;
+		rollingRocks[i].minX = rollingRocks[i].posX - rollingRocks[i].radius;
+		rollingRocks[i].maxZ = rollingRocks[i].posZ + rollingRocks[i].radius;
+		rollingRocks[i].minZ = rollingRocks[i].posZ - rollingRocks[i].radius;
+
 		// TODO: melhorar barreiras
 		if (rollingRocks[i].posX > 50 || rollingRocks[i].posZ > 50 ||
 			rollingRocks[i].posX < -50 || rollingRocks[i].posZ < -50) {
@@ -227,6 +238,60 @@ void animateRocks() {
 	}
 	for (int j = 0; j < rocks.size(); j++)
 		myObjects.push_back(rocks[j].object);
+}
+
+bool isPointInsideAABB(Point point, RollingRock rock) {
+	return (
+		point.x >= rock.minX &&
+		point.x <= rock.maxX &&
+		point.z >= rock.minZ &&
+		point.z <= rock.maxZ);
+}
+
+void checkCollisions() {
+	std::map<int, int> detected;
+	for (int i = 0; i < rollingRocks.size(); i++) {
+		for (int j = 0; j < rollingRocks.size(); j++) {
+			if (i != j) {
+
+				RollingRock obj1 = rollingRocks[i], obj2 = rollingRocks[j];
+				if (detected.count(i) == 0 || detected.count(j) == 0) {
+					
+					//bool x = fabs(obj1.posX - obj2.posX) <= (obj1.radius + obj2.radius);
+					//bool y = fabs(obj1.posZ - obj2.posZ) <= (obj1.radius + obj2.radius);
+					//bool z = Abs(obj1.c[2] - obj2.c[2]) <= (obj1.r[2] + obj2.r[2]);
+					Point point1, point2, point3, point4;
+					point1.x = obj1.minX;
+					point1.z = obj1.minZ;
+					point2.x = obj1.minX;
+					point2.z = obj1.maxZ;
+					point3.x = obj1.maxX;
+					point3.z = obj1.minZ;
+					point4.x = obj1.maxX;
+					point4.z = obj1.maxZ;
+					std::list<Point> points;
+					points.push_back(point1);
+					points.push_back(point2);
+					points.push_back(point3);
+					points.push_back(point4);
+
+
+					for each  (Point p in points){
+						if (isPointInsideAABB(p, obj2)) {
+							detected[i] = j;
+							detected[j] = i;
+							float auxSpeed = obj1.speed;
+							obj1.speed = -auxSpeed;
+							auxSpeed = obj2.speed;
+							obj2.speed = -auxSpeed;
+							break;
+						}
+					}
+				}
+			}
+
+		}
+	}
 }
 
 void timer(int value)
@@ -357,6 +422,8 @@ void renderScene(void) {
 
 	animateRocks();
 	rover.updatePosition(NONE);
+
+	checkCollisions();
 
 	myObjects.clear();
 

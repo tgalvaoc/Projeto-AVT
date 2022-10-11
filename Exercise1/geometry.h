@@ -33,6 +33,11 @@ struct MyMesh {
 		struct Material mat;
 	};
 
+struct Point {
+	float x;
+	float y;
+	float z;
+};
 
 struct MyObject {
 	float objectTransform[16]; // posiciona o objeto em relacao ao centro do mundo
@@ -47,6 +52,11 @@ struct RollingRock {
 	float speed;
 	float posX;
 	float posZ;
+	float radius;
+	float minX;
+	float maxX;
+	float minZ;
+	float maxZ;
 };
 
 MyMesh createCube();
