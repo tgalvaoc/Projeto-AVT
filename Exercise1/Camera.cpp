@@ -41,10 +41,10 @@ void Camera::setProjection(float w, float h) {
 
 }
 
-void Camera::fixPosition(float alpha, float beta, float r) { // seno e cosseno estavam invertidos
-	pos[0] = r * cosf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
-	pos[1] = r * cosf(beta * 3.14f / 180.0f);
-	pos[2] = r * sinf(alpha * 3.14f / 180.0f) * sinf(beta * 3.14f / 180.0f);
+void Camera::fixPosition(float alpha, float beta, float r) {
+	pos[0] = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
+	pos[1] = r * sin(beta * 3.14f / 180.0f);
+	pos[2] = r * cos(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 }
 
 void Camera::cameraLookAt() {

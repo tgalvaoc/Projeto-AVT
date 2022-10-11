@@ -49,7 +49,7 @@ int WinX = 1280, WinY = 720;
 
 unsigned int FrameCount = 0;
 
-float alpha = 90.0f, beta = 45.0f;
+float alpha = 90.0f, beta = 40.0f;
 float r = 10.0f;
 
 //shaders
@@ -106,6 +106,7 @@ float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 4.0f, -35.0f, 1.0f}, {0.
 	{0.0f, 0.0f, -10.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f},
 	{0.0f, 0.0f, -10.0f, 1.0f} };
 float spotlightPos[NUMBER_SPOT_LIGHTS][4];
+float coneDir[4];
 
 void createCameras() {
 	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -208,6 +209,11 @@ void updateSpotlightPos() {
 	spotlightPos[1][1] = rover.position[1] + 0.2;
 	spotlightPos[1][2] = rover.position[2];
 	spotlightPos[1][3] = 1;
+}
+
+void updateSpotlightDir() {
+	//coneDir = ;
+	
 }
 
 void animateRocks() {
@@ -385,6 +391,12 @@ void renderScene(void) {
 		glUniform1i(loc, 1);
 	else
 		glUniform1i(loc, 0);
+
+	
+	glUniform4fv(loc, 1,coneDir);  
+	loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
+	glUniform1f(loc, 0.93f);
+
 
 
 	//Associar os Texture Units aos Objects Texture
@@ -575,11 +587,14 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'o':
 	case'O':
 		rover.rotateRover(LEFT);
-		
+		alpha += 1;
+		cameras[2].fixPosition(alpha, beta, r);
 		break;
 	case 'p':
 	case'P':
 		rover.rotateRover(RIGHT);
+		alpha -= 1;
+		cameras[2].fixPosition(alpha, beta, r);
 		break;
 	
 	//case 'm': glEnable(GL_MULTISAMPLE); break;
@@ -646,8 +661,8 @@ void processMouseMotion(int xx, int yy)
 {
 
 	int deltaX, deltaY;
-	float alphaAux, betaAux;
-	float rAux;
+	float alphaAux = alpha, betaAux = beta;
+	float rAux = r;
 
 	deltaX = - xx + startX;
 	deltaY = yy - startY;
@@ -663,8 +678,10 @@ void processMouseMotion(int xx, int yy)
 			betaAux = -85.0f;
 		rAux = r;
 
+
 		cameras[currentCamera].fixPosition(alphaAux, betaAux, rAux);
 	}
+
 
 	//  uncomment this if not using an idle or refresh func
 	glutPostRedisplay();
@@ -802,12 +819,20 @@ void createRover() {
 	setIdentityMatrix(roda4.meshTransform, 4);
 	myTranslate(roda4.meshTransform, -1.2, 0.85, -0.75); // coloca a roda no lugar
 	myRotate(roda4.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
+
+	MyMesh cabeca = createPawn();
+	setMeshColor(&cabeca, 0.5, 0.5, 0.5);
+	setIdentityMatrix(cabeca.meshTransform, 4);
+	myScale(cabeca.meshTransform, 0.8, 0.5, 0.5); // ajusta as dimensoes
+	myTranslate(cabeca.meshTransform, -1.0, 0.5, 0); // coloca o corpo no centro, tocando no chao
+	myTranslate(cabeca.meshTransform, 0.0, 1, 0.0); // tira o corpo do chao
 	
 	roverObj.meshes.push_back(corpo);
 	roverObj.meshes.push_back(roda1);
 	roverObj.meshes.push_back(roda2);
-	//roverObj.meshes.push_back(roda3);
-	//roverObj.meshes.push_back(roda4);
+	roverObj.meshes.push_back(roda3);
+	roverObj.meshes.push_back(roda4);
+	roverObj.meshes.push_back(cabeca);
 
 	rover = Rover(roverObj);
 	updateSpotlightPos();
@@ -843,6 +868,10 @@ void init()
 	freeType_init(font_name);
 
 	createCameras();
+	float pi = 3.1415;//helololoooo
+	//r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
+	//beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
+	//alpha = atan(cameras[2].pos[0] / cameras[2].pos[2]) * 180.0 / pi;
 
 	// -------
 

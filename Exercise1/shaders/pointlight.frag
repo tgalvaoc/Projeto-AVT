@@ -101,6 +101,30 @@ void main() {
 
 		}
 	}
+	if (spotlight_mode) {
+		float att = 0.0;
+		float spotExp = 80.0;
+		vec4 spec = vec4(0.0);
+
+		for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+			vec3 lightDir = vec3(spotLights[i].position - DataIn.pos);
+			vec3 n = normalize(DataIn.normal);
+			vec3 l = normalize(lightDir);
+			vec3 e = normalize(DataIn.eye);
+			vec3 sd = normalize(vec3(-spotLights[i].coneDir));
+			float spotCos = dot(l, sd);
+
+			if(spotCos > spotLights[i].spotCosCutOff)  {	//inside cone?
+				att = pow(spotCos, spotExp);
+				float intensity = max(dot(n,l), 0.0) * att;
+				if (intensity > 0.0) {
+					vec3 h = normalize(l + e);
+					float intSpec = max(dot(h,n), 0.0);
+					spec = mat.specular * pow(intSpec, mat.shininess) * att;
+				}
+			}
+		}
+	}
 	colorOut = auxColorOut;
 
 }
