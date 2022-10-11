@@ -10,10 +10,10 @@ Rover::Rover() {};
 
 Rover::Rover(MyObject obj) {
 	rover = obj;
-	velocity.angle = 0;
+	velocity.angle = -90;
 	velocity.speed = 0;
 	position[0] = 0;
-	position[1] = 0;
+	position[1] = 0.5;
 	position[2] = 0;
 	updateDirection();
 }
@@ -22,12 +22,21 @@ void Rover::rotateRover(Key key) {
 	switch (key) {
 	case LEFT:
 		this->velocity.angle += 1;
+		this->velocity.angle = this->velocity.angle % 360;
+		cout << "Left: New angle: " << this->velocity.angle << "\n";
+		this->velocity.angle = -this->velocity.angle % 360;
+		cout << "Left % angle: " << this->velocity.angle << "\n";
+
 		myTranslate(this->rover.objectTransform, 1.5, 0, 0.75);
 		myRotate(this->rover.objectTransform, 1, 0, 1, 0);
 		myTranslate(this->rover.objectTransform, -1.5, 0, -0.75);
 		break;
 	case RIGHT:
 		this->velocity.angle -= 1;
+		cout << "Right New angle: " << this->velocity.angle << "\n";
+		this->velocity.angle = - this->velocity.angle % 360;
+		cout << "Rigth % angle: " << this->velocity.angle << "\n";
+
 		myTranslate(this->rover.objectTransform, 1.5, 0, 0.75);
 		myRotate(this->rover.objectTransform, -1, 0, 1, 0);
 		myTranslate(this->rover.objectTransform, -1.5, 0, -0.75);
@@ -59,16 +68,16 @@ std::tuple<float, float> Rover::updatePosition(Key key) {
 	}
 	//TODO : fix angles
 	float translateX = this->velocity.speed * this->velocity.direction[0];
-	float translateY = this->velocity.speed * this->velocity.direction[2];
-	position[0] += translateX;
-	position[1] += translateY;
+	float translateZ = this->velocity.speed * this->velocity.direction[1];
+	position[0] -= translateX;
+	position[2] -= translateZ;
 
-	myTranslate(this->rover.objectTransform, translateX, translateY, 0);
-	return { translateX, translateY };
+	myTranslate(this->rover.objectTransform, -translateX, -translateZ, 0);
+	return { translateX, translateZ };
 }
 
 void Rover::updateDirection() {
 	this->velocity.direction[0] = cos(this->velocity.angle);
-	this->velocity.direction[1] = sin(this->velocity.angle);
-	this->velocity.direction[2] = 0;
+	this->velocity.direction[2] = sin(this->velocity.angle);
+	this->velocity.direction[1] = 0;
 }

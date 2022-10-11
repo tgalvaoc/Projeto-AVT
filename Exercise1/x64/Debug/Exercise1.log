@@ -1,28 +1,10 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(513,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (Exercise1.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  lightDemo.cpp
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(180,19): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(203,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(203,66): warning C4552: '-': result of expression not used
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(204,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(208,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(208,66): warning C4552: '-': result of expression not used
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(209,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(551,103): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(551,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(551,53): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(551,20): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(748,20): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(748,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(748,29): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(748,29): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(748,38): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(748,38): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(768,36): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(805,50): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(810,51): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(815,51): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(820,52): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(826,45): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\lightDemo.cpp(871,19): warning C4305: 'initializing': truncation from 'double' to 'float'
-  Exercise1.vcxproj -> C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\x64\Debug\Projeto-AVT.exe
+  Rover.cpp
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(55,30): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(60,30): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(64,33): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(66,33): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(80,35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\Rover.cpp(81,35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Exercise1.vcxproj -> C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\x64\Debug\Projeto-AVT.exe
   0 File(s) copied

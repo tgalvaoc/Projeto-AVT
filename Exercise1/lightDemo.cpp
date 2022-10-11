@@ -65,7 +65,7 @@ vector<MyObject> myObjects;
 MyObject ground;
 Rover rover;
 vector<RollingRock> rollingRocks;
-bool spotlight_mode = false;
+bool spotlight_mode = true;
 bool sun_mode = true;
 bool point_lights_mode = false;
 
@@ -184,8 +184,8 @@ void updateRoverCamera(float vx, float vy) {
 
 	std::copy(rover.position, rover.position + 3, cameras[2].target);
 
-	cout << "before r: " << r << "; before alpha: " << alpha << "; before beta: " << beta << "\n";
-	cout << "x: " << cameras[2].pos[0] << "y: " << cameras[2].pos[1] << "z: " << cameras[2].pos[2] << "\n";
+	//cout << "before r: " << r << "; before alpha: " << alpha << "; before beta: " << beta << "\n";
+	//cout << "x: " << cameras[2].pos[0] << "y: " << cameras[2].pos[1] << "z: " << cameras[2].pos[2] << "\n";
 
 	
 	// alpha rotacao abertura do chao
@@ -195,25 +195,28 @@ void updateRoverCamera(float vx, float vy) {
 	//beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
 	//alpha = atan(cameras[2].pos[0] / cameras[2].pos[2]) * 180.0 / pi;
 
-	cout << "after r: " << r << "; after alpha: " << alpha << "; after beta: " << beta << "\n";
+	//cout << "after r: " << r << "; after alpha: " << alpha << "; after beta: " << beta << "\n";
 }
 
 void updateSpotlightPos() {
 
-	spotlightPos[0][0] = rover.position[0] + 0.5; rover.position[1] - 0.2;
-	spotlightPos[0][1] = rover.position[1] - 0.2;
-	spotlightPos[0][2] = rover.position[2];
+	spotlightPos[0][0] = rover.position[0] - 1.5f;
+	spotlightPos[0][1] = rover.position[1];
+	spotlightPos[0][2] = rover.position[2] + 0.5f;
 	spotlightPos[0][3] = 1;
 
-	spotlightPos[1][0] = rover.position[0] + 0.5; rover.position[1] - 0.2;
-	spotlightPos[1][1] = rover.position[1] + 0.2;
-	spotlightPos[1][2] = rover.position[2];
+	spotlightPos[1][0] = rover.position[0] - 1.5f;
+	spotlightPos[1][1] = rover.position[1];
+	spotlightPos[1][2] = rover.position[2] - 0.5f;
 	spotlightPos[1][3] = 1;
 }
 
 void updateSpotlightDir() {
-	//coneDir = ;
-	
+	coneDir[0] = rover.velocity.direction[0];
+	coneDir[1] = rover.velocity.direction[1] - 0.2f;
+	coneDir[2] = rover.velocity.direction[2];
+	coneDir[3] = 0.0f;
+
 }
 
 void animateRocks() {
@@ -320,6 +323,17 @@ void refresh(int value)
 	glutTimerFunc(1000 / 60, refresh, 0); // continua chamando refresh(0)
 }
 
+void timerVelocity(int value) {
+	rover.updatePosition(NONE);
+	updateSpotlightPos();
+	glutTimerFunc(15, timerVelocity, 0);
+}
+
+void timerRocks(int value) {
+	animateRocks();
+	glutTimerFunc(20, timerRocks, 0);
+}
+
 // ------------------------------------------------------------
 //
 // Reshape Callback Function
@@ -391,11 +405,11 @@ void renderScene(void) {
 		glUniform1i(loc, 1);
 	else
 		glUniform1i(loc, 0);
-
 	
-	glUniform4fv(loc, 1,coneDir);  
+	loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
+	glUniform4fv(loc, 1, coneDir);
 	loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
-	glUniform1f(loc, 0.93f);
+	glUniform1f(loc, 0.99f);
 
 
 
@@ -431,9 +445,17 @@ void renderScene(void) {
 		"dirLight.position");
 	glUniform4fv(loc, 1, res);
 
+	for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+		multMatrixPoint(VIEW, spotlightPos[i], res);
+		loc = glGetUniformLocation(shader.getProgramIndex(),
+			(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
+		glUniform4fv(loc, 1, res);
+	}
 
-	animateRocks();
-	rover.updatePosition(NONE);
+
+
+	//animateRocks();
+	//rover.updatePosition(NONE);
 
 	checkCollisions();
 
@@ -576,12 +598,13 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'q':
 	case'Q':
 		aux = rover.updatePosition(FRONT);
-		
+		//cameras[2].fixPosition(alpha, beta, r);
 		updateSpotlightPos();
 		break;
 	case 'a':
 	case'A':
 		aux = rover.updatePosition(BACK);
+		//cameras[2].fixPosition(alpha, beta, r);
 		updateSpotlightPos();
 		break;
 	case 'o':
@@ -589,12 +612,14 @@ void processKeys(unsigned char key, int xx, int yy)
 		rover.rotateRover(LEFT);
 		alpha += 1;
 		cameras[2].fixPosition(alpha, beta, r);
+		updateSpotlightDir();
 		break;
 	case 'p':
 	case'P':
 		rover.rotateRover(RIGHT);
 		alpha -= 1;
 		cameras[2].fixPosition(alpha, beta, r);
+		updateSpotlightDir();
 		break;
 	
 	//case 'm': glEnable(GL_MULTISAMPLE); break;
@@ -836,6 +861,8 @@ void createRover() {
 
 	rover = Rover(roverObj);
 	updateSpotlightPos();
+	updateSpotlightDir();
+	glutTimerFunc(0, timerVelocity, 0);
 }
 
 
@@ -882,7 +909,7 @@ void init()
 	createGround();
 	createRover();
 	createRollingRocks(10);
-
+	glutTimerFunc(0, timerRocks, 0);
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
