@@ -823,7 +823,6 @@ void createRover() {
 	// altura do corpo: 1.0
 	// distancia do corpo pro chao: 0.25
 
-	
 
 	MyMesh roda1 = createTorus(0.5, 0.75, 80, 80);
 	setIdentityMatrix(roda1.meshTransform, 4);
