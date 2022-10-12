@@ -48,6 +48,9 @@ int WindowHandle = 0;
 int WinX = 1280, WinY = 720;
 
 unsigned int FrameCount = 0;
+float delta = 0.015;
+float auxRoverAngle;
+float auxRoverPos[3];
 
 float alpha = 90.0f, beta = 40.0f;
 float r = 10.0f;
@@ -303,7 +306,7 @@ void checkCollisions() {
 	}
 }
 
-void timer(int value)
+void timerFPS(int value)
 {
 	std::ostringstream oss;
 	oss << CAPTION << ": " << FrameCount << " FPS @ (" << WinX << "x" << WinY << ") " << value;
@@ -311,7 +314,7 @@ void timer(int value)
 	glutSetWindow(WindowHandle);
 	glutSetWindowTitle(s.c_str());
 	FrameCount = 0;
-	glutTimerFunc(1000, timer, value + 1);
+	glutTimerFunc(1000, timerFPS, value + 1);
 }
 
 void refresh(int value)
@@ -323,11 +326,12 @@ void refresh(int value)
 	glutTimerFunc(1000 / 60, refresh, 0); // continua chamando refresh(0)
 }
 
+/*
 void timerVelocity(int value) {
 	rover.updatePosition(NONE);
 	updateSpotlightPos();
 	glutTimerFunc(15, timerVelocity, 0);
-}
+}*/
 
 void timerRocks(int value) {
 	animateRocks();
@@ -353,6 +357,35 @@ void changeSize(int w, int h) {
 	perspective(53.13f, ratio, 0.1f, 1000.0f);
 }
 
+
+// ------------------------------------------------------------
+//
+// Animate stufff
+//
+
+void animate(int value) {
+	rover.updateDirection();
+
+	cout << "\ndirection : x: " << rover.velocity.direction[0] << "direction : z: " << rover.velocity.direction[2];
+	auxRoverPos[0] = rover.velocity.direction[0] * rover.velocity.speed * delta;
+	auxRoverPos[1] = rover.velocity.direction[1] * rover.velocity.speed * delta;
+	auxRoverPos[2] = rover.velocity.direction[2] * rover.velocity.speed * delta;
+
+	cout << "\nauxRov: x: " << auxRoverPos[0] << "z: " << auxRoverPos[2];
+	rover.position[0] += auxRoverPos[0];
+	rover.position[1] += auxRoverPos[1];
+	rover.position[2] += auxRoverPos[2];
+	
+	if(rover.velocity.speed > 0)
+		rover.velocity.speed -= 2 * rover.velocity.speed * delta;
+	else if(rover.velocity.speed != 0)
+		rover.velocity.speed += -2 * rover.velocity.speed * delta;
+	
+	updateSpotlightPos();
+	updateSpotlightDir();
+	
+	glutTimerFunc(15, animate, 0); // continua chamando refresh(0)
+}
 
 // ------------------------------------------------------------
 //
@@ -520,7 +553,23 @@ void renderScene(void) {
 	pushMatrix(MODEL);
 
 	multMatrix(MODEL, rover.rover.objectTransform);
+	
+	cout << "\nauxRov: x: " << auxRoverPos[0] << "z: " << auxRoverPos[2];
 
+	myTranslate(rover.rover.objectTransform, auxRoverPos[0], 0, auxRoverPos[2]);
+
+	myTranslate(rover.rover.objectTransform, 1.5, 0, 0.75);
+	myRotate(rover.rover.objectTransform, auxRoverAngle, 0, 1, 0);
+	myTranslate(rover.rover.objectTransform, -1.5, 0, -0.75);
+
+	rover.updateDirection();
+
+	auxRoverAngle = 0;
+	auxRoverPos[0] = 0;
+	auxRoverPos[1] = 0;
+	auxRoverPos[2] = 0;
+
+	
 	for (int objId = 0; objId < meshes.size(); objId++) {
 		
 		// send the material
@@ -597,29 +646,25 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'q':
 	case'Q':
-		aux = rover.updatePosition(FRONT);
-		//cameras[2].fixPosition(alpha, beta, r);
-		updateSpotlightPos();
+		rover.velocity.speed += 0.8;
 		break;
 	case 'a':
 	case'A':
-		aux = rover.updatePosition(BACK);
-		//cameras[2].fixPosition(alpha, beta, r);
-		updateSpotlightPos();
+		rover.velocity.speed -= 0.8;
 		break;
 	case 'o':
 	case'O':
-		rover.rotateRover(LEFT);
+		//rover.rotateRover(LEFT);
+		rover.velocity.angle += 1;
 		alpha += 1;
-		cameras[2].fixPosition(alpha, beta, r);
-		updateSpotlightDir();
+		auxRoverAngle = 1;
 		break;
 	case 'p':
 	case'P':
-		rover.rotateRover(RIGHT);
+		//rover.rotateRover(RIGHT);
+		rover.velocity.angle -= 1;
+		auxRoverAngle = -1;
 		alpha -= 1;
-		cameras[2].fixPosition(alpha, beta, r);
-		updateSpotlightDir();
 		break;
 	
 	//case 'm': glEnable(GL_MULTISAMPLE); break;
@@ -861,7 +906,6 @@ void createRover() {
 	rover = Rover(roverObj);
 	updateSpotlightPos();
 	updateSpotlightDir();
-	glutTimerFunc(0, timerVelocity, 0);
 }
 
 
@@ -907,6 +951,9 @@ void init()
 
 	createGround();
 	createRover();
+	glutTimerFunc(0, animate, 0);
+
+	//glutTimerFunc(0, timerVelocity, 0);
 	createRollingRocks(10);
 	glutTimerFunc(0, timerRocks, 0);
 	// some GL settings
@@ -941,10 +988,10 @@ int main(int argc, char** argv) {
 	//  Callback Registration
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
-
-	glutTimerFunc(0, timer, 0);
-	//glutIdleFunc(renderScene);  // Use it for maximum performance
-	glutTimerFunc(0, refresh, 0);    //use it to to get 60 FPS whatever
+	
+	
+	glutTimerFunc(0, timerFPS, 0);
+	glutTimerFunc(0, refresh, 0);
 
 	//	Mouse and Keyboard Callbacks
 	glutKeyboardFunc(processKeys);

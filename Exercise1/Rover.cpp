@@ -10,10 +10,10 @@ Rover::Rover() {};
 
 Rover::Rover(MyObject obj) {
 	rover = obj;
-	velocity.angle = -90;
+	velocity.angle = 0;
 	velocity.speed = 0;
 	position[0] = 0;
-	position[1] = 0.5;
+	position[1] = 0;
 	position[2] = 0;
 	updateDirection();
 }
@@ -77,7 +77,8 @@ std::tuple<float, float> Rover::updatePosition(Key key) {
 }
 
 void Rover::updateDirection() {
-	this->velocity.direction[0] = cos(this->velocity.angle);
-	this->velocity.direction[2] = sin(this->velocity.angle);
+	float pi = 3.1415;
+	this->velocity.direction[0] = cos((pi / 180) * this->velocity.angle);
+	this->velocity.direction[2] = sin((pi / 180) * this->velocity.angle);
 	this->velocity.direction[1] = 0;
 }

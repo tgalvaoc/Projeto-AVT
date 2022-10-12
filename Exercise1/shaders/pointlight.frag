@@ -57,7 +57,7 @@ uniform DirectionalLight dirLight;
 
 uniform Materials mat;
 vec4 auxColorOut = { 0.0, 0.0, 0.0, 0.0};
-in float dist;
+// in float dist;
 
 in Data {
 	vec4 pos;
@@ -128,9 +128,10 @@ void main() {
 			}
 		}
 	}
-
-	float fogAmount = exp( -dist*0.05 );
-	vec4 fogColor = vec3(0.5, 0.6, 0.7, 1);
-	// não sei se da para fazer mix com vec4 ou se tem q ser com vec3
-	colorOut = mix(fogColor, auxColorOut, fogAmount);
+	/*
+	//float fogAmount = exp( -dist*0.05 );
+	vec4 fogColor = vec4(0.5, 0.6, 0.7, 1);
+	//não sei se da para fazer mix com vec4 ou se tem q ser com vec3
+	colorOut = mix(fogColor, auxColorOut, fogAmount);*/
+	colorOut = auxColorOut;
 }
