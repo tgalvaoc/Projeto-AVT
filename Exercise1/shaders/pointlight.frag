@@ -47,7 +47,7 @@ struct Materials {
 uniform bool sun_mode;
 uniform bool point_lights_mode;
 uniform bool spotlight_mode;
-
+uniform bool fog_mode;
 uniform vec4 coneDir;	
 uniform float spotCosCutOff;
 
@@ -57,7 +57,7 @@ uniform DirectionalLight dirLight;
 
 uniform Materials mat;
 vec4 auxColorOut = { 0.0, 0.0, 0.0, 0.0};
-// in float dist;
+float dist;
 
 in Data {
 	vec4 pos;
@@ -66,6 +66,9 @@ in Data {
 } DataIn;
 
 void main() {
+
+   //range based
+   dist = length(DataIn.pos);   //use it;
 
 	if(sun_mode){
 		
@@ -128,9 +131,12 @@ void main() {
 			}
 		}
 	}
-	/*
-	//float fogAmount = exp( -dist*0.05 );
-	vec4 fogColor = vec4(0.5, 0.6, 0.7, 1);
-	colorOut = mix(fogColor, auxColorOut, fogAmount);*/
-	colorOut = auxColorOut;
+	if (fog_mode) {
+		
+		float fogAmount = exp( -dist*0.05 );
+		vec4 fogColor = vec4(0.5, 0.5, 0.5, 1);
+		colorOut = mix(fogColor, auxColorOut, fogAmount);
+	}
+	else
+		colorOut = auxColorOut;
 }

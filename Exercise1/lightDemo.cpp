@@ -69,6 +69,7 @@ vector<RollingRock> rollingRocks;
 bool spotlight_mode = true;
 bool sun_mode = true;
 bool point_lights_mode = false;
+bool fog_mode = false;
 
 GLuint TextureArray[3];
 
@@ -199,9 +200,8 @@ void animateRocks() {
 			rollingRocks[i].posX < -50 || rollingRocks[i].posZ < -50) {
 			rollingRocks.erase(rollingRocks.begin() + i);
 			aux = createRollingRocks(1);
-			if(!aux.empty())
+			if (!aux.empty())
 				rocks.push_back(aux[0]);
-			//std::cout << "speed: " << rollingRocks[i].speed << " posX: " << rollingRocks[i].posX << " posX: " << rollingRocks[i].posZ << "\n";
 		}
 	}
 	for (int j = 0; j < rocks.size(); j++)
@@ -370,7 +370,7 @@ void animate(int value) {
 	if (tracking == 0)
 		updateRoverCamera();
 
-	glutTimerFunc(15, animate, 0); // continua chamando refresh(0)
+	glutTimerFunc(15, animate, 0);
 }
 
 
@@ -399,10 +399,6 @@ void renderScene(void) {
 
 	glUseProgram(shader.getProgramIndex());
 
-	//send the light position in eye coordinates
-	//glUniform4fv(lPos_uniformId, 1, lightPos); //efeito capacete do mineiro, ou seja lighPos foi definido em eye coord 
-
-
 	loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
 	if (sun_mode)
 		glUniform1i(loc, 1);
@@ -422,6 +418,13 @@ void renderScene(void) {
 		glUniform1i(loc, 1);
 	else
 		glUniform1i(loc, 0);
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "fog_mode");
+	if (fog_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
 	
 	loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
 	glUniform4fv(loc, 1, coneDir);
@@ -526,8 +529,7 @@ void renderScene(void) {
 	}
 
 	// Rover ---------------------------------------------------
-	// separei para o rover pq dava problema de insercao/remoção muita rápida
-
+	
 	vector<MyMesh> meshes = rover.rover.meshes;
 
 	pushMatrix(MODEL);
@@ -588,8 +590,6 @@ void renderScene(void) {
 	pushMatrix(VIEW);
 	loadIdentity(VIEW);
 	ortho(m_viewport[0], m_viewport[0] + m_viewport[2] - 1, m_viewport[1], m_viewport[1] + m_viewport[3] - 1, -1, 1);
-	//RenderText(shaderText, "This is a sample text", 25.0f, 25.0f, 1.0f, 0.5f, 0.8f, 0.2f);
-	//RenderText(shaderText, "AVT Light and Text Rendering Demo", 440.0f, 570.0f, 0.5f, 0.3, 0.7f, 0.9f);
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
@@ -604,7 +604,6 @@ void renderScene(void) {
 //
 // Events from the Keyboard
 //
-//AS TECLAS EST�O AQUI
 void processKeys(unsigned char key, int xx, int yy)
 {
 	std::tuple<float, float> aux;
@@ -630,10 +629,6 @@ void processKeys(unsigned char key, int xx, int yy)
 		rover.velocity.angle -= 1;
 		alpha -= 1;
 		break;
-	
-	//case 'm': glEnable(GL_MULTISAMPLE); break;
-	//case 'n': glDisable(GL_MULTISAMPLE); break;
-
 	case '1':
 		currentCamera = 0;
 		break;
@@ -663,6 +658,13 @@ void processKeys(unsigned char key, int xx, int yy)
 			sun_mode = true;
 		else
 			sun_mode = false;
+		break;
+	case 'f':
+	case 'F':
+		if (!fog_mode)
+			fog_mode = true;
+		else
+			fog_mode = false;
 		break;
 	}
 }
@@ -903,12 +905,12 @@ void init()
 
 	createCameras();
 	float pi = 3.1415;//helololoooo
-	//r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
-	//beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
-	//alpha = atan(cameras[2].pos[0] / cameras[2].pos[2]) * 180.0 / pi;
+	r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
+	beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
+	alpha = atan(cameras[2].pos[2] / cameras[2].pos[0]) * 180.0 / pi;
 
-	// -------
-
+	cout << "\nx: " << cameras[2].pos[0] << "y: " << cameras[2].pos[1] << "z: " << cameras[2].pos[2];
+	cout << "\nalpha: " << alpha << " beta: " << beta << " r: " << r;
 
 	// place objects in world
 
@@ -917,7 +919,6 @@ void init()
 	createRover();
 	glutTimerFunc(0, animate, 0);
 
-	//glutTimerFunc(0, timerVelocity, 0);
 	createRollingRocks(10);
 	glutTimerFunc(0, timerRocks, 0);
 	// some GL settings
