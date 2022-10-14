@@ -556,13 +556,15 @@ void renderScene(void) {
 	
 	cout << "\nauxRov: x: " << auxRoverPos[0] << "z: " << auxRoverPos[2];
 
-	myTranslate(rover.rover.objectTransform, auxRoverPos[0], 0, auxRoverPos[2]);
 
-	myTranslate(rover.rover.objectTransform, 1.5, 0, 0.75);
-	myRotate(rover.rover.objectTransform, auxRoverAngle, 0, 1, 0);
-	myTranslate(rover.rover.objectTransform, -1.5, 0, -0.75);
+	//rover.updateDirection();
 
-	rover.updateDirection();
+	rotate(MODEL, auxRoverAngle, 0, 1, 0);
+	translate(MODEL, auxRoverPos[0], 0, auxRoverPos[2]);
+
+	//myTranslate(rover.rover.objectTransform, 1.5, 0, 0.75);
+	//myTranslate(rover.rover.objectTransform, -1.5, 0, -0.75);
+
 
 	auxRoverAngle = 0;
 	auxRoverPos[0] = 0;
