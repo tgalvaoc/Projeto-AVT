@@ -18,10 +18,6 @@ public:
 	Rover();
 	Rover(MyObject obj);
 
-	void rotateRover(Key key);
-
-	tuple<float, float> updatePosition(Key key);
-
 	void updateDirection();
 };
 

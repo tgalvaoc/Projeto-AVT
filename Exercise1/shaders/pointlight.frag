@@ -82,7 +82,7 @@ void main() {
 			float intSpec = max(dot(h,n), 0.0);
 			spec = mat.specular * pow(intSpec, mat.shininess);
 		}
-		auxColorOut += max(intensity * mat.diffuse, mat.ambient);
+		auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient);
 	}
 	if(point_lights_mode){
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
@@ -99,7 +99,7 @@ void main() {
 				float intSpec = max(dot(h,n), 0.0);
 				spec = mat.specular * pow(intSpec, mat.shininess);
 			}
-			auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient);
+			auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient)/6;
 
 		}
 	}
@@ -131,7 +131,6 @@ void main() {
 	/*
 	//float fogAmount = exp( -dist*0.05 );
 	vec4 fogColor = vec4(0.5, 0.6, 0.7, 1);
-	//não sei se da para fazer mix com vec4 ou se tem q ser com vec3
 	colorOut = mix(fogColor, auxColorOut, fogAmount);*/
 	colorOut = auxColorOut;
 }

@@ -49,8 +49,6 @@ int WinX = 1280, WinY = 720;
 
 unsigned int FrameCount = 0;
 float delta = 0.015;
-float auxRoverAngle;
-float auxRoverPos[3];
 
 float alpha = 90.0f, beta = 40.0f;
 float r = 10.0f;
@@ -106,8 +104,8 @@ char s[32];
 
 float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 0.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 4.0f, -35.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f},
-	{0.0f, 0.0f, -10.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f},
-	{0.0f, 0.0f, -10.0f, 1.0f} };
+	{0.0f, 5.0f, 5.0f, 1.0f}, {-4.0f, 3.0f, -10.0f, 1.0f}, {0.0f, 5.0f, -10.0f, 1.0f},
+	{4.0f, 2.0f, -10.0f, 1.0f} };
 float spotlightPos[NUMBER_SPOT_LIGHTS][4];
 float coneDir[4];
 
@@ -179,48 +177,6 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 	return rocks;
 }
 
-void updateRoverCamera(float vx, float vy) {
-	float pi = 3.1415;
-	cameras[2].pos[0] = rover.position[0] + vx;
-	cameras[2].pos[1] = rover.position[1] + vy;
-	cameras[2].pos[2] = rover.position[2];
-
-	std::copy(rover.position, rover.position + 3, cameras[2].target);
-
-	//cout << "before r: " << r << "; before alpha: " << alpha << "; before beta: " << beta << "\n";
-	//cout << "x: " << cameras[2].pos[0] << "y: " << cameras[2].pos[1] << "z: " << cameras[2].pos[2] << "\n";
-
-	
-	// alpha rotacao abertura do chao
-	// beta 
-
-	//r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
-	//beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
-	//alpha = atan(cameras[2].pos[0] / cameras[2].pos[2]) * 180.0 / pi;
-
-	//cout << "after r: " << r << "; after alpha: " << alpha << "; after beta: " << beta << "\n";
-}
-
-void updateSpotlightPos() {
-
-	spotlightPos[0][0] = rover.position[0] - 1.5f;
-	spotlightPos[0][1] = rover.position[1];
-	spotlightPos[0][2] = rover.position[2] + 0.5f;
-	spotlightPos[0][3] = 1;
-
-	spotlightPos[1][0] = rover.position[0] - 1.5f;
-	spotlightPos[1][1] = rover.position[1];
-	spotlightPos[1][2] = rover.position[2] - 0.5f;
-	spotlightPos[1][3] = 1;
-}
-
-void updateSpotlightDir() {
-	coneDir[0] = rover.velocity.direction[0];
-	coneDir[1] = rover.velocity.direction[1] - 0.2f;
-	coneDir[2] = rover.velocity.direction[2];
-	coneDir[3] = 0.0f;
-
-}
 
 void animateRocks() {
 	vector<RollingRock> rocks;
@@ -326,12 +282,6 @@ void refresh(int value)
 	glutTimerFunc(1000 / 60, refresh, 0); // continua chamando refresh(0)
 }
 
-/*
-void timerVelocity(int value) {
-	rover.updatePosition(NONE);
-	updateSpotlightPos();
-	glutTimerFunc(15, timerVelocity, 0);
-}*/
 
 void timerRocks(int value) {
 	animateRocks();
@@ -357,35 +307,72 @@ void changeSize(int w, int h) {
 	perspective(53.13f, ratio, 0.1f, 1000.0f);
 }
 
-
 // ------------------------------------------------------------
 //
 // Animate stufff
 //
 
-void animate(int value) {
+
+
+void updateSpotlight() {
+	coneDir[0] = rover.velocity.direction[0];
+	coneDir[1] = rover.velocity.direction[1];
+	coneDir[2] = rover.velocity.direction[2];
+	coneDir[3] = 1.0f;
+
+	spotlightPos[0][0] = rover.position[0];
+	spotlightPos[0][1] = rover.position[1] + 0.5f;
+	spotlightPos[0][2] = rover.position[2];
+	spotlightPos[0][3] = 1.0f;
+
+	spotlightPos[1][0] = rover.position[0] - 1.5f;
+	spotlightPos[1][1] = rover.position[1] + 0.5f;
+	spotlightPos[1][2] = rover.position[2] - 0.5f;
+	spotlightPos[1][3] = 1.0f;
+
+	/*
+	spotlightPos[0][0] = rover.position[0] + rover.velocity.direction[0] * (-1.5f);
+	spotlightPos[0][1] = rover.position[1] + 0.5f;
+	spotlightPos[0][2] = rover.position[2] + rover.velocity.direction[2] * 0.5f;
+	spotlightPos[0][3] = 1.0f;
+
+	spotlightPos[1][0] = rover.position[0] + rover.velocity.direction[0] * (-1.5f);
+	spotlightPos[1][1] = rover.position[1] + 0.5f;
+	spotlightPos[1][2] = rover.position[2] + rover.velocity.direction[2] * 0.5f;
+	spotlightPos[1][3] = 1.0f;*/
+}
+
+void updateRoverPosition() {
 	rover.updateDirection();
 
-	cout << "\ndirection : x: " << rover.velocity.direction[0] << "direction : z: " << rover.velocity.direction[2];
-	auxRoverPos[0] = rover.velocity.direction[0] * rover.velocity.speed * delta;
-	auxRoverPos[1] = rover.velocity.direction[1] * rover.velocity.speed * delta;
-	auxRoverPos[2] = rover.velocity.direction[2] * rover.velocity.speed * delta;
+	rover.position[0] -= rover.velocity.direction[0] * rover.velocity.speed * delta;
+	rover.position[2] += rover.velocity.direction[2] * rover.velocity.speed * delta;
 
-	cout << "\nauxRov: x: " << auxRoverPos[0] << "z: " << auxRoverPos[2];
-	rover.position[0] += auxRoverPos[0];
-	rover.position[1] += auxRoverPos[1];
-	rover.position[2] += auxRoverPos[2];
-	
-	if(rover.velocity.speed > 0)
-		rover.velocity.speed -= 2 * rover.velocity.speed * delta;
-	else if(rover.velocity.speed != 0)
+	if (rover.velocity.speed != 0)
 		rover.velocity.speed += -2 * rover.velocity.speed * delta;
+
+}
+
+
+void updateRoverCamera() {
+	float pi = 3.1415;
+	cameras[2].pos[0] = rover.position[0] + rover.velocity.direction[0] * 10;
+	cameras[2].pos[1] = 5;
+	cameras[2].pos[2] = rover.position[2] - rover.velocity.direction[2] * 10;
+
+	std::copy(rover.position, rover.position + 3, cameras[2].target);
+}
+
+void animate(int value) {
+	updateRoverPosition();
+	updateSpotlight();
 	
-	updateSpotlightPos();
-	updateSpotlightDir();
-	
+	if (tracking == 0)
+		updateRoverCamera();
+
 	glutTimerFunc(15, animate, 0); // continua chamando refresh(0)
 }
+
 
 // ------------------------------------------------------------
 //
@@ -402,9 +389,6 @@ void renderScene(void) {
 	// load identity matrices
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
-
-	if (tracking == 0)
-		updateRoverCamera(10, 5);
 
 	// set the camera using a function similar to gluLookAt
 
@@ -486,10 +470,6 @@ void renderScene(void) {
 	}
 
 
-
-	//animateRocks();
-	//rover.updatePosition(NONE);
-
 	checkCollisions();
 
 	myObjects.clear();
@@ -554,22 +534,8 @@ void renderScene(void) {
 
 	multMatrix(MODEL, rover.rover.objectTransform);
 	
-	cout << "\nauxRov: x: " << auxRoverPos[0] << "z: " << auxRoverPos[2];
-
-
-	//rover.updateDirection();
-
-	rotate(MODEL, auxRoverAngle, 0, 1, 0);
-	translate(MODEL, auxRoverPos[0], 0, auxRoverPos[2]);
-
-	//myTranslate(rover.rover.objectTransform, 1.5, 0, 0.75);
-	//myTranslate(rover.rover.objectTransform, -1.5, 0, -0.75);
-
-
-	auxRoverAngle = 0;
-	auxRoverPos[0] = 0;
-	auxRoverPos[1] = 0;
-	auxRoverPos[2] = 0;
+	translate(MODEL, rover.position[0], 0, rover.position[2]);
+	rotate(MODEL, rover.velocity.angle, 0, 1, 0);
 
 	
 	for (int objId = 0; objId < meshes.size(); objId++) {
@@ -656,16 +622,12 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'o':
 	case'O':
-		//rover.rotateRover(LEFT);
 		rover.velocity.angle += 1;
 		alpha += 1;
-		auxRoverAngle = 1;
 		break;
 	case 'p':
 	case'P':
-		//rover.rotateRover(RIGHT);
 		rover.velocity.angle -= 1;
-		auxRoverAngle = -1;
 		alpha -= 1;
 		break;
 	
@@ -906,8 +868,8 @@ void createRover() {
 	roverObj.meshes.push_back(cabeca);
 
 	rover = Rover(roverObj);
-	updateSpotlightPos();
-	updateSpotlightDir();
+	rover.updateDirection();
+	updateSpotlight();
 }
 
 
