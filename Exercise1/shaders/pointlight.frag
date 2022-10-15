@@ -48,6 +48,7 @@ uniform bool sun_mode;
 uniform bool point_lights_mode;
 uniform bool spotlight_mode;
 uniform bool fog_mode;
+uniform bool multitexture_mode;
 uniform vec4 coneDir;	
 uniform float spotCosCutOff;
 
@@ -85,7 +86,7 @@ void main() {
 			float intSpec = max(dot(h,n), 0.0);
 			spec = mat.specular * pow(intSpec, mat.shininess);
 		}
-		auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient);
+		auxColorOut += max(intensity * mat.diffuse + 0.3 * spec, mat.ambient);
 	}
 	if(point_lights_mode){
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
@@ -108,7 +109,7 @@ void main() {
 	}
 	if (spotlight_mode) {
 		float att = 0.0;
-		float spotExp = 80.0;
+		float spotExp = 60.0;
 
 		for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
 			vec4 spec = vec4(0.0);

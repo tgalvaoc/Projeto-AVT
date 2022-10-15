@@ -70,6 +70,7 @@ bool spotlight_mode = true;
 bool sun_mode = true;
 bool point_lights_mode = false;
 bool fog_mode = false;
+bool multitexture_mode = false;
 
 GLuint TextureArray[3];
 
@@ -319,10 +320,12 @@ void updateSpotlight() {
 	coneDir[1] = rover.velocity.direction[1];
 	coneDir[2] = rover.velocity.direction[2];
 	coneDir[3] = 1.0f;
+	cout << "\nPOS: 0: " << rover.position[0] << " 2: " << rover.position[2];
+	cout << "\nDIR: 0: " << rover.velocity.direction[0] << " 2: " << rover.velocity.direction[2];
 
-	spotlightPos[0][0] = rover.position[0];
+	spotlightPos[0][0] = rover.position[0] - 1.5f;
 	spotlightPos[0][1] = rover.position[1] + 0.5f;
-	spotlightPos[0][2] = rover.position[2];
+	spotlightPos[0][2] = rover.position[2] + 0.5f;
 	spotlightPos[0][3] = 1.0f;
 
 	spotlightPos[1][0] = rover.position[0] - 1.5f;
@@ -421,6 +424,13 @@ void renderScene(void) {
 
 	loc = glGetUniformLocation(shader.getProgramIndex(), "fog_mode");
 	if (fog_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "multitexture_mode");
+	if (multitexture_mode)
 		glUniform1i(loc, 1);
 	else
 		glUniform1i(loc, 0);
@@ -666,6 +676,13 @@ void processKeys(unsigned char key, int xx, int yy)
 		else
 			fog_mode = false;
 		break;
+	case 't':
+	case 'T':
+		if (!multitexture_mode)
+			multitexture_mode = true;
+		else
+			multitexture_mode = false;
+		break;
 	}
 }
 
@@ -904,7 +921,7 @@ void init()
 	freeType_init(font_name);
 
 	createCameras();
-	float pi = 3.1415;//helololoooo
+	float pi = 3.1415;
 	r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
 	beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
 	alpha = atan(cameras[2].pos[2] / cameras[2].pos[0]) * 180.0 / pi;
