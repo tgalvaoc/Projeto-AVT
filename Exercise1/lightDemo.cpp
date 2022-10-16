@@ -43,6 +43,8 @@
 
 using namespace std;
 
+int teste = 0;
+
 #define CAPTION "Projecto AVT"
 int WindowHandle = 0;
 int WinX = 1280, WinY = 720;
@@ -50,8 +52,7 @@ int WinX = 1280, WinY = 720;
 unsigned int FrameCount = 0;
 float delta = 0.015;
 
-float alpha = 90.0f, beta = 40.0f;
-float r = 10.0f;
+float alpha, beta, r;
 
 //shaders
 VSShaderLib shader;  //geometry
@@ -111,14 +112,26 @@ float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.
 float spotlightPos[NUMBER_SPOT_LIGHTS][4];
 float coneDir[4];
 
-void createCameras() {
-	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	cameras[1] = Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
+void initialState() {
+	rover.position[0] = 0;
+	rover.position[1] = 0;
+	rover.position[2] = 0;
+	rover.velocity.angle = 0;
 
 	cameras[2].pos[0] = 10;
 	cameras[2].pos[1] = 5;
 	cameras[2].pos[2] = 0;
+
+	float pi = 3.1415;
+	r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
+	alpha = acos(cameras[2].pos[2] / r) * 180.0 / pi;
+	beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
+}
+
+void createCameras() {
+	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	cameras[1] = Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
 }
 
 
@@ -173,7 +186,7 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 		high = 1;
 		
 		signal = rand() % 2;
-		cout << "signal " << signal;
+		//cout << "signal " << signal;
 		rock.directionX = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
 			rock.directionX = - rock.directionX;
@@ -252,48 +265,34 @@ bool isPointInsideAABB(Point point, RollingRock rock) {
 }
 
 void checkCollisions() {
-	std::map<int, int> detected;
+	// colisão com objetos estáticos
+	// TODO: 
+
+	// colisão com as rochas
 	for (int i = 0; i < rollingRocks.size(); i++) {
-		for (int j = 0; j < rollingRocks.size(); j++) {
-			if (i != j) {
+		
+		RollingRock rock = rollingRocks[i];
+		Point supEsquerdo, supDireito, infEsquerdo, infDireito;
+		
+		supEsquerdo.x = rover.position[0] - 5;
+		supEsquerdo.z = rover.position[1] + 5;
 
-				RollingRock obj1 = rollingRocks[i], obj2 = rollingRocks[j];
-				if (detected.count(i) == 0 || detected.count(j) == 0) {
-					
-					//bool x = fabs(obj1.posX - obj2.posX) <= (obj1.radius + obj2.radius);
-					//bool y = fabs(obj1.posZ - obj2.posZ) <= (obj1.radius + obj2.radius);
-					//bool z = Abs(obj1.c[2] - obj2.c[2]) <= (obj1.r[2] + obj2.r[2]);
-					Point point1, point2, point3, point4;
-					point1.x = obj1.minX;
-					point1.z = obj1.minZ;
-					point2.x = obj1.minX;
-					point2.z = obj1.maxZ;
-					point3.x = obj1.maxX;
-					point3.z = obj1.minZ;
-					point4.x = obj1.maxX;
-					point4.z = obj1.maxZ;
-					std::list<Point> points;
-					points.push_back(point1);
-					points.push_back(point2);
-					points.push_back(point3);
-					points.push_back(point4);
+		supDireito.x = rover.position[0] - 5;
+		supDireito.z = rover.position[1] - 5;
+		
+		infEsquerdo.x = rover.position[0] + 5;
+		infEsquerdo.z = rover.position[1] + 5;
+		
+		infDireito.x = rover.position[0] + 5;
+		infDireito.z = rover.position[1] - 5;
 
-
-					for each  (Point p in points){
-						if (isPointInsideAABB(p, obj2)) {
-							detected[i] = j;
-							detected[j] = i;
-							float auxSpeed = obj1.speed;
-							obj1.speed = -auxSpeed;
-							auxSpeed = obj2.speed;
-							obj2.speed = -auxSpeed;
-							break;
-						}
-					}
-				}
-			}
+		if (rock.posX <= infEsquerdo.x && rock.posX >= supEsquerdo.x && rock.posZ >= infDireito.z && rock.posZ <= infEsquerdo.z) {
+			teste++;
+			initialState();
+			cout << "\n" << teste << ": QUE ISSO MANO EU TO AQUI";
 
 		}
+		
 	}
 }
 
@@ -315,12 +314,6 @@ void refresh(int value)
 	// por causa disso, a funcao refresh vai ser chamada daqui a 16 ms pelo glutTimerFunc
 	glutPostRedisplay(); //desenha a janela
 	glutTimerFunc(1000 / 60, refresh, 0); // continua chamando refresh(0)
-}
-
-
-void timerRocks(int value) {
-	animateRocks();
-	glutTimerFunc(20, timerRocks, 0);
 }
 
 // ------------------------------------------------------------
@@ -352,10 +345,6 @@ void updateSpotlight() {
 	coneDir[1] = rover.velocity.direction[1];
 	coneDir[2] = rover.velocity.direction[2];
 	coneDir[3] = 0.0f;
-	cout << "\nPOS: 0: " << rover.position[0] << " POS1: " << rover.position[1] << " POS2: " << rover.position[2];
-	cout << "\nDIR: 0: " << rover.velocity.direction[0] << " DIR1: " << rover.velocity.direction[1] << " DIR2: " << rover.velocity.direction[2];
-	//cout << "\nCONE DIR: 0: " << coneDir[0] << " DIR1: " << coneDir[1] << " DIR2: " << coneDir[2];
-	
 	
 	spotlightPos[0][0] = rover.position[0] + rover.velocity.direction[0] * (-1.0f);
 	spotlightPos[0][1] = rover.position[1] + 0.5f;
@@ -396,9 +385,10 @@ void animate(int value) {
 	if (tracking == 0)
 		updateRoverCamera();
 
+	animateRocks();
 	checkCollisions();
 
-	glutTimerFunc(15, animate, 0);
+	glutTimerFunc(20, animate, 0);
 }
 
 
@@ -413,7 +403,7 @@ void renderScene(void) {
 
 	FrameCount++;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glDepthMask(GL_FALSE);
+	//glDepthMask(GL_FALSE);
 
 	// load identity matrices
 	loadIdentity(VIEW);
@@ -614,7 +604,10 @@ void renderScene(void) {
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
 	//the glyph contains transparent background colors and non-transparent for the actual character pixels. So we use the blending
-	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
 	int m_viewport[4];
 	glGetIntegerv(GL_VIEWPORT, m_viewport);
 
@@ -630,8 +623,8 @@ void renderScene(void) {
 	popMatrix(VIEW);
 	popMatrix(MODEL);
 	glEnable(GL_DEPTH_TEST);
-
-	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
+	//glDepthMask(GL_TRUE);
 	glutSwapBuffers();
 }
 
@@ -750,7 +743,7 @@ void processMouseMotion(int xx, int yy)
 
 	// left mouse button: move camera
 	if (currentCamera == 2 && tracking == 1) {
-		alphaAux = alpha + deltaX;
+		alphaAux = alpha + deltaX - 90;
 		betaAux = beta + deltaY;
 
 		if (betaAux > 85.0f)
@@ -860,7 +853,7 @@ void createGround() {
 	ground.meshes.push_back(amesh);
 
 	// landing site
-	amesh = createQuad(7.0f, 7.0f);
+	amesh = createQuad(5.0f, 5.0f);
 	setIdentityMatrix(ground.objectTransform, 4);
 	setMeshColor(&amesh, 0.8, 0.8, 0.8, false);
 	setIdentityMatrix(amesh.meshTransform, 4);
@@ -999,13 +992,9 @@ void init()
 	createRover();
 	createCameras();
 
-	float pi = 3.1415;
-	r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
-	alpha = acos(cameras[2].pos[2] / r) * 180.0 / pi;
-	beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
+	initialState();
 
 	glutTimerFunc(0, animate, 0);
-	glutTimerFunc(0, timerRocks, 0);
 
 	// some GL settings
 
