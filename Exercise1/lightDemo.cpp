@@ -396,6 +396,8 @@ void animate(int value) {
 	if (tracking == 0)
 		updateRoverCamera();
 
+	checkCollisions();
+
 	glutTimerFunc(15, animate, 0);
 }
 
@@ -411,6 +413,7 @@ void renderScene(void) {
 
 	FrameCount++;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDepthMask(GL_FALSE);
 
 	// load identity matrices
 	loadIdentity(VIEW);
@@ -486,7 +489,7 @@ void renderScene(void) {
 	glUniform1i(tex_loc2, 2);
 
 
-	res[4];	//lightPos definido em World Coord so is converted to eye space
+	//lightPos definido em World Coord so is converted to eye space
 
 	for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
 		multMatrixPoint(VIEW, pointLightPos[i], res);
@@ -508,7 +511,6 @@ void renderScene(void) {
 	}
 
 
-	//checkCollisions();
 
 	myObjects.clear();
 	myObjects.push_back(ground);
@@ -537,6 +539,7 @@ void renderScene(void) {
 			pushMatrix(MODEL);
 
 			multMatrix(MODEL, meshes[objId].meshTransform);
+
 
 			// send matrices to OGL
 			computeDerivedMatrix(PROJ_VIEW_MODEL);
@@ -611,8 +614,7 @@ void renderScene(void) {
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
 	//the glyph contains transparent background colors and non-transparent for the actual character pixels. So we use the blending
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
 	int m_viewport[4];
 	glGetIntegerv(GL_VIEWPORT, m_viewport);
 
@@ -628,8 +630,8 @@ void renderScene(void) {
 	popMatrix(VIEW);
 	popMatrix(MODEL);
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
 
+	glDepthMask(GL_TRUE);
 	glutSwapBuffers();
 }
 
@@ -825,10 +827,13 @@ GLuint setupShaders() {
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
-void setMeshColor(MyMesh* amesh, float r, float g, float b)
+void setMeshColor(MyMesh* amesh, float r, float g, float b, bool transparent)
 {
 	float amb[] = { r / 4.0, g / 4.0, b / 4.0, 1.0f };
 	float diff[] = { r, g, b, 1.0f };
+	if (transparent)
+		diff[3] = 0.6f;
+
 	float spec[] = { r, g, b, 1.0f };
 	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -847,7 +852,7 @@ void createGround() {
 
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
 	
-	setMeshColor(&amesh, 0.8, 0.4, 0.0);
+	setMeshColor(&amesh, 0.8, 0.4, 0.0, false);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
 	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
@@ -857,7 +862,7 @@ void createGround() {
 	// landing site
 	amesh = createQuad(7.0f, 7.0f);
 	setIdentityMatrix(ground.objectTransform, 4);
-	setMeshColor(&amesh, 0.8, 0.8, 0.8);
+	setMeshColor(&amesh, 0.8, 0.8, 0.8, false);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
 	myTranslate(amesh.meshTransform, 0.0, 0.15, 0.0);
@@ -866,25 +871,25 @@ void createGround() {
 
 	// column
 	amesh = createCylinder(7, 0.2, 10);
-	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03, false);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, 3.5, 0, 3.5); 
 	ground.meshes.push_back(amesh);
 
 	amesh = createCylinder(7, 0.2, 10);
-	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03, false);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, 3.5, 0, -3.5);
 	ground.meshes.push_back(amesh);
 
 	amesh = createCylinder(7, 0.2, 10);
-	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03, false);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, -3.5, 0, 3.5);
 	ground.meshes.push_back(amesh);
 
 	amesh = createCylinder(7, 0.2, 10);
-	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03, false);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, -3.5, 0, -3.5);
 	ground.meshes.push_back(amesh);
@@ -896,7 +901,7 @@ void createRover() {
 	setIdentityMatrix(roverObj.objectTransform, 4);
 
 	MyMesh corpo = createCube();
-	setMeshColor(&corpo, 0.27, 0.71, 0.77);
+	setMeshColor(&corpo, 0.27, 0.71, 0.77, true);
 	setIdentityMatrix(corpo.meshTransform, 4);
 	myTranslate(corpo.meshTransform, -0.5, -0.5, -0.5); // move o cubo pro centro
 	myScale(corpo.meshTransform, 3.0, 1.0, 1.5); // ajusta as dimensoes
@@ -917,42 +922,42 @@ void createRover() {
 
 
 	MyMesh roda1 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda1, 0.35, 0.18, 0.08);
+	setMeshColor(&roda1, 0.35, 0.18, 0.08, false);
 	setIdentityMatrix(roda1.meshTransform, 4);
 	myTranslate(roda1.meshTransform, 1.2, 0.85, 0.75); // coloca a roda no lugar
 	myRotate(roda1.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh roda2 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda2, 0.35, 0.18, 0.08);
+	setMeshColor(&roda2, 0.35, 0.18, 0.08, false);
 	setIdentityMatrix(roda2.meshTransform, 4);
 	myTranslate(roda2.meshTransform, 1.2, 0.85, -0.75); // coloca a roda no lugar
 	myRotate(roda2.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh roda3 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda3, 0.35, 0.18, 0.08);
+	setMeshColor(&roda3, 0.35, 0.18, 0.08, false);
 	setIdentityMatrix(roda3.meshTransform, 4);
 	myTranslate(roda3.meshTransform, -1.2, 0.85, 0.75); // coloca a roda no lugar
 	myRotate(roda3.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh roda4 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda4, 0.35, 0.18, 0.08);
+	setMeshColor(&roda4, 0.35, 0.18, 0.08, false);
 	setIdentityMatrix(roda4.meshTransform, 4);
 	myTranslate(roda4.meshTransform, -1.2, 0.85, -0.75); // coloca a roda no lugar
 	myRotate(roda4.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh cabeca = createPawn();
-	setMeshColor(&cabeca, 0.27, 0.71, 0.77);
+	setMeshColor(&cabeca, 0.27, 0.71, 0.77, false);
 	setIdentityMatrix(cabeca.meshTransform, 4);
 	myScale(cabeca.meshTransform, 0.8, 0.5, 0.5); // ajusta as dimensoes
 	myTranslate(cabeca.meshTransform, -1.0, 0.5, 0); // coloca o corpo no centro, tocando no chao
 	myTranslate(cabeca.meshTransform, 0.0, 1, 0.0); // tira o corpo do chao
 	
-	roverObj.meshes.push_back(corpo);
 	roverObj.meshes.push_back(roda1);
 	roverObj.meshes.push_back(roda2);
 	roverObj.meshes.push_back(roda3);
 	roverObj.meshes.push_back(roda4);
 	roverObj.meshes.push_back(cabeca);
+	roverObj.meshes.push_back(corpo);
 
 	rover = Rover(roverObj);
 	rover.updateDirection();
@@ -988,6 +993,7 @@ void init()
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
+
 	createGround();
 	createRollingRocks(10);
 	createRover();
@@ -1002,10 +1008,16 @@ void init()
 	glutTimerFunc(0, timerRocks, 0);
 
 	// some GL settings
+
+	// Transparency
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND); 
+
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_MULTISAMPLE);
 	glClearColor(243.0f / 255.0f, 206.0f / 255.0f, 180.0f / 255.0f, 1.0f);
+
 
 }
 
@@ -1028,7 +1040,6 @@ int main(int argc, char** argv) {
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(WinX, WinY);
 	WindowHandle = glutCreateWindow(CAPTION);
-
 
 	//  Callback Registration
 	glutDisplayFunc(renderScene);

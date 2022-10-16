@@ -73,7 +73,7 @@ void main() {
 
 	if(sun_mode){
 		
-		vec4 spec = vec4(0.0);
+		vec3 spec = vec3(0.0);
 		vec3 lightDir = vec3(dirLight.position - DataIn.pos);
 		vec3 n = normalize(DataIn.normal);
 		vec3 l = normalize(lightDir);
@@ -84,13 +84,13 @@ void main() {
 		if (intensity > 0.0) {
 			vec3 h = normalize(l + e);
 			float intSpec = max(dot(h,n), 0.0);
-			spec = mat.specular * pow(intSpec, mat.shininess);
+			spec = mat.specular.rgb * pow(intSpec, mat.shininess);
 		}
-		auxColorOut += max(intensity * mat.diffuse + 0.3 * spec, mat.ambient);
+		auxColorOut += vec4(max(intensity * mat.diffuse.rgb + 0.3 * spec, mat.ambient.rgb), mat.diffuse.a);
 	}
 	if(point_lights_mode){
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
-			vec4 spec = vec4(0.0);
+			vec3 spec = vec3(0.0);
 			vec3 lightDir = vec3(pointLights[i].position - DataIn.pos);
 			vec3 n = normalize(DataIn.normal);
 			vec3 l = normalize(lightDir);
@@ -101,9 +101,9 @@ void main() {
 			if (intensity > 0.0) {
 				vec3 h = normalize(l + e);
 				float intSpec = max(dot(h,n), 0.0);
-				spec = mat.specular * pow(intSpec, mat.shininess);
+				spec = mat.specular.rgb * pow(intSpec, mat.shininess);
 			}
-			auxColorOut += max(intensity * mat.diffuse + spec, mat.ambient)/6;
+			auxColorOut += vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb)/6, mat.diffuse.a);
 
 		}
 	}
@@ -112,7 +112,7 @@ void main() {
 		float spotExp = 60.0;
 
 		for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
-			vec4 spec = vec4(0.0);
+			vec3 spec = vec3(0.0);
 			vec3 lightDir = vec3(spotLights[i].position - DataIn.pos);
 			vec3 n = normalize(DataIn.normal);
 			vec3 l = normalize(lightDir);
@@ -126,8 +126,8 @@ void main() {
 				if (intensity > 0.0) {
 					vec3 h = normalize(l + e);
 					float intSpec = max(dot(h,n), 0.0);
-					spec = mat.specular * pow(intSpec, mat.shininess) * att;
-					auxColorOut +=  max(intensity * mat.diffuse + spec, mat.ambient);
+					spec = mat.specular.rgb * pow(intSpec, mat.shininess) * att;
+					auxColorOut +=  vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb), mat.diffuse.a);
 				}
 			}
 		}
