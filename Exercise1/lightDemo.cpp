@@ -105,9 +105,9 @@ char s[32];
 
 
 float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 0.0f };
-float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 4.0f, -35.0f, 1.0f}, {0.0f, 0.0f, -10.0f, 1.0f},
-	{0.0f, 5.0f, 5.0f, 1.0f}, {-4.0f, 3.0f, -10.0f, 1.0f}, {0.0f, 5.0f, -10.0f, 1.0f},
-	{4.0f, 2.0f, -10.0f, 1.0f} };
+float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
+	{5.0f, 8.0f, -5.0f, 1.0f}, {5.0f, 8.0f, 5.0f, 1.0f}, {-5.0f, 8.0f, 0.0f, 1.0f},
+	{5.0f, 8.0f, 0.0f, 1.0f} };
 float spotlightPos[NUMBER_SPOT_LIGHTS][4];
 float coneDir[4];
 
@@ -115,6 +115,10 @@ void createCameras() {
 	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 	cameras[1] = Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
+
+	cameras[2].pos[0] = 10;
+	cameras[2].pos[1] = 5;
+	cameras[2].pos[2] = 0;
 }
 
 
@@ -125,6 +129,7 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 	RollingRock rock;
 	vector<RollingRock> rocks;
 	int low, high;
+	int signal;
 
 	float square_size = 50.0f;
 
@@ -145,21 +150,50 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 
 	for (int i = 0; i < numToCreate; i++) {
 
-		low = -25;
-		high = 25;
+		low = 5;
+		high = 30;
+		signal = rand() % 2;
 
 		float r1 = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		if (signal)
+			r1 = -r1;
 		float r2 = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		if (signal)
+			r2 = -r2;
 		//std::cout << "R1: " << r1 << " r2: " << r2 << "\n";
 
-		low = -1;
+		low = 0;
 		high = 1;
+		signal = rand() % 2;
+		rock.speed = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		if (signal)
+			rock.speed = - rock.speed;
 
-		rock.speed = rand() / static_cast<float>(RAND_MAX);
+		low = 0;
+		high = 1;
+		
+		signal = rand() % 2;
+		cout << "signal " << signal;
 		rock.directionX = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		if (signal)
+			rock.directionX = - rock.directionX;
+
+		signal = rand() % 2;
 		rock.directionZ = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
-		rock.posX = r1;
-		rock.posZ = r2;
+		if (signal)
+			rock.directionZ = - rock.directionZ;
+		
+
+		signal = rand() % 2;
+		rock.posX = r1 + rover.position[0];
+		if (signal) {
+			rock.posX = -rock.posX;
+		}
+		signal = rand() % 2;
+		rock.posZ = r2 + rover.position[2];
+		if (signal)
+			rock.posZ = -rock.posZ;
+
 		rock.radius = 1.0f;
 
 		rock.maxX = rock.posX + rock.radius;
@@ -170,7 +204,7 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 		//std::cout << "speed: " << stone.speed << " dir0 " << stone.direction[0] << "\n";
 		setIdentityMatrix(stone.objectTransform, 4);
 
-		myTranslate(stone.objectTransform, r1, 1, r2);
+		myTranslate(stone.objectTransform, rock.posX, 1, rock.posZ);
 
 		stone.meshes.push_back(amesh);
 		rock.object = stone;
@@ -197,8 +231,8 @@ void animateRocks() {
 		rollingRocks[i].minZ = rollingRocks[i].posZ - rollingRocks[i].radius;
 
 		// TODO: melhorar barreiras
-		if (rollingRocks[i].posX > 50 || rollingRocks[i].posZ > 50 ||
-			rollingRocks[i].posX < -50 || rollingRocks[i].posZ < -50) {
+		if (rollingRocks[i].posX > rover.position[0] + 200 || rollingRocks[i].posZ > rover.position[2] + 200 ||
+			rollingRocks[i].posX < rover.position[0] - 200 || rollingRocks[i].posZ < rover.position[2] - 200) {
 			rollingRocks.erase(rollingRocks.begin() + i);
 			aux = createRollingRocks(1);
 			if (!aux.empty())
@@ -313,36 +347,25 @@ void changeSize(int w, int h) {
 // Animate stufff
 //
 
-
-
 void updateSpotlight() {
-	coneDir[0] = rover.velocity.direction[0];
+	coneDir[0] = -rover.velocity.direction[0];
 	coneDir[1] = rover.velocity.direction[1];
 	coneDir[2] = rover.velocity.direction[2];
-	coneDir[3] = 1.0f;
-	cout << "\nPOS: 0: " << rover.position[0] << " 2: " << rover.position[2];
-	cout << "\nDIR: 0: " << rover.velocity.direction[0] << " 2: " << rover.velocity.direction[2];
-
-	spotlightPos[0][0] = rover.position[0] - 1.5f;
+	coneDir[3] = 0.0f;
+	cout << "\nPOS: 0: " << rover.position[0] << " POS1: " << rover.position[1] << " POS2: " << rover.position[2];
+	cout << "\nDIR: 0: " << rover.velocity.direction[0] << " DIR1: " << rover.velocity.direction[1] << " DIR2: " << rover.velocity.direction[2];
+	//cout << "\nCONE DIR: 0: " << coneDir[0] << " DIR1: " << coneDir[1] << " DIR2: " << coneDir[2];
+	
+	
+	spotlightPos[0][0] = rover.position[0] + rover.velocity.direction[0] * (-1.0f);
 	spotlightPos[0][1] = rover.position[1] + 0.5f;
 	spotlightPos[0][2] = rover.position[2] + 0.5f;
 	spotlightPos[0][3] = 1.0f;
 
-	spotlightPos[1][0] = rover.position[0] - 1.5f;
+	spotlightPos[1][0] = rover.position[0] + rover.velocity.direction[0] * (-1.0f);
 	spotlightPos[1][1] = rover.position[1] + 0.5f;
 	spotlightPos[1][2] = rover.position[2] - 0.5f;
 	spotlightPos[1][3] = 1.0f;
-
-	/*
-	spotlightPos[0][0] = rover.position[0] + rover.velocity.direction[0] * (-1.5f);
-	spotlightPos[0][1] = rover.position[1] + 0.5f;
-	spotlightPos[0][2] = rover.position[2] + rover.velocity.direction[2] * 0.5f;
-	spotlightPos[0][3] = 1.0f;
-
-	spotlightPos[1][0] = rover.position[0] + rover.velocity.direction[0] * (-1.5f);
-	spotlightPos[1][1] = rover.position[1] + 0.5f;
-	spotlightPos[1][2] = rover.position[2] + rover.velocity.direction[2] * 0.5f;
-	spotlightPos[1][3] = 1.0f;*/
 }
 
 void updateRoverPosition() {
@@ -435,9 +458,11 @@ void renderScene(void) {
 	else
 		glUniform1i(loc, 0);
 
-	
+	//cout << "\nCONE DIR: 0: " << coneDir[0] << " DIR1: " << coneDir[1] << " DIR2: " << coneDir[2];
+	float res[4];
+	multMatrixPoint(VIEW, coneDir, res);
 	loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
-	glUniform4fv(loc, 1, coneDir);
+	glUniform4fv(loc, 1, res);
 	loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
 	glUniform1f(loc, 0.99f);
 
@@ -461,7 +486,7 @@ void renderScene(void) {
 	glUniform1i(tex_loc2, 2);
 
 
-	float res[4];	//lightPos definido em World Coord so is converted to eye space
+	res[4];	//lightPos definido em World Coord so is converted to eye space
 
 	for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
 		multMatrixPoint(VIEW, pointLightPos[i], res);
@@ -483,10 +508,9 @@ void renderScene(void) {
 	}
 
 
-	checkCollisions();
+	//checkCollisions();
 
 	myObjects.clear();
-
 	myObjects.push_back(ground);
 	for (int j = 0; j < rollingRocks.size(); j++)
 		myObjects.push_back(rollingRocks[j].object);
@@ -616,6 +640,7 @@ void renderScene(void) {
 //
 void processKeys(unsigned char key, int xx, int yy)
 {
+	float pi = 3.1415;
 	std::tuple<float, float> aux;
 	switch (key) {
 	case 27:
@@ -624,10 +649,12 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'q':
 	case'Q':
 		rover.velocity.speed += 0.8;
+		beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
 		break;
 	case 'a':
 	case'A':
 		rover.velocity.speed -= 0.8;
+		beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
 		break;
 	case 'o':
 	case'O':
@@ -715,8 +742,7 @@ void processMouseMotion(int xx, int yy)
 
 	int deltaX, deltaY;
 	float alphaAux = alpha, betaAux = beta;
-	float rAux = r;
-
+	
 	deltaX = - xx + startX;
 	deltaY = yy - startY;
 
@@ -729,10 +755,13 @@ void processMouseMotion(int xx, int yy)
 			betaAux = 85.0f;
 		else if (betaAux < -85.0f)
 			betaAux = -85.0f;
-		rAux = r;
 
+		float pi = 3.1415;
+		cameras[2].pos[0] = rover.position[0] + cos((pi / 180) * alphaAux) * 10;
+		cameras[2].pos[1] = rover.position[1] + cos((pi / 180) * betaAux) * 10;
+		cameras[2].pos[2] = rover.position[2] - sin((pi / 180) * alphaAux) * 10;
 
-		cameras[currentCamera].fixPosition(alphaAux, betaAux, rAux);
+		std::copy(rover.position, rover.position + 3, cameras[2].target);
 	}
 
 
@@ -813,18 +842,53 @@ void setMeshColor(MyMesh* amesh, float r, float g, float b)
 }
 
 void createGround() {
-
+	//surface
 	setIdentityMatrix(ground.objectTransform, 4);
 
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
 	
-	setMeshColor(&amesh, 0.9, 0.8, 0.9);
+	setMeshColor(&amesh, 0.8, 0.4, 0.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
 	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
 
 	ground.meshes.push_back(amesh);
-	myObjects.push_back(ground);
+
+	// landing site
+	amesh = createQuad(7.0f, 7.0f);
+	setIdentityMatrix(ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.8, 0.8, 0.8);
+	setIdentityMatrix(amesh.meshTransform, 4);
+
+	myTranslate(amesh.meshTransform, 0.0, 0.15, 0.0);
+	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
+	ground.meshes.push_back(amesh);
+
+	// column
+	amesh = createCylinder(7, 0.2, 10);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 3.5, 0, 3.5); 
+	ground.meshes.push_back(amesh);
+
+	amesh = createCylinder(7, 0.2, 10);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 3.5, 0, -3.5);
+	ground.meshes.push_back(amesh);
+
+	amesh = createCylinder(7, 0.2, 10);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, -3.5, 0, 3.5);
+	ground.meshes.push_back(amesh);
+
+	amesh = createCylinder(7, 0.2, 10);
+	setMeshColor(&amesh, 0.82, 0.17, 0.03);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, -3.5, 0, -3.5);
+	ground.meshes.push_back(amesh);
+
 }
 
 void createRover() {
@@ -832,7 +896,7 @@ void createRover() {
 	setIdentityMatrix(roverObj.objectTransform, 4);
 
 	MyMesh corpo = createCube();
-	setMeshColor(&corpo, 0.5, 0.5, 0.5);
+	setMeshColor(&corpo, 0.27, 0.71, 0.77);
 	setIdentityMatrix(corpo.meshTransform, 4);
 	myTranslate(corpo.meshTransform, -0.5, -0.5, -0.5); // move o cubo pro centro
 	myScale(corpo.meshTransform, 3.0, 1.0, 1.5); // ajusta as dimensoes
@@ -853,27 +917,31 @@ void createRover() {
 
 
 	MyMesh roda1 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&roda1, 0.35, 0.18, 0.08);
 	setIdentityMatrix(roda1.meshTransform, 4);
 	myTranslate(roda1.meshTransform, 1.2, 0.85, 0.75); // coloca a roda no lugar
 	myRotate(roda1.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh roda2 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&roda2, 0.35, 0.18, 0.08);
 	setIdentityMatrix(roda2.meshTransform, 4);
 	myTranslate(roda2.meshTransform, 1.2, 0.85, -0.75); // coloca a roda no lugar
 	myRotate(roda2.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh roda3 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&roda3, 0.35, 0.18, 0.08);
 	setIdentityMatrix(roda3.meshTransform, 4);
 	myTranslate(roda3.meshTransform, -1.2, 0.85, 0.75); // coloca a roda no lugar
 	myRotate(roda3.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh roda4 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&roda4, 0.35, 0.18, 0.08);
 	setIdentityMatrix(roda4.meshTransform, 4);
 	myTranslate(roda4.meshTransform, -1.2, 0.85, -0.75); // coloca a roda no lugar
 	myRotate(roda4.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
 	MyMesh cabeca = createPawn();
-	setMeshColor(&cabeca, 0.5, 0.5, 0.5);
+	setMeshColor(&cabeca, 0.27, 0.71, 0.77);
 	setIdentityMatrix(cabeca.meshTransform, 4);
 	myScale(cabeca.meshTransform, 0.8, 0.5, 0.5); // ajusta as dimensoes
 	myTranslate(cabeca.meshTransform, -1.0, 0.5, 0); // coloca o corpo no centro, tocando no chao
@@ -920,24 +988,19 @@ void init()
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
+	createGround();
+	createRollingRocks(10);
+	createRover();
 	createCameras();
+
 	float pi = 3.1415;
 	r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
-	beta = acos(cameras[2].pos[1] / r) * 180.0 / pi;
-	alpha = atan(cameras[2].pos[2] / cameras[2].pos[0]) * 180.0 / pi;
+	alpha = acos(cameras[2].pos[2] / r) * 180.0 / pi;
+	beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
 
-	cout << "\nx: " << cameras[2].pos[0] << "y: " << cameras[2].pos[1] << "z: " << cameras[2].pos[2];
-	cout << "\nalpha: " << alpha << " beta: " << beta << " r: " << r;
-
-	// place objects in world
-
-
-	createGround();
-	createRover();
 	glutTimerFunc(0, animate, 0);
-
-	createRollingRocks(10);
 	glutTimerFunc(0, timerRocks, 0);
+
 	// some GL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);

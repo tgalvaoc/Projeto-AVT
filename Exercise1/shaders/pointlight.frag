@@ -108,7 +108,7 @@ void main() {
 		}
 	}
 	if (spotlight_mode) {
-		float att = 0.0;
+		float att = 0.1;
 		float spotExp = 60.0;
 
 		for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
@@ -118,7 +118,7 @@ void main() {
 			vec3 l = normalize(lightDir);
 			vec3 e = normalize(DataIn.eye);
 			vec3 sd = normalize(vec3(-coneDir));
-			float spotCos = dot(l, sd);
+			float spotCos = dot(sd, l);
 
 			if(spotCos > spotCosCutOff)  {	//inside cone?
 				att = pow(spotCos, spotExp);

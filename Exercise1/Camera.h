@@ -17,6 +17,4 @@ public:
 	void setProjection(float w, float h);
 
 	void cameraLookAt();
-
-	void fixPosition(float alpha, float beta, float r);
 };

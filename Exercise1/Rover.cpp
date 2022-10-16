@@ -16,6 +16,8 @@ Rover::Rover(MyObject obj) {
 	position[1] = 0;
 	position[2] = 0;
 	updateDirection();
+	cout << "\n------------DIR: 0: " << velocity.direction[0] << " DIR1: " << velocity.direction[1] << " DIR2: " << velocity.direction[2];
+
 }
 
 void Rover::updateDirection() {
