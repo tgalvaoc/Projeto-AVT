@@ -6,7 +6,7 @@ enum CameraType { ORTHOGONAL, PERSPECTIVE, MOVING, };
 
 class Camera {
 public:
-	float pos[3];
+	float position[3];
 	float target[3];
 
 	CameraType type;

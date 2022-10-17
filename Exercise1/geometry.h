@@ -19,7 +19,6 @@ struct Material{
 };
 
 
-
 // A model can be made of many meshes. Each is stored  in the following structure
 struct MyMesh {
 	//vertex array objects
@@ -31,12 +30,6 @@ struct MyMesh {
 		GLuint numIndexes;
 		unsigned int type;
 		struct Material mat;
-	};
-
-struct Point {
-	float x = 0;
-	float y = 0;
-	float z = 0;
 };
 
 struct MyObject {
@@ -45,25 +38,24 @@ struct MyObject {
 };
 
 struct Pillar {
-
-	float pos[3];
+	float position[3];
 	float radius;
 };
 
 struct Rock{
-	float pos[3];
-	float radius;
+	float position[3];
+	float side;
+	float speed;
+	MyObject object;
 };
 
 
 struct RollingRock {
+	float radius = 0;
+	float speed = 0;
+	float position[3];
+	float direction[3];
 	MyObject object;
-	float directionX;
-	float directionZ;
-	float speed;
-	float posX;
-	float posZ;
-	float radius;
 };
 
 MyMesh createCube();

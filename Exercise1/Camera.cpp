@@ -10,9 +10,9 @@ Camera::Camera() {};
 
 Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val, float targetY_val, float targetZ_val) {
 
-	pos[0] = x;
-	pos[1] = y;
-	pos[2] = z;
+	position[0] = x;
+	position[1] = y;
+	position[2] = z;
 
 	target[0] = targetX_val;
 	target[1] = targetY_val;
@@ -42,7 +42,7 @@ void Camera::setProjection(float w, float h) {
 }
 
 void Camera::cameraLookAt() {
-	lookAt(this->pos[0], this->pos[1], this->pos[2],
+	lookAt(this->position[0], this->position[1], this->position[2],
 		this->target[0], this->target[1], this->target[2],
 		0, 1, 0);
 }

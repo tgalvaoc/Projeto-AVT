@@ -65,6 +65,7 @@ vector<MyObject> myObjects;
 MyObject ground;
 Rover rover;
 vector<RollingRock> rollingRocks;
+vector<Rock> rocks;
 list<Pillar> pillars;
 bool spotlight_mode = true;
 bool sun_mode = true;
@@ -73,7 +74,8 @@ bool fog_mode = false;
 bool multitexture_mode = false;
 
 bool isGoingForward = false;
-bool isHittingPillar= false;
+bool isHittingPillar = false;
+bool isHittingRock = false;
 
 GLuint TextureArray[3];
 
@@ -121,14 +123,14 @@ void initialState() {
 	rover.angle = 0;
 	rover.speed = 0;
 
-	cameras[2].pos[0] = 10;
-	cameras[2].pos[1] = 5;
-	cameras[2].pos[2] = 0;
+	cameras[2].position[0] = 10;
+	cameras[2].position[1] = 5;
+	cameras[2].position[2] = 0;
 
 	float pi = 3.1415;
-	r = sqrt(pow(cameras[2].pos[0], 2) + pow(cameras[2].pos[1], 2) + pow(cameras[2].pos[2], 2));
-	alpha = acos(cameras[2].pos[2] / r) * 180.0 / pi;
-	beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
+	r = sqrt(pow(cameras[2].position[0], 2) + pow(cameras[2].position[1], 2) + pow(cameras[2].position[2], 2));
+	alpha = acos(cameras[2].position[2] / r) * 180.0 / pi;
+	beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / pi;
 }
 
 void createCameras() {
@@ -190,31 +192,32 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 		
 		signal = rand() % 2;
 		//cout << "signal " << signal;
-		rock.directionX = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		rock.direction[0] = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
-			rock.directionX = - rock.directionX;
+			rock.direction[0] = - rock.direction[0];
 
 		signal = rand() % 2;
-		rock.directionZ = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
+		rock.direction[2] = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
-			rock.directionZ = - rock.directionZ;
+			rock.direction[2] = - rock.direction[2];
 		
 
 		signal = rand() % 2;
-		rock.posX = r1 + rover.position[0];
+		rock.position[0] = r1 + rover.position[0];
 		if (signal) {
-			rock.posX = -rock.posX;
+			rock.position[0] = -rock.position[0];
 		}
+		rock.position[1] = 0;
 		signal = rand() % 2;
-		rock.posZ = r2 + rover.position[2];
+		rock.position[2] = r2 + rover.position[2];
 		if (signal)
-			rock.posZ = -rock.posZ;
+			rock.position[2] = -rock.position[2];
 
 		rock.radius = 1.0f;
 
 		setIdentityMatrix(stone.objectTransform, 4);
 
-		myTranslate(stone.objectTransform, rock.posX, 1, rock.posZ);
+		myTranslate(stone.objectTransform, rock.position[0], 1, rock.position[2]);
 
 		stone.meshes.push_back(amesh);
 		rock.object = stone;
@@ -229,15 +232,15 @@ void animateRocks() {
 	vector<RollingRock> aux;
 	for (int i = 0; i < rollingRocks.size(); i++) {
 		rollingRocks[i].speed += rollingRocks[i].speed * 0.005;
-		float translateX = rollingRocks[i].speed * rollingRocks[i].directionX;
-		float translateZ = rollingRocks[i].speed * rollingRocks[i].directionZ;
+		float translateX = rollingRocks[i].speed * rollingRocks[i].direction[0];
+		float translateZ = rollingRocks[i].speed * rollingRocks[i].direction[2];
 
 		myTranslate(rollingRocks[i].object.objectTransform, translateX, 0, translateZ);
-		rollingRocks[i].posX += translateX;
-		rollingRocks[i].posZ += translateZ;
+		rollingRocks[i].position[0] += translateX;
+		rollingRocks[i].position[2] += translateZ;
 
-		if (rollingRocks[i].posX > rover.position[0] + 200 || rollingRocks[i].posZ > rover.position[2] + 200 ||
-			rollingRocks[i].posX < rover.position[0] - 200 || rollingRocks[i].posZ < rover.position[2] - 200) {
+		if (rollingRocks[i].position[0] > rover.position[0] + 200 || rollingRocks[i].position[2] > rover.position[2] + 200 ||
+			rollingRocks[i].position[0] < rover.position[0] - 200 || rollingRocks[i].position[2] < rover.position[2] - 200) {
 			rollingRocks.erase(rollingRocks.begin() + i);
 			aux = createRollingRocks(1);
 			if (!aux.empty())
@@ -303,9 +306,9 @@ void updateRoverPosition() {
 
 void updateRoverCamera() {
 	float pi = 3.1415;
-	cameras[2].pos[0] = rover.position[0] + rover.direction[0] * 10;
-	cameras[2].pos[1] = 5;
-	cameras[2].pos[2] = rover.position[2] - rover.direction[2] * 10;
+	cameras[2].position[0] = rover.position[0] + rover.direction[0] * 10;
+	cameras[2].position[1] = 5;
+	cameras[2].position[2] = rover.position[2] - rover.direction[2] * 10;
 
 	std::copy(rover.position, rover.position + 3, cameras[2].target);
 }
@@ -321,40 +324,65 @@ void checkCollisions() {
 	float roverMaxZ = rover.position[2] + roverFactor;
 	float roverMinZ = rover.position[2] - roverFactor;
 
-
 	// colisão com objetos estáticos
-	// TODO: implementar
+	isHittingRock = false;
+	for each (Rock rock in rocks) {
+
+		float maxX = rock.position[0] + rock.side / 2;
+		float minX = rock.position[0] - rock.side / 2;
+		float maxZ = rock.position[2] + rock.side / 2;
+		float minZ = rock.position[2] - rock.side / 2;
+
+		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+
+			isHittingRock = true;
+			rover.speed = 0;
+
+			rock.speed = ((isGoingForward) ? rock.speed + 0.1 : rock.speed - 0.1);
+
+			rock.position[0] = rock.speed * delta * rover.direction[0];
+			rock.position[2] = rock.speed * delta * rover.direction[2];
+
+			if (rock.speed != 0)
+				rover.speed += -2 * rover.speed * delta;
+		}
+	}
 
 	// colisão com pilares
 	isHittingPillar = false;
 	for each (Pillar pillar in pillars) {
 
-		float maxX = pillar.pos[0] + pillar.radius;
-		float minX = pillar.pos[0] - pillar.radius;
-		float maxZ = pillar.pos[2] + pillar.radius;
-		float minZ = pillar.pos[2] - pillar.radius;
+		float maxX = pillar.position[0] + pillar.radius;
+		float minX = pillar.position[0] - pillar.radius;
+		float maxZ = pillar.position[2] + pillar.radius;
+		float minZ = pillar.position[2] - pillar.radius;
 
-		if ((minX <= roverMaxX && minX >= roverMinX && pillar.pos[2] >= roverMinZ && pillar.pos[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && pillar.pos[2] >= roverMinZ && pillar.pos[2] <= roverMaxZ) ||
-			(pillar.pos[0] <= roverMaxX && pillar.pos[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(pillar.pos[0] <= roverMaxX && pillar.pos[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+		if ((minX <= roverMaxX && minX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
+			(maxX <= roverMaxX && maxX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
+			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
+			rover.speed = 0;
 			isHittingPillar = true;
+			break;
 		}
 	}
 
 	// colisão com as rochas
 	for each (RollingRock rock in rollingRocks) {
 
-		float maxX = rock.posX + rock.radius;
-		float minX = rock.posX - rock.radius;
-		float maxZ = rock.posZ + rock.radius;
-		float minZ = rock.posZ - rock.radius;
+		float maxX = rock.position[0] + rock.radius;
+		float minX = rock.position[0] - rock.radius;
+		float maxZ = rock.position[2] + rock.radius;
+		float minZ = rock.position[2] - rock.radius;
 
-		if ((minX <= roverMaxX && minX >= roverMinX && rock.posZ >= roverMinZ && rock.posZ <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && rock.posZ >= roverMinZ && rock.posZ <= roverMaxZ) ||
-			(rock.posX <= roverMaxX && rock.posX >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(rock.posX <= roverMaxX && rock.posX >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
 			initialState();
 			rollingRocks.clear();
@@ -368,6 +396,8 @@ void checkCollisions() {
 
 
 void animate(int value) {
+
+	checkCollisions();
 	updateRoverPosition();
 	updateSpotlight();
 	
@@ -375,7 +405,6 @@ void animate(int value) {
 		updateRoverCamera();
 
 	animateRocks();
-	checkCollisions();
 
 	glutTimerFunc(20, animate, 0);
 }
@@ -498,6 +527,8 @@ void renderScene(void) {
 	myObjects.push_back(ground);
 	for (int j = 0; j < rollingRocks.size(); j++)
 		myObjects.push_back(rollingRocks[j].object);
+	for (int j = 0; j < rocks.size(); j++)
+		myObjects.push_back(rocks[j].object);
 
 	for (int i = 0; i < myObjects.size(); i++) {
 
@@ -658,28 +689,27 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'q':
 	case'Q':
-		if (isHittingPillar && isGoingForward) {
-			rover.speed = 0;
-			cout << "\nbateu de frenteee";
-			isHittingPillar = false;
+		if (isHittingPillar && isGoingForward)
 			return;
-		}
 		
+		if (isHittingRock && isGoingForward)
+			return;
+
 		rover.speed += 0.8;
-		beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
+		beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / pi;
 		isGoingForward = true;
 		break;
 	case 'a':
 	case'A':
 		if (isHittingPillar && !isGoingForward) {
 			rover.speed = 0;
-
-			isHittingPillar = false;
-			cout << "\nbateu de trassss";
 			return;
 		}
+
+		
+
 		rover.speed -= 0.8;
-		beta = atan(cameras[2].pos[1] / cameras[2].pos[0]) * 180.0 / pi;
+		beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / pi;
 		isGoingForward = false;
 		break;
 	case 'o':
@@ -703,38 +733,23 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'c':
 	case 'C':
-		if (!point_lights_mode)
-			point_lights_mode = true;
-		else
-			point_lights_mode = false;
+		point_lights_mode = !point_lights_mode;
 		break;
 	case 'h':
 	case 'H':
-		if (!spotlight_mode)
-			spotlight_mode = true;
-		else
-			spotlight_mode = false;
+		spotlight_mode = !spotlight_mode;
 		break;
 	case 'n':
 	case 'N':
-		if (!sun_mode)
-			sun_mode = true;
-		else
-			sun_mode = false;
+		sun_mode = !sun_mode;
 		break;
 	case 'f':
 	case 'F':
-		if (!fog_mode)
-			fog_mode = true;
-		else
-			fog_mode = false;
+		fog_mode = !fog_mode;
 		break;
 	case 't':
 	case 'T':
-		if (!multitexture_mode)
-			multitexture_mode = true;
-		else
-			multitexture_mode = false;
+		multitexture_mode = !multitexture_mode;
 		break;
 	case 'i':
 	case'I':
@@ -789,9 +804,9 @@ void processMouseMotion(int xx, int yy)
 			betaAux = -85.0f;
 
 		float pi = 3.1415;
-		cameras[2].pos[0] = rover.position[0] + cos((pi / 180) * alphaAux) * 10;
-		cameras[2].pos[1] = rover.position[1] + cos((pi / 180) * betaAux) * 10;
-		cameras[2].pos[2] = rover.position[2] - sin((pi / 180) * alphaAux) * 10;
+		cameras[2].position[0] = rover.position[0] + cos((pi / 180) * alphaAux) * 10;
+		cameras[2].position[1] = rover.position[1] + cos((pi / 180) * betaAux) * 10;
+		cameras[2].position[2] = rover.position[2] - sin((pi / 180) * alphaAux) * 10;
 
 		std::copy(rover.position, rover.position + 3, cameras[2].target);
 	}
@@ -890,7 +905,8 @@ void createGround() {
 	ground.meshes.push_back(amesh);
 
 	// landing site
-	amesh = createQuad(7.0f, 7.0f);
+	float side = 8.0f;
+	amesh = createQuad(side, side);
 	setIdentityMatrix(ground.objectTransform, 4);
 	setMeshColor(&amesh, 0.8, 0.8, 0.8, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
@@ -901,48 +917,48 @@ void createGround() {
 
 	// pillar
 	pillar1.radius = 0.2;
-	pillar1.pos[0] = 3.5;
-	pillar1.pos[1] = 0;
-	pillar1.pos[2] = 3.5;
+	pillar1.position[0] = side / 2;
+	pillar1.position[1] = 0;
+	pillar1.position[2] = side / 2;
 
 	amesh = createCylinder(7, pillar1.radius, 10);
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, pillar1.pos[0], pillar1.pos[1], pillar1.pos[2]);
+	myTranslate(amesh.meshTransform, pillar1.position[0], pillar1.position[1], pillar1.position[2]);
 	ground.meshes.push_back(amesh);
 
 
 	pillar2.radius = 0.2;
-	pillar2.pos[0] = 3.5;
-	pillar2.pos[1] = 0;
-	pillar2.pos[2] = -3.5;
+	pillar2.position[0] = side /2;
+	pillar2.position[1] = 0;
+	pillar2.position[2] = -side / 2;
 
 	amesh = createCylinder(7, pillar2.radius, 10);
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, pillar2.pos[0], pillar2.pos[1], pillar2.pos[2]);
+	myTranslate(amesh.meshTransform, pillar2.position[0], pillar2.position[1], pillar2.position[2]);
 	ground.meshes.push_back(amesh);
 
 	pillar3.radius = 0.2;
-	pillar3.pos[0] = -3.5;
-	pillar3.pos[1] = 0;
-	pillar3.pos[2] = 3.5;
+	pillar3.position[0] = -side / 2;
+	pillar3.position[1] = 0;
+	pillar3.position[2] = side / 2;
 
 	amesh = createCylinder(7, pillar3.radius, 10);
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, pillar3.pos[0], pillar3.pos[1], pillar3.pos[2]);
+	myTranslate(amesh.meshTransform, pillar3.position[0], pillar3.position[1], pillar3.position[2]);
 	ground.meshes.push_back(amesh);
 
 	pillar4.radius = 0.2;
-	pillar4.pos[0] = -3.5;
-	pillar4.pos[1] = 0;
-	pillar4.pos[2] = -3.5;
+	pillar4.position[0] = -side / 2;
+	pillar4.position[1] = 0;
+	pillar4.position[2] = -side / 2;
 
 	amesh = createCylinder(7, pillar4.radius, 10);
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, pillar4.pos[0], pillar4.pos[1], pillar4.pos[2]);
+	myTranslate(amesh.meshTransform, pillar4.position[0], pillar4.position[1], pillar4.position[2]);
 	ground.meshes.push_back(amesh);
 
 	pillars.push_back(pillar1);
@@ -1021,8 +1037,29 @@ void createRover() {
 }
 
 void createRock() {
-	MyMesh amesh = createSphere(1.0f, 10); // podemos randomizar tamanho no futuro
 
+	MyMesh amesh = createSphere(1.0f, 10);
+	Rock rock;
+    MyObject obj;
+    setIdentityMatrix(obj.objectTransform, 4);
+
+    setMeshColor(&amesh, 0.27, 0.71, 0.77, 1.0);
+    setIdentityMatrix(amesh.meshTransform, 4);
+    myTranslate(amesh.meshTransform, -10.0, 0.2, 0.0);
+    obj.meshes.push_back(amesh);
+	rock.object = obj;
+	
+    rocks.push_back(rock);
+
+    amesh = createSphere(0.5f, 10);
+    setMeshColor(&amesh, 0.27, 0.71, 0.77, 1.0);
+    setIdentityMatrix(amesh.meshTransform, 4);
+    myTranslate(amesh.meshTransform, -12.0, 0.2, 3.0);
+    obj.meshes.push_back(amesh);
+	rock.object = obj;
+	
+	rocks.push_back(rock);
+	
 }
 
 
