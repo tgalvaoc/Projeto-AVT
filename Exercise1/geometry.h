@@ -44,6 +44,17 @@ struct MyObject {
 	vector<MyMesh> meshes;
 };
 
+struct Pillar {
+
+	float pos[3];
+	float radius;
+};
+
+struct Rock{
+	float pos[3];
+	float radius;
+};
+
 
 struct RollingRock {
 	MyObject object;
@@ -53,10 +64,6 @@ struct RollingRock {
 	float posX;
 	float posZ;
 	float radius;
-	float minX;
-	float maxX;
-	float minZ;
-	float maxZ;
 };
 
 MyMesh createCube();

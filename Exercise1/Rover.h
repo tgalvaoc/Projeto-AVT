@@ -3,16 +3,12 @@
 
 enum Key { FRONT, BACK, LEFT, RIGHT, NONE };
 
-struct Velocity {
-	int angle;
-	float speed;
-	float direction[3];
-};
-
 class Rover {
 public: 
 	MyObject rover;
-	Velocity velocity;
+	int angle;
+	float speed;
+	float direction[3];
 	float position[3];
 
 	Rover();

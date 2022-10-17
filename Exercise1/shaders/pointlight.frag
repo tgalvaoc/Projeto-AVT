@@ -51,6 +51,7 @@ uniform bool fog_mode;
 uniform bool multitexture_mode;
 uniform vec4 coneDir;	
 uniform float spotCosCutOff;
+uniform bool ground;
 
 uniform PointLight pointLights[NUMBER_POINT_LIGHTS];
 uniform SpotLight spotLights[NUMBER_SPOT_LIGHTS];
@@ -64,13 +65,17 @@ in Data {
 	vec4 pos;
 	vec3 normal;
 	vec3 eye;
+	vec2 tex_coord;
 } DataIn;
 
 void main() {
 
-   //range based
-   dist = length(DataIn.pos);   //use it;
-   bool changed = false;
+	//range based
+	dist = length(DataIn.pos);   //use it;
+
+	vec4 texel, texel1; 
+	float intensity;
+	vec3 specSum = vec3(0.0);
 	if(sun_mode){
 		
 		vec3 spec = vec3(0.0);
@@ -79,18 +84,17 @@ void main() {
 		vec3 l = normalize(lightDir);
 		vec3 e = normalize(DataIn.eye);
 
-		float intensity = max(dot(n,l), 0.0);
+		intensity = max(dot(n,l), 0.0);
 	
 		if (intensity > 0.0) {
 			vec3 h = normalize(l + e);
 			float intSpec = max(dot(h,n), 0.0);
 			spec = mat.specular.rgb * pow(intSpec, mat.shininess);
+			specSum += spec;
 		}
-		changed = true;
-		auxColorOut += vec4(max(intensity * mat.diffuse.rgb + 0.3 * spec, mat.ambient.rgb), mat.diffuse.a);
+		auxColorOut += vec4(max(intensity * mat.diffuse.rgb + 0.3 * spec, mat.ambient.rgb)*0.8, mat.diffuse.a);
 	}
 	if(point_lights_mode){
-	changed = true;
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
 			vec3 spec = vec3(0.0);
 			vec3 lightDir = vec3(pointLights[i].position - DataIn.pos);
@@ -98,12 +102,13 @@ void main() {
 			vec3 l = normalize(lightDir);
 			vec3 e = normalize(DataIn.eye);
 
-			float intensity = max(dot(n,l), 0.0);
+			intensity = max(dot(n,l), 0.0);
 	
 			if (intensity > 0.0) {
 				vec3 h = normalize(l + e);
 				float intSpec = max(dot(h,n), 0.0);
 				spec = mat.specular.rgb * pow(intSpec, mat.shininess);
+				specSum += spec;
 			}
 			auxColorOut += vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb)/6, mat.diffuse.a);
 
@@ -124,15 +129,21 @@ void main() {
 
 			if(spotCos > spotCosCutOff)  {	//inside cone?
 				att = pow(spotCos, spotExp);
-				float intensity = max(dot(n,l), 0.0) * att;
+				intensity = max(dot(n,l), 0.0) * att;
 				if (intensity > 0.0) {
 					vec3 h = normalize(l + e);
 					float intSpec = max(dot(h,n), 0.0);
 					spec = mat.specular.rgb * pow(intSpec, mat.shininess) * att;
-					auxColorOut += vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb), mat.diffuse.a);
+					specSum += spec;
+					auxColorOut +=  vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb), mat.diffuse.a);
 				}
 			}
 		}
+	}
+	if (multitexture_mode && ground){
+		texel = texture(texmap, DataIn.tex_coord * 40);  // texel from lighwood.tga
+		texel1 = texture(texmap2, DataIn.tex_coord * 40);  // texel from checker.tga
+		auxColorOut += vec4(max(intensity*texel.rgb*texel1.rgb + specSum, 0.07*texel.rgb*texel1.rgb), texel.a*texel1.a);
 	}
 	auxColorOut[3] = mat.diffuse.a;
 	if (fog_mode) {
