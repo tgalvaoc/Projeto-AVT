@@ -57,7 +57,7 @@ uniform SpotLight spotLights[NUMBER_SPOT_LIGHTS];
 uniform DirectionalLight dirLight;
 
 uniform Materials mat;
-vec4 auxColorOut = { 0.0, 0.0, 0.0, 0.0};
+vec4 auxColorOut = { 0.0, 0.0, 0.0, 1.0};
 float dist;
 
 in Data {
@@ -70,7 +70,7 @@ void main() {
 
    //range based
    dist = length(DataIn.pos);   //use it;
-
+   bool changed = false;
 	if(sun_mode){
 		
 		vec3 spec = vec3(0.0);
@@ -86,9 +86,11 @@ void main() {
 			float intSpec = max(dot(h,n), 0.0);
 			spec = mat.specular.rgb * pow(intSpec, mat.shininess);
 		}
+		changed = true;
 		auxColorOut += vec4(max(intensity * mat.diffuse.rgb + 0.3 * spec, mat.ambient.rgb), mat.diffuse.a);
 	}
 	if(point_lights_mode){
+	changed = true;
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
 			vec3 spec = vec3(0.0);
 			vec3 lightDir = vec3(pointLights[i].position - DataIn.pos);
@@ -127,11 +129,12 @@ void main() {
 					vec3 h = normalize(l + e);
 					float intSpec = max(dot(h,n), 0.0);
 					spec = mat.specular.rgb * pow(intSpec, mat.shininess) * att;
-					auxColorOut +=  vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb), mat.diffuse.a);
+					auxColorOut += vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb), mat.diffuse.a);
 				}
 			}
 		}
 	}
+	auxColorOut[3] = mat.diffuse.a;
 	if (fog_mode) {
 		
 		float fogAmount = exp( -dist*0.05 );
