@@ -44,7 +44,7 @@ struct Pillar {
 
 struct Rock{
 	float position[3];
-	float side;
+	float radius;
 	float speed;
 	MyObject object;
 };

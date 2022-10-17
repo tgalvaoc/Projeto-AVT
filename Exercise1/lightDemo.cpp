@@ -328,26 +328,29 @@ void checkCollisions() {
 	isHittingRock = false;
 	for each (Rock rock in rocks) {
 
-		float maxX = rock.position[0] + rock.side / 2;
-		float minX = rock.position[0] - rock.side / 2;
-		float maxZ = rock.position[2] + rock.side / 2;
-		float minZ = rock.position[2] - rock.side / 2;
+		float maxX = rock.position[0] + rock.radius;
+		float minX = rock.position[0] - rock.radius;
+		float maxZ = rock.position[2] + rock.radius;
+		float minZ = rock.position[2] - rock.radius;
 
 		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
 			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
-			isHittingRock = true;
+			rover.position[0] += rover.direction[0] * rover.speed * delta;
+			rover.position[2] -= rover.direction[2] * rover.speed * delta;
 			rover.speed = 0;
 
-			rock.speed = ((isGoingForward) ? rock.speed + 0.1 : rock.speed - 0.1);
+			isHittingRock = true;
+			
+			rock.speed = rover.speed;
 
-			rock.position[0] = rock.speed * delta * rover.direction[0];
-			rock.position[2] = rock.speed * delta * rover.direction[2];
+			//rock.speed = ((isGoingForward) ? rock.speed + 0.1 : rock.speed - 0.1);
+			//rock.speed /= rock.radius;
 
-			if (rock.speed != 0)
-				rover.speed += -2 * rover.speed * delta;
+			rock.position[0] = rock.speed * rover.direction[0];
+			rock.position[2] = rock.speed * rover.direction[2];
 		}
 	}
 
@@ -365,7 +368,10 @@ void checkCollisions() {
 			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
 			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
+			rover.position[0] += rover.direction[0] * rover.speed * delta;
+			rover.position[2] -= rover.direction[2] * rover.speed * delta;
 			rover.speed = 0;
+
 			isHittingPillar = true;
 			break;
 		}
@@ -397,9 +403,13 @@ void checkCollisions() {
 
 void animate(int value) {
 
-	checkCollisions();
 	updateRoverPosition();
+	checkCollisions();
 	updateSpotlight();
+
+	for each (Rock rock in rocks)
+		if (rock.speed != 0)
+			rock.speed += -2 * rock.speed * delta;
 	
 	if (tracking == 0)
 		updateRoverCamera();
@@ -705,9 +715,6 @@ void processKeys(unsigned char key, int xx, int yy)
 			rover.speed = 0;
 			return;
 		}
-
-		
-
 		rover.speed -= 0.8;
 		beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / pi;
 		isGoingForward = false;
@@ -1038,25 +1045,31 @@ void createRover() {
 
 void createRock() {
 
-	MyMesh amesh = createSphere(1.0f, 10);
+	MyMesh amesh = createSphere(4.0f, 10);
 	Rock rock;
     MyObject obj;
     setIdentityMatrix(obj.objectTransform, 4);
 
     setMeshColor(&amesh, 0.27, 0.71, 0.77, 1.0);
     setIdentityMatrix(amesh.meshTransform, 4);
-    myTranslate(amesh.meshTransform, -10.0, 0.2, 0.0);
+    myTranslate(amesh.meshTransform, 20.0, 0.2, 10.0);
     obj.meshes.push_back(amesh);
 	rock.object = obj;
+	rock.radius = 4;
+	rock.position[0] = 20;
+	rock.position[2] = 10;
 	
     rocks.push_back(rock);
 
-    amesh = createSphere(0.5f, 10);
+    amesh = createSphere(1.0f, 10);
     setMeshColor(&amesh, 0.27, 0.71, 0.77, 1.0);
     setIdentityMatrix(amesh.meshTransform, 4);
-    myTranslate(amesh.meshTransform, -12.0, 0.2, 3.0);
+    myTranslate(amesh.meshTransform, -15.0, 0.2, -15.0);
     obj.meshes.push_back(amesh);
 	rock.object = obj;
+	rock.radius = 1.0;
+	rock.position[0] = -15;
+	rock.position[2] = -15;
 	
 	rocks.push_back(rock);
 	
