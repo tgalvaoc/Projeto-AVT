@@ -178,6 +178,7 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 		float r2 = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
 			r2 = -r2;
+		//std::cout << "R1: " << r1 << " r2: " << r2 << "\n";
 
 		low = 0;
 		high = 1;
@@ -190,6 +191,7 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 		high = 1;
 		
 		signal = rand() % 2;
+		//cout << "signal " << signal;
 		rock.direction[0] = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
 			rock.direction[0] = - rock.direction[0];

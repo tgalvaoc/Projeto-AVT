@@ -9,7 +9,7 @@ using namespace std;
 Rover::Rover() {};
 
 Rover::Rover(MyObject obj) {
-	rover = obj;
+	object = obj;
 	angle = 0;
 	speed = 0;
 	position[0] = 0;
