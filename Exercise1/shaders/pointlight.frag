@@ -6,6 +6,7 @@
 uniform sampler2D texmap;
 uniform sampler2D texmap1;
 uniform sampler2D texmap2;
+uniform sampler2D texmap3;
 
 uniform int texMode;
 
@@ -141,10 +142,18 @@ void main() {
 		}
 	}
 	if (multitexture_mode && ground){
-		texel = texture(texmap, DataIn.tex_coord * 40);  // texel from lighwood.tga
-		texel1 = texture(texmap2, DataIn.tex_coord * 40);  // texel from checker.tga
+		texel = texture(texmap, DataIn.tex_coord * 40);  // texel from mars_texture.tga
+		texel1 = texture(texmap2, DataIn.tex_coord * 40);  // texel from rock_texture.tga
 		auxColorOut += vec4(max(intensity*texel.rgb*texel1.rgb + specSum, 0.07*texel.rgb*texel1.rgb), texel.a*texel1.a);
 	}
+	
+	if (texMode == 4){ //particles
+		texel = texture(texmap3, DataIn.tex_coord); // texel from particle.tga
+		if((texel.a == 0.0)  || (mat.diffuse.a == 0.0) ) discard;
+		else
+			auxColorOut += mat.diffuse * texel;
+	}
+
 	auxColorOut[3] = mat.diffuse.a;
 	if (fog_mode) {
 		

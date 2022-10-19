@@ -40,6 +40,7 @@ float delta = 0.015f;
 float alpha, beta, r;
 
 #define M_PI       3.14159265358979323846f
+#define frand()			((float)rand()/RAND_MAX)
 
 //shaders
 VSShaderLib shader;  //geometry
@@ -50,6 +51,7 @@ const string font_name = "fonts/arial.ttf";
 
 //Vector with objects, and each object can have one or more meshes
 vector<MyObject> myObjects;
+MyMesh particleMesh;
 
 Rover rover;
 LandingSite landingSite;
@@ -70,7 +72,7 @@ bool isGoingForward = false;
 bool isHittingPillar = false;
 bool isHittingRock = false;
 
-GLuint TextureArray[3];
+GLuint TextureArray[4];
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -103,7 +105,7 @@ char s[32];
 
 #define NUMBER_POINT_LIGHTS 6
 #define NUMBER_SPOT_LIGHTS 2
-
+#define MAX_PARTICLES 250
 
 float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 0.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
@@ -111,6 +113,19 @@ float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.
 	{5.0f, 8.0f, 0.0f, 1.0f} };
 float spotlightPos[NUMBER_SPOT_LIGHTS][4];
 float coneDir[4];
+
+typedef struct {
+	float	life;		// vida
+	float	fade;		// fade
+	float	r, g, b;    // color
+	GLfloat x, y, z;    // posi‹o
+	GLfloat vx, vy, vz; // velocidade 
+	GLfloat ax, ay, az; // acelera‹o
+} Particle;
+
+vector <Particle> particles;
+int dead_num_particles = 0;
+
 
 void initialState(bool livesReset) {
 
@@ -232,6 +247,65 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 }
 
 
+void initParticles(void) {
+	GLfloat v, theta, phi;
+	int i;
+	Particle p;
+
+	for (i = 0; i < MAX_PARTICLES; i++)
+	{
+		v = 0.8 * frand() + 0.2;
+		phi = frand() * M_PI;
+		theta = 2.0 * frand() * M_PI;
+
+		p.x = rover.position[0] + rover.direction[0] * 2;
+		p.y = rover.position[1] + 0.75;
+		p.z = rover.position[2] - rover.direction[2] * 2;
+		p.vx = v * cos(theta) * sin(phi);
+		p.vy = v * cos(phi);
+		p.vz = v * sin(theta) * sin(phi);
+		p.ax = 0.1f;   /* simulates wind */
+		p.ay = -0.25f; /* simulates gravity */
+		p.az = 0.0f;
+
+		p.r = 0.6f;
+		p.g = 0.6f;
+		p.b = 0.6f;
+
+		p.life = 1.0f;		/* initial life */
+		p.fade = 0.008f;	    /* step to decrease life in each iteration */
+		particles.push_back(p);
+	}
+}
+
+
+void updateParticles()
+{
+	int i;
+	float h;
+
+	/* Método de Euler de integração de eq. diferenciais ordinárias
+	h represents the time step; dv/dt = a; dx/dt = v; initial values of x and v */
+
+	//h = 0.125f;
+	h = 0.033;
+
+	for (i = 0; i < particles.size(); i++) {
+		particles[i].x += (h * particles[i].vx);
+		particles[i].y += (h * particles[i].vy);
+		particles[i].z += (h * particles[i].vz);
+		particles[i].vx += (h * particles[i].ax);
+		particles[i].vy += (h * particles[i].ay);
+		particles[i].vz += (h * particles[i].az);
+		particles[i].life -= particles[i].fade;
+
+		if (particles[i].life <= 0)
+			particles.erase(particles.begin() + i);
+	}
+
+}
+
+
 void updateRollingRocks() {
 	vector<RollingRock> aux;
 
@@ -274,7 +348,7 @@ void updateStaticRocks() {
 		staticRocks[i].position[2] += translateZ;
 
 		if (staticRocks[i].speed != 0)
-			staticRocks[i].speed += -staticRocks[i].speed / 2;
+			staticRocks[i].speed += -staticRocks[i].speed / 8;
 	}
 
 }
@@ -311,12 +385,12 @@ void updateSpotlight() {
 	coneDir[2] = rover.direction[2];
 	coneDir[3] = 0.0f;
 	
-	spotlightPos[0][0] = rover.position[0] + rover.direction[0] * (-1.0f);
+	spotlightPos[0][0] = rover.position[0] - rover.direction[0];
 	spotlightPos[0][1] = rover.position[1] + 0.5f;
 	spotlightPos[0][2] = rover.position[2] + 0.5f;
 	spotlightPos[0][3] = 1.0f;
 
-	spotlightPos[1][0] = rover.position[0] + rover.direction[0] * (-1.0f);
+	spotlightPos[1][0] = rover.position[0] - rover.direction[0];
 	spotlightPos[1][1] = rover.position[1] + 0.5f;
 	spotlightPos[1][2] = rover.position[2] - 0.5f;
 	spotlightPos[1][3] = 1.0f;
@@ -361,12 +435,13 @@ void checkCollisions() {
 		float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
 		float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
 
+		cout << "\nRadius of : " << i << " :" << staticRocks[i].radius;
 		if ((minX <= roverMaxX && minX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
 			(maxX <= roverMaxX && maxX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
 			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
 			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
-			staticRocks[i].speed = rover.speed * 0.1f;
+			staticRocks[i].speed = abs(rover.speed * 0.01f / staticRocks[i].radius);
 
 			rover.position[0] += rover.direction[0] * rover.speed * delta;
 			rover.position[2] -= rover.direction[2] * rover.speed * delta;
@@ -378,8 +453,8 @@ void checkCollisions() {
 				staticRocks[i].direction[2] = rover.direction[2];
 			}
 			else {
-				staticRocks[i].direction[0] = rover.direction[0];
-				staticRocks[i].direction[2] = -rover.direction[2];
+				staticRocks[i].direction[0] =  rover.direction[0];
+				staticRocks[i].direction[2] =  -rover.direction[2];
 			}
 
 			isHittingRock = true;
@@ -695,10 +770,71 @@ void renderScene(void) {
 	}
 	popMatrix(MODEL);
 
+	// Particles --------------------------------------------
+
+	float particle_color[4];
+	
+	updateParticles();
+
+	// draw fireworks particles
+	//objId = 6;  //quad for particle
+
+	glBindTexture(GL_TEXTURE_2D, TextureArray[3]); //particle.tga 
+
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glDepthMask(GL_FALSE);  //Depth Buffer Read Only
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "texMode");
+	glUniform1i(loc, 4);
+	//glUniform1i(texMode_uniformId, 4); // draw modulated textured particles 
+
+	for (int i = 0; i < particles.size(); i++)
+	{
+		if (particles[i].life > 0.0f) /* só desenha as que ainda estão vivas */
+		{
+
+			/* A vida da partícula representa o canal alpha da cor. Como o blend está activo a cor final é a soma da cor rgb do fragmento multiplicada pelo
+			alpha com a cor do pixel destino */
+
+			particle_color[0] = particles[i].r;
+			particle_color[1] = particles[i].g;
+			particle_color[2] = particles[i].b;
+			particle_color[3] = particles[i].life;
+
+			// send the material - diffuse color modulated with texture
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, particle_color);
+
+			pushMatrix(MODEL);
+			translate(MODEL, particles[i].x, particles[i].y, particles[i].z);
+			rotate(MODEL, 90, 0, 1, 0);
+
+			// send matrices to OGL
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			glBindVertexArray(particleMesh.vao);
+			glDrawElements(particleMesh.type, particleMesh.numIndexes, GL_UNSIGNED_INT, 0);
+			popMatrix(MODEL);
+		}
+		else dead_num_particles++;
+	}
+	loc = glGetUniformLocation(shader.getProgramIndex(), "texMode");
+	glUniform1i(loc, 0); // does nothing in shader
+
+	glDepthMask(GL_TRUE); //make depth buffer again writeable
+
+	// Text -------------------------------------------------
+
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
 	//the glyph contains transparent background colors and non-transparent for the actual character pixels. So we use the blending
-
 
 	int m_viewport[4];
 	glGetIntegerv(GL_VIEWPORT, m_viewport);
@@ -768,7 +904,7 @@ void processKeys(unsigned char key, int xx, int yy)
 		
 		if (isHittingRock && isGoingForward)
 			return;
-
+		initParticles();
 		rover.speed += 0.8f;
 		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
 		isGoingForward = true;
@@ -783,7 +919,7 @@ void processKeys(unsigned char key, int xx, int yy)
 		
 		if (isHittingRock && !isGoingForward) 
 			return;
-		
+		initParticles();
 		rover.speed -= 0.8f;
 		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
 		isGoingForward = false;
@@ -1164,8 +1300,10 @@ void createStaticRocks() {
     obj1.meshes.push_back(amesh);
 	rock1.object = obj1;
 	rock1.radius = 4.0f;
-	rock1.originalPos[0] = rock1.position[0] = 20.0f;
-	rock1.originalPos[2] = rock1.position[2] = 10.0f;
+	rock1.originalPos[0] = 20.0f;
+	rock1.originalPos[2] = 10.0f;
+	rock1.position[0] = 20.0f;
+	rock1.position[2] = 10.0f;
 	rock1.speed = 0.0f;
     staticRocks.push_back(rock1);
 
@@ -1180,13 +1318,14 @@ void createStaticRocks() {
     obj2.meshes.push_back(amesh);
 	rock2.object = obj2;
 	rock2.radius = 1.0f;
-	rock2.originalPos[0] = rock2.position[0] = -15.0f;
-	rock2.originalPos[2] = rock2.position[2] = -15.0f;
+	rock2.originalPos[0] = -15.0f;
+	rock2.originalPos[2] = -15.0f;
+	rock2.position[0] = -15.0f;
+	rock2.position[2] = -15.0f;
 	rock2.speed = 0.0f;
 	staticRocks.push_back(rock2);
 	
 }
-
 
 
 // ------------------------------------------------------------
@@ -1208,11 +1347,11 @@ void init()
 	}
 	ilInit();
 
-	glGenTextures(3, TextureArray);
-	Texture2D_Loader(TextureArray, "mars_texture.jpg", 0);
-	Texture2D_Loader(TextureArray, "steel_texture.jpg", 1);
-	Texture2D_Loader(TextureArray, "rock_texture.jpg", 2);
-
+	glGenTextures(4, TextureArray);
+	Texture2D_Loader(TextureArray, "mars_texture.tga", 0);
+	Texture2D_Loader(TextureArray, "steel_texture.tga", 1);
+	Texture2D_Loader(TextureArray, "rock_texture.tga", 2);
+	Texture2D_Loader(TextureArray, "particle.tga", 3);
 
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
@@ -1224,6 +1363,8 @@ void init()
 	createRover();
 	createCameras();
 
+	particleMesh = createQuad(0.01, 0.01);
+	//particleMesh.mat.texCount = 3; // attribute for texture
 	initialState(true);
 	glutTimerFunc(0, animate, 0);
 
