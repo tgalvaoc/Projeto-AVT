@@ -39,6 +39,8 @@ float delta = 0.015;
 
 float alpha, beta, r;
 
+#define M_PI       3.14159265358979323846f
+
 //shaders
 VSShaderLib shader;  //geometry
 VSShaderLib shaderText;  //render bitmap text
@@ -56,6 +58,7 @@ vector<Rock> rocks;
 list<Pillar> pillars;
 
 bool pauseActive = false;
+bool gameOver = false;
 
 bool spotlight_mode = true;
 bool sun_mode = true;
@@ -89,6 +92,7 @@ Camera cameras[3];
 int currentCamera = 0;
 
 int livesCount;
+int points = 0;
 
 // Mouse Tracking Variables
 int startX, startY, tracking = 0;
@@ -123,10 +127,9 @@ void initialState(bool livesReset) {
 	cameras[2].position[1] = 5;
 	cameras[2].position[2] = 0;
 
-	float pi = 3.1415;
 	r = sqrt(pow(cameras[2].position[0], 2) + pow(cameras[2].position[1], 2) + pow(cameras[2].position[2], 2));
-	alpha = acos(cameras[2].position[2] / r) * 180.0 / pi;
-	beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / pi;
+	alpha = acos(cameras[2].position[2] / r) * 180.0 / M_PI;
+	beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI;
 }
 
 void createCameras() {
@@ -299,7 +302,6 @@ void updateRoverPosition() {
 
 
 void updateRoverCamera() {
-	float pi = 3.1415;
 	cameras[2].position[0] = rover.position[0] + rover.direction[0] * 10;
 	cameras[2].position[1] = 5;
 	cameras[2].position[2] = rover.position[2] - rover.direction[2] * 10;
@@ -394,9 +396,9 @@ void checkCollisions() {
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
 			
-			if(livesCount-- == 0){
-				//gameOverScreen(); //speed rolling rocks = 0;
-				
+			if(--livesCount <= 0){
+				livesCount = 0;
+				gameOver = true;
 			}
 			else{
 				initialState(false);
@@ -413,7 +415,7 @@ void checkCollisions() {
 
 void animate(int value) {
 
-	if (!pauseActive) {
+	if (!pauseActive && !gameOver) {
 
 		updateRoverPosition();
 
@@ -680,7 +682,12 @@ void renderScene(void) {
 	pushMatrix(VIEW);
 	loadIdentity(VIEW);
 	ortho(m_viewport[0], m_viewport[0] + m_viewport[2] - 1, m_viewport[1], m_viewport[1] + m_viewport[3] - 1, -1, 1);
-	RenderText(shaderText, (const GLchar*)("Lives: " + to_string(livesCount)).c_str(), WinX - 180, WinY - 50, 1.0f, 0.5f, 0.5f, 0.5f);
+	RenderText(shaderText, (const GLchar*)("Lives: " + to_string(livesCount)).c_str(), WinX - 190, WinY - 48, 1.0f, 0.8f, 0.8f, 0.8f);
+	RenderText(shaderText, "00000", 10, WinY - 48, 1.0f, 0.8f, 0.8f, 0.8f);
+	if (pauseActive)
+		RenderText(shaderText, "PAUSE", WinX/2 - 80, WinY /2 + 220, 1.0f, 0.8f, 0.8f, 0.8f);
+	if (gameOver)
+		RenderText(shaderText, "GAME OVER", WinX / 2 - 150 , WinY / 2 + 220, 1.0f, 0.8f, 0.8f, 0.8f);
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
@@ -717,7 +724,6 @@ void changeSize(int w, int h) {
 //
 void processKeys(unsigned char key, int xx, int yy)
 {
-	float pi = 3.1415;
 	std::tuple<float, float> aux;
 	switch (key) {
 	case 27:
@@ -725,7 +731,7 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'q':
 	case'Q':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		if (isHittingPillar && isGoingForward)
@@ -735,12 +741,12 @@ void processKeys(unsigned char key, int xx, int yy)
 			return;
 
 		rover.speed += 0.8;
-		beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / pi;
+		beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI;
 		isGoingForward = true;
 		break;
 	case 'a':
 	case'A':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		if (isHittingPillar && !isGoingForward) 
@@ -750,12 +756,12 @@ void processKeys(unsigned char key, int xx, int yy)
 			return;
 		
 		rover.speed -= 0.8;
-		beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / pi;
+		beta = atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI;
 		isGoingForward = false;
 		break;
 	case 'o':
 	case'O':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		rover.angle += 1;
@@ -763,71 +769,74 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'p':
 	case'P':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		rover.angle -= 1;
 		alpha -= 1;
 		break;
 	case '1':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		currentCamera = 0;
 		break;
 	case '2':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		currentCamera = 1;
 		break;
 	case '3':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		currentCamera = 2;
 		break;
 	case 'c':
 	case 'C':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		point_lights_mode = !point_lights_mode;
 		break;
 	case 'h':
 	case 'H':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		spotlight_mode = !spotlight_mode;
 		break;
 	case 'n':
 	case 'N':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		sun_mode = !sun_mode;
 		break;
 	case 'f':
 	case 'F':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		fog_mode = !fog_mode;
 		break;
 	case 't':
 	case 'T':
-		if (pauseActive)
+		if (pauseActive || gameOver)
 			return;
 
 		multitexture_mode = !multitexture_mode;
 		break;
 	case 's':
 	case 'S':
+		if (gameOver)
+			return;
 		pauseActive = !pauseActive;
 		break;
 	case 'r':
 	case'R':
+		gameOver = false;
 		pauseActive = false;
 		initialState(true);
 		rollingRocks.clear();
@@ -879,10 +888,9 @@ void processMouseMotion(int xx, int yy)
 		else if (betaAux < -85.0f)
 			betaAux = -85.0f;
 
-		float pi = 3.1415;
-		cameras[2].position[0] = rover.position[0] + cos((pi / 180) * alphaAux) * 10;
-		cameras[2].position[1] = rover.position[1] + cos((pi / 180) * betaAux) * 10;
-		cameras[2].position[2] = rover.position[2] - sin((pi / 180) * alphaAux) * 10;
+		cameras[2].position[0] = rover.position[0] + cos((M_PI / 180) * alphaAux) * 10;
+		cameras[2].position[1] = rover.position[1] + cos((M_PI / 180) * betaAux) * 10;
+		cameras[2].position[2] = rover.position[2] - sin((M_PI / 180) * alphaAux) * 10;
 
 		std::copy(rover.position, rover.position + 3, cameras[2].target);
 	}
