@@ -5,10 +5,10 @@ enum Key { FRONT, BACK, LEFT, RIGHT, NONE };
 
 class Rover {
 public: 
-	int angle;
-	float speed;
-	float direction[3];
-	float position[3];
+	float angle = 0.0f;
+	float speed = 0.0f;
+	float direction[3] = { 0.0f, 0.0f, 0.0f };
+	float position[3] = { 0.0f, 0.0f, 0.0f };
 	
 	MyObject object;
 	Rover();

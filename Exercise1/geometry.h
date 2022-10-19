@@ -33,33 +33,34 @@ struct MyMesh {
 };
 
 struct MyObject {
-	float objectTransform[16]; // posiciona o objeto em relacao ao centro do mundo
+	float objectTransform[16] = {}; // posiciona o objeto em relacao ao centro do mundo
 	vector<MyMesh> meshes;
 };
 
 struct Pillar {
-	float position[3];
-	float radius;
+	float position[3] = { 0.0f, 0.0f, 0.0f };
+	float radius = 0;
 };
 
-struct Rock{
-	float position[3];
-	float direction[3];
-	float radius;
-	float speed;
+struct StaticRock {
+	float originalPos[3] = {0.0f, 0.0f, 0.0f};
+	float position[3] = { 0.0f, 0.0f, 0.0f };
+	float direction[3] = { 0.0f, 0.0f, 0.0f };
+	float radius = 0;
+	float speed = 0;
 	MyObject object;
 };
 
 struct RollingRock {
 	float radius = 0;
 	float speed = 0;
-	float position[3];
-	float direction[3];
+	float position[3] = { 0.0f, 0.0f, 0.0f };
+	float direction[3] = { 0.0f, 0.0f, 0.0f };
 	MyObject object;
 };
 
 struct LandingSite {
-	float side;
+	float side = 0;
 	MyObject ground;
 };
 
