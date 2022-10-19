@@ -129,8 +129,10 @@ int dead_num_particles = 0;
 
 void initialState(bool livesReset) {
 
-	if (livesReset)
+	if (livesReset) {
 		livesCount = 5;
+		points = 0;
+	}
 
 	rover.position[0] = 0.0f;
 	rover.position[1] = 0.0f;
@@ -435,7 +437,7 @@ void checkCollisions() {
 		float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
 		float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
 
-		cout << "\nRadius of : " << i << " :" << staticRocks[i].radius;
+		//cout << "\nRadius of : " << i << " :" << staticRocks[i].radius;
 		if ((minX <= roverMaxX && minX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
 			(maxX <= roverMaxX && maxX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
 			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
@@ -453,8 +455,8 @@ void checkCollisions() {
 				staticRocks[i].direction[2] = rover.direction[2];
 			}
 			else {
-				staticRocks[i].direction[0] =  rover.direction[0];
-				staticRocks[i].direction[2] =  -rover.direction[2];
+				staticRocks[i].direction[0] = rover.direction[0];
+				staticRocks[i].direction[2] = -rover.direction[2];
 			}
 
 			isHittingRock = true;
@@ -847,12 +849,19 @@ void renderScene(void) {
 	pushMatrix(VIEW);
 	loadIdentity(VIEW);
 	ortho(float(m_viewport[0]), float(m_viewport[0] + m_viewport[2] - 1), float(m_viewport[1]), float(m_viewport[1] + m_viewport[3] - 1), -1.0f, 1.0f);
+	
 	RenderText(shaderText, (const GLchar*)("Lives: " + to_string(livesCount)).c_str(), float(WinX - 190), float(WinY - 48), 1.0f, 0.8f, 0.8f, 0.8f);
-	RenderText(shaderText, "00000", 10, float(WinY - 48), 1.0f, 0.8f, 0.8f, 0.8f);
+	
+	string num = to_string(points);
+	string str = "00000";
+	str.replace(str.size() - num.size(), 5, num);
+	RenderText(shaderText, str, 10, float(WinY - 48), 1.0f, 0.8f, 0.8f, 0.8f);
+	
 	if (pauseActive)
 		RenderText(shaderText, "PAUSE", float(WinX/2 - 80), float(WinY /2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
 	if (gameOver)
 		RenderText(shaderText, "GAME OVER", float(WinX / 2 - 150) , float(WinY / 2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
+	
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
