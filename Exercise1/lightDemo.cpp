@@ -1,17 +1,4 @@
-﻿//
-// AVT: Phong Shading and Text rendered with FreeType library
-// The text rendering was based on https://learnopengl.com/In-Practice/Text-Rendering
-// This demo was built for learning purposes only.
-// Some code could be severely optimised, but I tried to
-// keep as simple and clear as possible.
-//
-// The code comes with no warranties, use it at your own risk.
-// You may use it, or parts of it, wherever you want.
-// 
-// Author: Jo�o Madeiras Pereira
-//
-
-#include <math.h>
+﻿#include <math.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -67,6 +54,9 @@ Rover rover;
 vector<RollingRock> rollingRocks;
 vector<Rock> rocks;
 list<Pillar> pillars;
+
+bool pauseActive = false;
+
 bool spotlight_mode = true;
 bool sun_mode = true;
 bool point_lights_mode = false;
@@ -98,6 +88,8 @@ GLint texMode_uniformId;
 Camera cameras[3];
 int currentCamera = 0;
 
+int livesCount;
+
 // Mouse Tracking Variables
 int startX, startY, tracking = 0;
 
@@ -116,7 +108,11 @@ float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.
 float spotlightPos[NUMBER_SPOT_LIGHTS][4];
 float coneDir[4];
 
-void initialState() {
+void initialState(bool livesReset) {
+
+	if (livesReset)
+		livesCount = 5;
+
 	rover.position[0] = 0;
 	rover.position[1] = 0;
 	rover.position[2] = 0;
@@ -142,7 +138,7 @@ void createCameras() {
 
 vector<RollingRock> createRollingRocks(int numToCreate) {
 
-	MyMesh amesh = createSphere(1.0f, 10); // podemos randomizar tamanho no futuro
+	MyMesh amesh = createSphere(1.0f, 10); // randomize size in the future
 	MyObject stone;
 	RollingRock rock;
 	vector<RollingRock> rocks;
@@ -322,7 +318,7 @@ void checkCollisions() {
 	float roverMaxZ = rover.position[2] + roverFactor;
 	float roverMinZ = rover.position[2] - roverFactor;
 
-	// colisão com objetos estáticos
+	// collision with static rocks
 	isHittingRock = false;
 	for each (Rock rock in rocks) {
 
@@ -356,7 +352,6 @@ void checkCollisions() {
 			}
 			//rock.speed = ((isGoingForward) ? rock.speed + 0.1 : rock.speed - 0.1);
 			//rock.speed /= rock.radius;
-			
 
 			rock.position[0] = 0;
 		}
@@ -398,10 +393,17 @@ void checkCollisions() {
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
-			initialState();
-			rollingRocks.clear();
-			createRollingRocks(7);
-			break;
+			
+			if(livesCount-- == 0){
+				//gameOverScreen(); //speed rolling rocks = 0;
+				
+			}
+			else{
+				initialState(false);
+				rollingRocks.clear();
+				createRollingRocks(7);
+				break;
+			}
 		}
 	}
 
@@ -411,30 +413,34 @@ void checkCollisions() {
 
 void animate(int value) {
 
-	updateRoverPosition();
+	if (!pauseActive) {
 
-	for each (Rock rock in rocks) {
+		updateRoverPosition();
 
-		float translateX = rock.speed * rock.direction[0];
-		float translateZ = rock.speed * rock.direction[2];
+		checkCollisions();
 
-		rock.position[0] += translateX;
-		rock.position[2] += translateZ;
+		for each (Rock rock in rocks) {
 
-		myTranslate(rock.object.objectTransform, translateX, 0, translateZ);
+			float translateX = rock.speed * rock.direction[0];
+			float translateZ = rock.speed * rock.direction[2];
 
-		if (rock.speed != 0)
-			rock.speed += -rock.speed / 2;
+			rock.position[0] += translateX;
+			rock.position[2] += translateZ;
+
+			myTranslate(rock.object.objectTransform, translateX, 0, translateZ);
+
+			if (rock.speed != 0)
+				rock.speed += -rock.speed / 2;
+		}
+
+		updateSpotlight();
+
+
+		if (tracking == 0)
+			updateRoverCamera();
+
+		animateRocks();
 	}
-
-	checkCollisions();
-	updateSpotlight();
-
-
-	if (tracking == 0)
-		updateRoverCamera();
-
-	animateRocks();
 
 	glutTimerFunc(20, animate, 0);
 }
@@ -459,6 +465,7 @@ void renderScene(void) {
 	// load identity matrices
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
+
 
 	// set the camera using a function similar to gluLookAt
 
@@ -673,11 +680,13 @@ void renderScene(void) {
 	pushMatrix(VIEW);
 	loadIdentity(VIEW);
 	ortho(m_viewport[0], m_viewport[0] + m_viewport[2] - 1, m_viewport[1], m_viewport[1] + m_viewport[3] - 1, -1, 1);
+	RenderText(shaderText, (const GLchar*)("Lives: " + to_string(livesCount)).c_str(), WinX - 180, WinY - 50, 1.0f, 0.5f, 0.5f, 0.5f);
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
+
 	glutSwapBuffers();
 }
 
@@ -716,6 +725,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'q':
 	case'Q':
+		if (pauseActive)
+			return;
+
 		if (isHittingPillar && isGoingForward)
 			return;
 		
@@ -728,6 +740,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'a':
 	case'A':
+		if (pauseActive)
+			return;
+
 		if (isHittingPillar && !isGoingForward) 
 			return;
 		
@@ -740,46 +755,81 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'o':
 	case'O':
+		if (pauseActive)
+			return;
+
 		rover.angle += 1;
 		alpha += 1;
 		break;
 	case 'p':
 	case'P':
+		if (pauseActive)
+			return;
+
 		rover.angle -= 1;
 		alpha -= 1;
 		break;
 	case '1':
+		if (pauseActive)
+			return;
+
 		currentCamera = 0;
 		break;
 	case '2':
+		if (pauseActive)
+			return;
+
 		currentCamera = 1;
 		break;
 	case '3':
+		if (pauseActive)
+			return;
+
 		currentCamera = 2;
 		break;
 	case 'c':
 	case 'C':
+		if (pauseActive)
+			return;
+
 		point_lights_mode = !point_lights_mode;
 		break;
 	case 'h':
 	case 'H':
+		if (pauseActive)
+			return;
+
 		spotlight_mode = !spotlight_mode;
 		break;
 	case 'n':
 	case 'N':
+		if (pauseActive)
+			return;
+
 		sun_mode = !sun_mode;
 		break;
 	case 'f':
 	case 'F':
+		if (pauseActive)
+			return;
+
 		fog_mode = !fog_mode;
 		break;
 	case 't':
 	case 'T':
+		if (pauseActive)
+			return;
+
 		multitexture_mode = !multitexture_mode;
 		break;
-	case 'i':
-	case'I':
-		initialState();
+	case 's':
+	case 'S':
+		pauseActive = !pauseActive;
+		break;
+	case 'r':
+	case'R':
+		pauseActive = false;
+		initialState(true);
 		rollingRocks.clear();
 		createRollingRocks(7);
 		break;
@@ -998,13 +1048,13 @@ void createRover() {
 	MyObject roverObj;
 	setIdentityMatrix(roverObj.objectTransform, 4);
 
-	MyMesh corpo = createCube();
-	setMeshColor(&corpo, 0.27, 0.71, 0.77, 0.6);
-	setIdentityMatrix(corpo.meshTransform, 4);
-	myTranslate(corpo.meshTransform, -0.5, -0.5, -0.5); // move o cubo pro centro
-	myScale(corpo.meshTransform, 3.0, 1.0, 1.5); // ajusta as dimensoes
-	myTranslate(corpo.meshTransform, -0.75 / 2, 0.5, -0.75 / 4); // coloca o corpo no centro, tocando no chao
-	myTranslate(corpo.meshTransform, 0.0, 0.25, 0.0); // tira o corpo do chao
+	MyMesh body = createCube();
+	setMeshColor(&body, 0.27, 0.71, 0.77, 0.6);
+	setIdentityMatrix(body.meshTransform, 4);
+	myTranslate(body.meshTransform, -0.5, -0.5, -0.5); // move o cubo pro centro
+	myScale(body.meshTransform, 3.0, 1.0, 1.5); // ajusta as dimensoes
+	myTranslate(body.meshTransform, -0.75 / 2, 0.5, -0.75 / 4); // coloca o corpo no centro, tocando no chao
+	myTranslate(body.meshTransform, 0.0, 0.25, 0.0); // tira o corpo do chao
 
 	// vista de frente
 	// =        = 0.25
@@ -1019,43 +1069,43 @@ void createRover() {
 	// distancia do corpo pro chao: 0.25
 
 
-	MyMesh roda1 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda1, 0.35, 0.18, 0.08, 1.0);
-	setIdentityMatrix(roda1.meshTransform, 4);
-	myTranslate(roda1.meshTransform, 1.2, 0.85, 0.75); // coloca a roda no lugar
-	myRotate(roda1.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
+	MyMesh wheel1 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&wheel1, 0.35, 0.18, 0.08, 1.0);
+	setIdentityMatrix(wheel1.meshTransform, 4);
+	myTranslate(wheel1.meshTransform, 1.2, 0.85, 0.75); // coloca a roda no lugar
+	myRotate(wheel1.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
-	MyMesh roda2 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda2, 0.35, 0.18, 0.08, 1.0);
-	setIdentityMatrix(roda2.meshTransform, 4);
-	myTranslate(roda2.meshTransform, 1.2, 0.85, -0.75); // coloca a roda no lugar
-	myRotate(roda2.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
+	MyMesh wheel2 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&wheel2, 0.35, 0.18, 0.08, 1.0);
+	setIdentityMatrix(wheel2.meshTransform, 4);
+	myTranslate(wheel2.meshTransform, 1.2, 0.85, -0.75); // coloca a roda no lugar
+	myRotate(wheel2.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
-	MyMesh roda3 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda3, 0.35, 0.18, 0.08, 1.0);
-	setIdentityMatrix(roda3.meshTransform, 4);
-	myTranslate(roda3.meshTransform, -1.2, 0.85, 0.75); // coloca a roda no lugar
-	myRotate(roda3.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
+	MyMesh wheel3 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&wheel3, 0.35, 0.18, 0.08, 1.0);
+	setIdentityMatrix(wheel3.meshTransform, 4);
+	myTranslate(wheel3.meshTransform, -1.2, 0.85, 0.75); // coloca a roda no lugar
+	myRotate(wheel3.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
-	MyMesh roda4 = createTorus(0.5, 0.75, 80, 80);
-	setMeshColor(&roda4, 0.35, 0.18, 0.08, 1.0);
-	setIdentityMatrix(roda4.meshTransform, 4);
-	myTranslate(roda4.meshTransform, -1.2, 0.85, -0.75); // coloca a roda no lugar
-	myRotate(roda4.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
+	MyMesh wheel4 = createTorus(0.5, 0.75, 80, 80);
+	setMeshColor(&wheel4, 0.35, 0.18, 0.08, 1.0);
+	setIdentityMatrix(wheel4.meshTransform, 4);
+	myTranslate(wheel4.meshTransform, -1.2, 0.85, -0.75); // coloca a roda no lugar
+	myRotate(wheel4.meshTransform, 90.0, 1.0, 0.0, 0.0); // coloca ela na vertical
 
-	MyMesh cabeca = createPawn();
-	setMeshColor(&cabeca, 0.27, 0.71, 0.77, 1.0);
-	setIdentityMatrix(cabeca.meshTransform, 4);
-	myScale(cabeca.meshTransform, 0.8, 0.5, 0.5); // ajusta as dimensoes
-	myTranslate(cabeca.meshTransform, -1.0, 0.5, 0); // coloca o corpo no centro, tocando no chao
-	myTranslate(cabeca.meshTransform, 0.0, 1, 0.0); // tira o corpo do chao
+	MyMesh head = createPawn();
+	setMeshColor(&head, 0.27, 0.71, 0.77, 1.0);
+	setIdentityMatrix(head.meshTransform, 4);
+	myScale(head.meshTransform, 0.8, 0.5, 0.5); // ajusta as dimensoes
+	myTranslate(head.meshTransform, -1.0, 0.5, 0); // coloca o corpo no centro, tocando no chao
+	myTranslate(head.meshTransform, 0.0, 1, 0.0); // tira o corpo do chao
 
-	roverObj.meshes.push_back(roda1);
-	roverObj.meshes.push_back(roda2);
-	roverObj.meshes.push_back(roda3);
-	roverObj.meshes.push_back(roda4);
-	roverObj.meshes.push_back(cabeca);
-	roverObj.meshes.push_back(corpo);
+	roverObj.meshes.push_back(wheel1);
+	roverObj.meshes.push_back(wheel2);
+	roverObj.meshes.push_back(wheel3);
+	roverObj.meshes.push_back(wheel4);
+	roverObj.meshes.push_back(head);
+	roverObj.meshes.push_back(body);
 
 	rover = Rover(roverObj);
 	rover.updateDirection();
@@ -1135,8 +1185,7 @@ void init()
 	createRover();
 	createCameras();
 
-	initialState();
-
+	initialState(true);
 	glutTimerFunc(0, animate, 0);
 
 	// some GL settings
@@ -1177,7 +1226,6 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
 	
-	
 	glutTimerFunc(0, timerFPS, 0);
 	glutTimerFunc(0, refresh, 0);
 
@@ -1185,7 +1233,7 @@ int main(int argc, char** argv) {
 	glutKeyboardFunc(processKeys);
 	glutMouseFunc(processMouseButtons);
 	glutMotionFunc(processMouseMotion);
-
+	
 
 	//	return from main loop
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
