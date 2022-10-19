@@ -50,13 +50,17 @@ struct Rock{
 	MyObject object;
 };
 
-
 struct RollingRock {
 	float radius = 0;
 	float speed = 0;
 	float position[3];
 	float direction[3];
 	MyObject object;
+};
+
+struct LandingSite {
+	float side;
+	MyObject ground;
 };
 
 MyMesh createCube();

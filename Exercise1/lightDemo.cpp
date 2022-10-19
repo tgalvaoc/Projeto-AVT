@@ -51,8 +51,8 @@ const string font_name = "fonts/arial.ttf";
 //Vector with objects, and each object can have one or more meshes
 vector<MyObject> myObjects;
 
-MyObject ground;
 Rover rover;
+LandingSite landingSite;
 vector<RollingRock> rollingRocks;
 vector<Rock> rocks;
 list<Pillar> pillars;
@@ -224,7 +224,7 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 }
 
 
-void animateRocks() {
+void updateRollingRocks() {
 	vector<RollingRock> rocks;
 	vector<RollingRock> aux;
 	for (int i = 0; i < rollingRocks.size(); i++) {
@@ -244,6 +244,23 @@ void animateRocks() {
 				rocks.push_back(aux[0]);
 		}
 	}
+}
+
+void updateStaticRocks() {
+	for each (Rock rock in rocks) {
+
+		float translateX = rock.speed * rock.direction[0];
+		float translateZ = rock.speed * rock.direction[2];
+
+		myTranslate(rock.object.objectTransform, translateX, 0, translateZ);
+
+		rock.position[0] += translateX;
+		rock.position[2] += translateZ;
+
+		if (rock.speed != 0)
+			rock.speed += -rock.speed / 2;
+	}
+
 }
 
 void timerFPS(int value)
@@ -334,14 +351,13 @@ void checkCollisions() {
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
+			rock.speed = 1;
+
 			rover.position[0] += rover.direction[0] * rover.speed * delta;
 			rover.position[2] -= rover.direction[2] * rover.speed * delta;
 
-			rock.speed = 2;
 			rover.speed = 0;
 
-			isHittingRock = true;
-			
 			if (isGoingForward) {
 				rock.direction[0] = rover.direction[0];
 				rock.direction[1] = rover.direction[1];
@@ -352,14 +368,57 @@ void checkCollisions() {
 				rock.direction[1] = -rover.direction[1];
 				rock.direction[2] = -rover.direction[2];
 			}
-			//rock.speed = ((isGoingForward) ? rock.speed + 0.1 : rock.speed - 0.1);
-			//rock.speed /= rock.radius;
 
-			rock.position[0] = 0;
+			isHittingRock = true;
+			break;
 		}
 	}
 
-	// colisão com pilares
+	// collision with rolling rocks
+	for (int i = 0; i < rocks.size(); i++) {
+		Rock rock = rocks[i];
+
+		float maxX = rock.position[0] + rock.radius;
+		float minX = rock.position[0] - rock.radius;
+		float maxZ = rock.position[2] + rock.radius;
+		float minZ = rock.position[2] - rock.radius;
+
+		float groundMaxX = landingSite.side;
+		float groundMinX = -landingSite.side;
+		float groundMaxZ = landingSite.side;
+		float groundMinZ = -landingSite.side;
+
+
+		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+
+			
+			if(--livesCount <= 0){
+				livesCount = 0;
+				gameOver = true;
+			}
+			else{
+				initialState(false);
+				rollingRocks.clear();
+				createRollingRocks(7);
+				break;
+			}
+		}
+		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+
+			// TODO: eliminar bola
+			pauseActive = true;
+			//rollingRocks.erase(rollingRocks.begin() + i);
+
+		}
+	}
+
+	// collision with pillars
 	isHittingPillar = false;
 	for each (Pillar pillar in pillars) {
 
@@ -382,33 +441,6 @@ void checkCollisions() {
 		}
 	}
 
-	// colisão com as rochas
-	for each (RollingRock rock in rollingRocks) {
-
-		float maxX = rock.position[0] + rock.radius;
-		float minX = rock.position[0] - rock.radius;
-		float maxZ = rock.position[2] + rock.radius;
-		float minZ = rock.position[2] - rock.radius;
-
-		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
-			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
-
-			
-			if(--livesCount <= 0){
-				livesCount = 0;
-				gameOver = true;
-			}
-			else{
-				initialState(false);
-				rollingRocks.clear();
-				createRollingRocks(7);
-				break;
-			}
-		}
-	}
-
 }
 
 
@@ -417,31 +449,15 @@ void animate(int value) {
 
 	if (!pauseActive && !gameOver) {
 
-		updateRoverPosition();
-
 		checkCollisions();
-
-		for each (Rock rock in rocks) {
-
-			float translateX = rock.speed * rock.direction[0];
-			float translateZ = rock.speed * rock.direction[2];
-
-			rock.position[0] += translateX;
-			rock.position[2] += translateZ;
-
-			myTranslate(rock.object.objectTransform, translateX, 0, translateZ);
-
-			if (rock.speed != 0)
-				rock.speed += -rock.speed / 2;
-		}
-
+		
+		updateRoverPosition();
 		updateSpotlight();
-
+		updateRollingRocks();
+		updateStaticRocks();
 
 		if (tracking == 0)
 			updateRoverCamera();
-
-		animateRocks();
 	}
 
 	glutTimerFunc(20, animate, 0);
@@ -561,7 +577,7 @@ void renderScene(void) {
 	}
 
 	myObjects.clear();
-	myObjects.push_back(ground);
+	myObjects.push_back(landingSite.ground);
 	for (int j = 0; j < rollingRocks.size(); j++)
 		myObjects.push_back(rollingRocks[j].object);
 	for (int j = 0; j < rocks.size(); j++)
@@ -976,7 +992,7 @@ void setMeshColor(MyMesh* amesh, float r, float g, float b, float a)
 
 void createGround() {
 	//surface
-	setIdentityMatrix(ground.objectTransform, 4);
+	setIdentityMatrix(landingSite.ground.objectTransform, 4);
 
 	Pillar pillar1, pillar2, pillar3, pillar4;
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
@@ -986,18 +1002,20 @@ void createGround() {
 
 	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
 
-	ground.meshes.push_back(amesh);
+	landingSite.ground.meshes.push_back(amesh);
 
 	// landing site
 	float side = 8.0f;
 	amesh = createQuad(side, side);
-	setIdentityMatrix(ground.objectTransform, 4);
+	setIdentityMatrix(landingSite.ground.objectTransform, 4);
 	setMeshColor(&amesh, 0.8, 0.8, 0.8, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
 	myTranslate(amesh.meshTransform, 0.0, 0.15, 0.0);
 	myRotate(amesh.meshTransform, -90.0, 1.0, 0.0, 0.0);
-	ground.meshes.push_back(amesh);
+	landingSite.ground.meshes.push_back(amesh);
+
+	landingSite.side = side;
 
 	// pillar
 	pillar1.radius = 0.2;
@@ -1009,7 +1027,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar1.position[0], pillar1.position[1], pillar1.position[2]);
-	ground.meshes.push_back(amesh);
+	landingSite.ground.meshes.push_back(amesh);
 
 
 	pillar2.radius = 0.2;
@@ -1021,7 +1039,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar2.position[0], pillar2.position[1], pillar2.position[2]);
-	ground.meshes.push_back(amesh);
+	landingSite.ground.meshes.push_back(amesh);
 
 	pillar3.radius = 0.2;
 	pillar3.position[0] = -side / 2;
@@ -1032,7 +1050,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar3.position[0], pillar3.position[1], pillar3.position[2]);
-	ground.meshes.push_back(amesh);
+	landingSite.ground.meshes.push_back(amesh);
 
 	pillar4.radius = 0.2;
 	pillar4.position[0] = -side / 2;
@@ -1043,7 +1061,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82, 0.17, 0.03, 1.0);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar4.position[0], pillar4.position[1], pillar4.position[2]);
-	ground.meshes.push_back(amesh);
+	landingSite.ground.meshes.push_back(amesh);
 
 	pillars.push_back(pillar1);
 	pillars.push_back(pillar2);
