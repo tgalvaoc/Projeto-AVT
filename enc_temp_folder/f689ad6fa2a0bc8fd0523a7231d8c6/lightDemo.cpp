@@ -389,12 +389,12 @@ void updateSpotlight() {
 	
 	spotlightPos[0][0] = rover.position[0] - 0.3f * rover.direction[0] + 0.6f * rover.direction[2];
 	spotlightPos[0][1] = rover.position[1] + 0.5f;
-	spotlightPos[0][2] = rover.position[2] - 0.4f * rover.direction[2] + 0.6f * rover.direction[0];
+	spotlightPos[0][2] = rover.position[2] - 0.3f * rover.direction[2] + 0.6f * rover.direction[0];
 	spotlightPos[0][3] = 1.0f;
 
 	spotlightPos[1][0] = rover.position[0] - 0.3f * rover.direction[0] - 0.6f * rover.direction[2];
 	spotlightPos[1][1] = rover.position[1] + 0.5f;
-	spotlightPos[1][2] = rover.position[2] - 0.4f * rover.direction[2] - 0.6f * rover.direction[0];
+	spotlightPos[1][2] = rover.position[2] - 0.3f * rover.direction[2] - 0.6f * rover.direction[0];
 	spotlightPos[1][3] = 1.0f;
 }
 
