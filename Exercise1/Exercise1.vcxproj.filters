@@ -27,7 +27,7 @@
     <ClCompile Include="Texture_Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lightDemo.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="avtFreeType.cpp">
@@ -37,6 +37,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Rover.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshFromAssimp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -69,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Rover.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="meshFromAssimp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

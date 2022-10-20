@@ -10,6 +10,16 @@ uniform sampler2D texmap3;
 
 uniform int texMode;
 
+
+uniform	sampler2D texUnitDiff;
+uniform	sampler2D texUnitDiff1;
+uniform	sampler2D texUnitSpec;
+uniform	sampler2D texUnitNormalMap;
+
+uniform bool normalMap;  //for normal mapping
+uniform bool specularMap;
+uniform uint diffMapCount;
+
 out vec4 colorOut;
 
 struct DirectionalLight {
