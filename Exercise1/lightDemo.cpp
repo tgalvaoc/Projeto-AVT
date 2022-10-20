@@ -105,7 +105,7 @@ char s[32];
 
 #define NUMBER_POINT_LIGHTS 6
 #define NUMBER_SPOT_LIGHTS 2
-#define MAX_PARTICLES 100
+#define MAX_PARTICLES 50
 
 float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 0.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
@@ -251,32 +251,57 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 
 void initParticles(void) {
 	GLfloat v, theta, phi;
-	int i;
+	int i, j;
 	Particle p;
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < MAX_PARTICLES; j++) {
+			v = 0.8 * frand() + 0.2;
+			phi = frand() * M_PI;
+			theta = 2.0 * frand() * M_PI;
+			switch (i) {
+			case 1: { // back wheel right
+				p.x = rover.position[0] + rover.direction[0] * 1.2 - 0.7 * rover.direction[2];
+				p.y = rover.position[1] + 0.1;
+				p.z = rover.position[2] - rover.direction[2] * 1.2 - 0.7 * rover.direction[0];
+				break;
+			}
+			case 2: { // back wheel left
+				p.x = rover.position[0] + rover.direction[0] * 1.2 + 0.7 * rover.direction[2];
+				p.y = rover.position[1] + 0.1;
+				p.z = rover.position[2] - rover.direction[2] * 1.2 + 0.7 * rover.direction[0];
+				break;
+			}
+			case 3: { // front left wheel
+				p.x = rover.position[0] - rover.direction[0] * 1.2 + 0.7 * rover.direction[2];
+				p.y = rover.position[1] + 0.1;
+				p.z = rover.position[2] + rover.direction[2] * 1.2 + 0.7 * rover.direction[0];
+				break;
+			}
+			case 4: {
+				p.x = rover.position[0] - rover.direction[0] * 1.2 - 0.7 * rover.direction[2];
+				p.y = rover.position[1] + 0.1;
+				p.z = rover.position[2] + rover.direction[2] * 1.2 - 0.7 * rover.direction[0];
+				break;
+			}
+			}
+			//p.x = rover.position[0] + rover.direction[0] * 2;
+			//p.y = rover.position[1] + 0.75;
+			//p.z = rover.position[2] - rover.direction[2] * 2;
+			p.vx = v * cos(theta) * sin(phi);
+			p.vy = v * cos(phi);
+			p.vz = v * sin(theta) * sin(phi);
+			p.ax = 0.1f;   /* simulates wind */
+			p.ay = -0.25f; /* simulates gravity */
+			p.az = 0.0f;
 
-	for (i = 0; i < MAX_PARTICLES; i++)
-	{
-		v = 0.8 * frand() + 0.2;
-		phi = frand() * M_PI;
-		theta = 2.0 * frand() * M_PI;
+			p.r = 0.8f;
+			p.g = 0.4f;
+			p.b = 0.0f;
 
-		p.x = rover.position[0] + rover.direction[0] * 2;
-		p.y = rover.position[1] + 0.75;
-		p.z = rover.position[2] - rover.direction[2] * 2;
-		p.vx = v * cos(theta) * sin(phi);
-		p.vy = v * cos(phi);
-		p.vz = v * sin(theta) * sin(phi);
-		p.ax = 0.1f;   /* simulates wind */
-		p.ay = -0.25f; /* simulates gravity */
-		p.az = 0.0f;
-
-		p.r = 0.6f;
-		p.g = 0.6f;
-		p.b = 0.6f;
-
-		p.life = 0.8f;		/* initial life */
-		p.fade = 0.008f;	    /* step to decrease life in each iteration */
-		particles.push_back(p);
+			p.life = 0.8f;		/* initial life */
+			p.fade = 0.008f;	    /* step to decrease life in each iteration */
+			particles.push_back(p);
+		}
 	}
 }
 
@@ -1372,7 +1397,7 @@ void init()
 	createRover();
 	createCameras();
 
-	particleMesh = createQuad(0.01, 0.01);
+	particleMesh = createQuad(0.03, 0.01);
 	//particleMesh.mat.texCount = 3; // attribute for texture
 	initialState(true);
 	glutTimerFunc(0, animate, 0);
