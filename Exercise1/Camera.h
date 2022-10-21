@@ -6,10 +6,10 @@ enum CameraType { ORTHOGONAL, PERSPECTIVE, MOVING, };
 
 class Camera {
 public:
-	float position[3];
-	float target[3];
+	float position[3] = {0.0f, 0.0f, 0.0f};
+	float target[3] = { 0.0f, 0.0f, 0.0f };
 
-	CameraType type;
+	CameraType type = ORTHOGONAL;
 
 	Camera();
 	Camera(CameraType camType, float x, float y, float z, float targetX_val, float targetY_val, float targetZ_val);

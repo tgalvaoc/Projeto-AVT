@@ -1,21 +1,7 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(513,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (Exercise1.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  main.cpp
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(280,22): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(282,26): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(285,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(286,29): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(287,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(291,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(292,29): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(293,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(297,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(298,29): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(299,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(303,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(304,29): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(305,56): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(340,11): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(654,31): warning C4018: '<': signed/unsigned mismatch
-C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1561,38): warning C4305: 'argument': truncation from 'double' to 'float'
-  Exercise1.vcxproj -> C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\x64\Debug\Projeto-AVT.exe
+  AVTmathLib.cpp
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\AVTmathLib.cpp(513,62): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\AVTmathLib.cpp(514,62): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\AVTmathLib.cpp(516,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Exercise1.vcxproj -> C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\x64\Debug\Projeto-AVT.exe
   0 File(s) copied

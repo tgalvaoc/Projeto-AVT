@@ -277,32 +277,32 @@ void initParticles(void) {
 	Particle p;
 	for (i = 0; i < 4; i++) {
 		for (j = 0; j < MAX_PARTICLES; j++) {
-			v = 0.8 * frand() + 0.2;
+			v = 0.8f * frand() + 0.2f;
 			phi = frand() * M_PI;
-			theta = 2.0 * frand() * M_PI;
+			theta = 2.0f * frand() * M_PI;
 			switch (i) {
 			case 1: { // back wheel right
-				p.x = rover.position[0] + rover.direction[0] * 1.2 - 0.7 * rover.direction[2];
-				p.y = rover.position[1] + 0.1;
-				p.z = rover.position[2] - rover.direction[2] * 1.2 - 0.7 * rover.direction[0];
+				p.x = rover.position[0] + rover.direction[0] * 1.2f - 0.7f * rover.direction[2];
+				p.y = rover.position[1] + 0.1f;
+				p.z = rover.position[2] - rover.direction[2] * 1.2f - 0.7f * rover.direction[0];
 				break;
 			}
 			case 2: { // back wheel left
-				p.x = rover.position[0] + rover.direction[0] * 1.2 + 0.7 * rover.direction[2];
-				p.y = rover.position[1] + 0.1;
-				p.z = rover.position[2] - rover.direction[2] * 1.2 + 0.7 * rover.direction[0];
+				p.x = rover.position[0] + rover.direction[0] * 1.2f + 0.7f * rover.direction[2];
+				p.y = rover.position[1] + 0.1f;
+				p.z = rover.position[2] - rover.direction[2] * 1.2f + 0.7f * rover.direction[0];
 				break;
 			}
 			case 3: { // front left wheel
-				p.x = rover.position[0] - rover.direction[0] * 1.2 + 0.7 * rover.direction[2];
-				p.y = rover.position[1] + 0.1;
-				p.z = rover.position[2] + rover.direction[2] * 1.2 + 0.7 * rover.direction[0];
+				p.x = rover.position[0] - rover.direction[0] * 1.2f + 0.7f * rover.direction[2];
+				p.y = rover.position[1] + 0.1f;
+				p.z = rover.position[2] + rover.direction[2] * 1.2f + 0.7f * rover.direction[0];
 				break;
 			}
 			case 4: {
-				p.x = rover.position[0] - rover.direction[0] * 1.2 - 0.7 * rover.direction[2];
-				p.y = rover.position[1] + 0.1;
-				p.z = rover.position[2] + rover.direction[2] * 1.2 - 0.7 * rover.direction[0];
+				p.x = rover.position[0] - rover.direction[0] * 1.2f - 0.7f * rover.direction[2];
+				p.y = rover.position[1] + 0.1f;
+				p.z = rover.position[2] + rover.direction[2] * 1.2f - 0.7f * rover.direction[0];
 				break;
 			}
 			}
@@ -337,7 +337,7 @@ void updateParticles()
 	h represents the time step; dv/dt = a; dx/dt = v; initial values of x and v */
 
 	//h = 0.125f;
-	h = 0.033;
+	h = 0.033f;
 
 	for (i = 0; i < particles.size(); i++) {
 		particles[i].x += (h * particles[i].vx);
@@ -651,7 +651,7 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 		glUniform1ui(diffMapCount_loc, 0);
 
 		if (myMeshes[nd->mMeshes[n]].mat.texCount != 0)
-			for (unsigned int i = 0; i < myMeshes[nd->mMeshes[n]].mat.texCount; ++i) {
+			for (int i = 0; i < myMeshes[nd->mMeshes[n]].mat.texCount; ++i) {
 				if (myMeshes[nd->mMeshes[n]].texTypes[i] == DIFFUSE) {
 					if (diffMapCount == 0) {
 						diffMapCount++;
@@ -1558,7 +1558,7 @@ void init()
 	createRover();
 	createCameras();
 
-	particleMesh = createQuad(0.03, 0.01);
+	particleMesh = createQuad(0.03f, 0.01f);
 	//particleMesh.mat.texCount = 3; // attribute for texture
 	initialState(true);
 	glutTimerFunc(0, animate, 0);

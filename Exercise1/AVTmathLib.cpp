@@ -10,6 +10,7 @@ Author: João Madeiras Pereira
 
 #include "AVTmathLib.h"
 #include <math.h>
+#include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
