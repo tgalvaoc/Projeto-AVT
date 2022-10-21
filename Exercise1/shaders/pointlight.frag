@@ -71,6 +71,8 @@ uniform DirectionalLight dirLight;
 uniform Materials mat;
 vec4 auxColorOut = { 0.0, 0.0, 0.0, 1.0};
 float dist;
+vec4 diff, auxSpec;
+
 
 in Data {
 	vec4 pos;
@@ -87,6 +89,20 @@ void main() {
 	vec4 texel, texel1; 
 	float intensity;
 	vec3 specSum = vec3(0.0);
+
+	
+	if(diffMapCount == 0)
+		diff = mat.diffuse;
+	else if(diffMapCount == 1)
+		diff = mat.diffuse * texture(texUnitDiff, DataIn.tex_coord);
+	else
+		diff = mat.diffuse * texture(texUnitDiff, DataIn.tex_coord) * texture(texUnitDiff1, DataIn.tex_coord);
+
+	if(specularMap) 
+		auxSpec = mat.specular * texture(texUnitSpec, DataIn.tex_coord);
+	else
+		auxSpec = mat.specular;
+
 	if(sun_mode){
 		
 		vec3 spec = vec3(0.0);
@@ -100,10 +116,10 @@ void main() {
 		if (intensity > 0.0) {
 			vec3 h = normalize(l + e);
 			float intSpec = max(dot(h,n), 0.0);
-			spec = mat.specular.rgb * pow(intSpec, mat.shininess);
+			spec = auxSpec.rgb * pow(intSpec, mat.shininess);
 			specSum += spec;
 		}
-		auxColorOut += vec4(max(intensity * mat.diffuse.rgb + 0.3 * spec, mat.ambient.rgb)*0.8, mat.diffuse.a);
+		auxColorOut += vec4(max(intensity * diff.rgb + 0.3 * spec, mat.ambient.rgb)*0.8, diff.a);
 	}
 	if(point_lights_mode){
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
@@ -118,10 +134,10 @@ void main() {
 			if (intensity > 0.0) {
 				vec3 h = normalize(l + e);
 				float intSpec = max(dot(h,n), 0.0);
-				spec = mat.specular.rgb * pow(intSpec, mat.shininess);
+				spec = auxSpec.rgb * pow(intSpec, mat.shininess);
 				specSum += spec;
 			}
-			auxColorOut += vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb)/6, mat.diffuse.a);
+			auxColorOut += vec4(max(intensity * diff.rgb + spec, mat.ambient.rgb)/6, diff.a);
 
 		}
 	}
@@ -144,9 +160,9 @@ void main() {
 				if (intensity > 0.0) {
 					vec3 h = normalize(l + e);
 					float intSpec = max(dot(h,n), 0.0);
-					spec = mat.specular.rgb * pow(intSpec, mat.shininess) * att;
+					spec = auxSpec.rgb * pow(intSpec, mat.shininess) * att;
 					specSum += spec;
-					auxColorOut +=  vec4(max(intensity * mat.diffuse.rgb + spec, mat.ambient.rgb), mat.diffuse.a);
+					auxColorOut +=  vec4(max(intensity * diff.rgb + spec, mat.ambient.rgb), diff.a);
 				}
 			}
 		}

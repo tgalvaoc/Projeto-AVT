@@ -32,7 +32,7 @@ const aiScene* scene = NULL;
 float scaleFactor;
 
 /* Directory name containing the OBJ file. The OBJ filename should be the same*/
-extern char model_dir[50];
+extern string model_dir;
 
 
 // unordered map which maps image filenames to texture units TU. This map is filled in the  LoadGLTexturesTUs()
@@ -153,10 +153,11 @@ bool LoadGLTexturesTUs(const aiScene* scene)  // Create OGL textures objects and
 		for (int i = 0; itr != textureIdMap.end(); ++i, ++itr)
 		{
 			filename = (*itr).first;  // get filename
+			//printf("textura = %s  TU = %d\n", filename.c_str(), i);
 			glActiveTexture(GL_TEXTURE0 + i);
 			Texture2D_Loader(textureIds, filename.c_str(), i);  //it already performs glBindTexture(GL_TEXTURE_2D, textureIds[i])
 			(*itr).second = i;	  // save texture unit for filename in map
-			//printf("textura = %s  TU = %d\n", filename.c_str(), i);
+			
 		}
 
 		//Cleanup
@@ -196,6 +197,7 @@ vector<struct MyMesh> createMeshFromAssimp(const aiScene* sc) {
 	printf("Cena: numero total de malhas = %d\n", sc->mNumMeshes);
 
 	LoadGLTexturesTUs(sc); //it creates the unordered map which maps image filenames to texture units TU
+
 
 	// For each mesh
 	for (unsigned int n = 0; n < sc->mNumMeshes; ++n)

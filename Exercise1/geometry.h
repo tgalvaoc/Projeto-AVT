@@ -4,6 +4,7 @@
 #include <vector>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <string>
 
 using namespace std;
 
@@ -17,7 +18,6 @@ struct Material{
 	float shininess;
 	int texCount;
 };
-
 
 // A model can be made of many meshes. Each is stored  in the following structure
 struct MyMesh {
@@ -62,6 +62,14 @@ struct RollingRock {
 struct LandingSite {
 	float side = 0;
 	MyObject ground;
+};
+
+struct Model {
+	float speed = 0;
+	float position[3] = { 0.0f, 0.0f, 0.0f };
+	float direction[3] = { 0.0f, 0.0f, 0.0f };
+	string model_dir = "";
+	vector<struct MyMesh> meshes;
 };
 
 MyMesh createCube();

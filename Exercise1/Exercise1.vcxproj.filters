@@ -42,6 +42,9 @@
     <ClCompile Include="meshFromAssimp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Flare.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AVTmathLib.h">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="meshFromAssimp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Flare.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

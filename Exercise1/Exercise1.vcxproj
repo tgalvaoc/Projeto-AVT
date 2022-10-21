@@ -164,6 +164,7 @@
     <ClCompile Include="AVTmathLib.cpp" />
     <ClCompile Include="basic_geometry.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Flare.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="meshFromAssimp.cpp" />
     <ClCompile Include="Rover.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="AVTmathLib.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="cube.h" />
+    <ClInclude Include="Flare.h" />
     <ClInclude Include="ft2build.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="meshFromAssimp.h" />

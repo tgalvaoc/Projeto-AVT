@@ -41,7 +41,7 @@ using namespace std;
 extern Assimp::Importer importer;
 // the global Assimp scene object
 extern const aiScene* scene;
-char model_dir[50];  //initialized by the user input at the console
+string model_dir;  //initialized by the user input at the console
 // scale factor for the Assimp model to fit in the window
 extern float scaleFactor;
 
@@ -66,19 +66,21 @@ const string font_name = "fonts/arial.ttf";
 
 //Vector with objects, and each object can have one or more meshes
 vector<MyObject> myObjects;
-vector<struct MyMesh> myMeshes; //for assimp
 MyMesh particleMesh;
+vector<struct MyMesh> myMeshes;
 
 Rover rover;
 LandingSite landingSite;
 vector<RollingRock> rollingRocks;
 vector<StaticRock> staticRocks;
+vector<Model> models;
 list<Pillar> pillars;
 
 bool pauseActive = false;
 bool gameOver = false;
 
 bool spotlight_mode = true;
+bool flare_mode = false;
 bool sun_mode = true;
 bool point_lights_mode = false;
 bool fog_mode = false;
@@ -623,35 +625,35 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 	memcpy(aux, &m, sizeof(float) * 16);
 	multMatrix(MODEL, aux);
 
+	//for (unsigned int i = 0; i < models.size(); i++) {
+		// draw all meshes assigned to this node
+		for (unsigned int n = 0; n < nd->mNumMeshes; ++n) {
 
-	// draw all meshes assigned to this node
-	for (unsigned int n = 0; n < nd->mNumMeshes; ++n) {
 
+			// send the material
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.ambient);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.diffuse);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.specular);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.emissive");
+			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.emissive);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+			glUniform1f(loc, myMeshes[nd->mMeshes[n]].mat.shininess);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.texCount");
+			glUniform1i(loc, myMeshes[nd->mMeshes[n]].mat.texCount);
 
-		// send the material
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-		glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.ambient);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-		glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.diffuse);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-		glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.specular);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.emissive");
-		glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.emissive);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-		glUniform1f(loc, myMeshes[nd->mMeshes[n]].mat.shininess);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.texCount");
-		glUniform1i(loc, myMeshes[nd->mMeshes[n]].mat.texCount);
+			unsigned int  diffMapCount = 0;  //read 2 diffuse textures
 
-		unsigned int  diffMapCount = 0;  //read 2 diffuse textures
+			//devido ao fragment shader suporta 2 texturas difusas simultaneas, 1 especular e 1 normal map
 
-		//devido ao fragment shader suporta 2 texturas difusas simultaneas, 1 especular e 1 normal map
-
-		glUniform1i(normalMap_loc, false);   //GLSL normalMap variable initialized to 0
-		glUniform1i(specularMap_loc, false);
-		glUniform1ui(diffMapCount_loc, 0);
+			glUniform1i(normalMap_loc, false);   //GLSL normalMap variable initialized to 0
+			glUniform1i(specularMap_loc, false);
+			glUniform1ui(diffMapCount_loc, 0);
 
 		if (myMeshes[nd->mMeshes[n]].mat.texCount != 0)
-			for (int i = 0; i < myMeshes[nd->mMeshes[n]].mat.texCount; ++i) {
+			for (unsigned int i = 0; i < myMeshes[nd->mMeshes[n]].mat.texCount; ++i) {
 				if (myMeshes[nd->mMeshes[n]].texTypes[i] == DIFFUSE) {
 					if (diffMapCount == 0) {
 						diffMapCount++;
@@ -678,29 +680,29 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 						glUniform1i(normalMap_loc, normalMapKey);
 					glUniform1i(loc, myMeshes[nd->mMeshes[n]].texUnits[i]);
 
+					}
+					else printf("Texture Map not supported\n");
 				}
-				else printf("Texture Map not supported\n");
+
+			// send matrices to OGL
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			// bind VAO
+			glBindVertexArray(myMeshes[nd->mMeshes[n]].vao);
+
+			if (!shader.isProgramValid()) {
+				printf("Program Not Valid!\n");
+				exit(1);
 			}
-
-		// send matrices to OGL
-		computeDerivedMatrix(PROJ_VIEW_MODEL);
-		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-		computeNormalMatrix3x3();
-		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
-
-		// bind VAO
-		glBindVertexArray(myMeshes[nd->mMeshes[n]].vao);
-
-		if (!shader.isProgramValid()) {
-			printf("Program Not Valid!\n");
-			exit(1);
+			// draw
+			glDrawElements(myMeshes[nd->mMeshes[n]].type, myMeshes[nd->mMeshes[n]].numIndexes, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
 		}
-		// draw
-		glDrawElements(myMeshes[nd->mMeshes[n]].type, myMeshes[nd->mMeshes[n]].numIndexes, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
-	}
-
+	//}
 	// draw all children
 	for (unsigned int n = 0; n < nd->mNumChildren; ++n) {
 		aiRecursive_render(sc, nd->mChildren[n]);
@@ -983,34 +985,7 @@ void renderScene(void) {
 	glDepthMask(GL_TRUE); //make depth buffer again writeable
 
 	// ASSIMP
-
-	if (pauseActive) {
-
-		std::string filepath = "backpack/backpack.obj";   //path of OBJ file in the VS project
-
-		//check if file exists
-		ifstream fin(filepath.c_str());
-		if (!fin.fail()) {
-			fin.close();
-		}
-		else
-			printf("Couldn't open file: %s\n", filepath.c_str());
-	
-
-		//import 3D file into Assimp scene graph
-		if (!Import3DFromFile(filepath))
-			return;
-
-		//creation of Mymesh array with VAO Geometry and Material
-		myMeshes = createMeshFromAssimp(scene);
-
-		// some GL settings
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_MULTISAMPLE);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	}
-
+	aiRecursive_render(scene, scene->mRootNode);
 
 
 	// Text -------------------------------------------------
@@ -1522,6 +1497,55 @@ void createStaticRocks() {
 	
 }
 
+void initModels(){
+	Model alien, arch;
+
+	alien.model_dir = "backpack";
+
+	alien.position[0] = 10;
+	alien.position[1] = 0;
+	alien.position[2] = 20;
+
+	arch.model_dir = "spider";
+
+	arch.position[0] = 10;
+	arch.position[1] = 0;
+	arch.position[2] = 20;
+
+	models.push_back(alien);
+	//models.push_back(arch);
+}
+
+void createModels(){
+	//initModels();
+
+	//for (int i = 0; i < models.size(); i++){
+		
+		model_dir = "backpack";
+
+		ostringstream oss;
+		oss << model_dir << "/" << model_dir << ".obj";
+		string filepath = oss.str(); 
+
+		model_dir += "/";
+	
+		//check if file exists
+		ifstream fin(filepath.c_str());
+		if (!fin.fail()) {
+			fin.close();
+		}
+		else
+			printf("Couldn't open file: %s\n", filepath.c_str());
+
+		//import 3D file into Assimp scene graph
+		if (!Import3DFromFile(filepath))
+			return;
+
+		//creation of Mymesh array with VAO Geometry and Material
+		myMeshes = createMeshFromAssimp(scene);
+	//}
+}
+
 
 // ------------------------------------------------------------
 //
@@ -1531,6 +1555,7 @@ void createStaticRocks() {
 
 void init()
 {
+
 	// wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -1551,12 +1576,12 @@ void init()
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
-
 	createGround();
 	createStaticRocks();
 	createRollingRocks(10);
 	createRover();
 	createCameras();
+	createModels();
 
 	particleMesh = createQuad(0.03f, 0.01f);
 	//particleMesh.mat.texCount = 3; // attribute for texture
@@ -1564,8 +1589,6 @@ void init()
 	glutTimerFunc(0, animate, 0);
 
 	// some GL settings
-
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
