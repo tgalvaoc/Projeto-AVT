@@ -110,4 +110,7 @@
       <Filter>Source Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="flare.txt" />
+  </ItemGroup>
 </Project>
