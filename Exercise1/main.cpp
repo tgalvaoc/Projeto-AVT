@@ -67,13 +67,13 @@ const string font_name = "fonts/arial.ttf";
 //Vector with objects, and each object can have one or more meshes
 vector<MyObject> myObjects;
 MyMesh particleMesh;
-vector<struct MyMesh> myMeshes;
+vector<struct MyMesh> spaceship;
 
 Rover rover;
-LandingSite landingSite;
+LandingSite landingSiteRover;
+LandingSite landingSiteSpaceship;
 vector<RollingRock> rollingRocks;
 vector<StaticRock> staticRocks;
-vector<Model> models;
 list<Pillar> pillars;
 
 bool pauseActive = false;
@@ -89,8 +89,7 @@ bool multitexture_mode = false;
 bool normalMapKey = TRUE; // by default if there is a normal map then bump effect is implemented. press key "b" to enable/disable normal mapping 
 
 bool isGoingForward = false;
-bool isHittingPillar = false;
-bool isHittingRock = false;
+bool isRoverHittingSomething = false;
 
 GLuint TextureArray[4];
 
@@ -458,7 +457,6 @@ void updateRoverPosition() {
 
 }
 
-
 void updateRoverCamera() {
 	cameras[2].position[0] = rover.position[0] + rover.direction[0] * 10;
 	cameras[2].position[1] = 5;
@@ -466,7 +464,6 @@ void updateRoverCamera() {
 
 	std::copy(rover.position, rover.position + 3, cameras[2].target);
 }
-
 
 void checkCollisions() {
 
@@ -478,7 +475,7 @@ void checkCollisions() {
 	float roverMinZ = rover.position[2] - roverFactor;
 
 	// collision with static rocks
-	isHittingRock = false;
+	isRoverHittingSomething = false;
 	for (int i = 0; i < staticRocks.size(); i++) {
 
 		float maxX = staticRocks[i].position[0] + staticRocks[i].radius;
@@ -508,7 +505,7 @@ void checkCollisions() {
 				staticRocks[i].direction[2] = -rover.direction[2];
 			}
 
-			isHittingRock = true;
+			isRoverHittingSomething = true;
 			break;
 		}
 	}
@@ -522,22 +519,7 @@ void checkCollisions() {
 		float maxZ = rock.position[2] + rock.radius;
 		float minZ = rock.position[2] - rock.radius;
 
-		float groundMaxX = landingSite.side / 2 + 0.5f;
-		float groundMinX = -landingSite.side / 2 + 0.5f;
-		float groundMaxZ = landingSite.side / 2 + 0.5f;
-		float groundMinZ = -landingSite.side / 2 + 0.5f;
-
-		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
-
-			rollingRocks.erase(rollingRocks.begin() + i);
-			createRollingRocks(1);
-			break;
-
-		}
-
+		// rolling rocks + rover
 		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
 			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
 			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
@@ -555,10 +537,59 @@ void checkCollisions() {
 				break;
 			}
 		}
+
+		float groundMaxX = landingSiteRover.position[0] + landingSiteRover.side / 2 + 0.5f;
+		float groundMinX = landingSiteRover.position[0] - landingSiteRover.side / 2 + 0.5f;
+		float groundMaxZ = landingSiteRover.position[2] + landingSiteRover.side / 2 + 0.5f;
+		float groundMinZ = landingSiteRover.position[2] - landingSiteRover.side / 2 + 0.5f;
+
+		// rolling rocks + landing site rover
+		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
+
+		}
+
+		// rolling rocks + landing site spaceship
+		groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
+		groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
+		groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
+		groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
+
+		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
+
+		}
+
+		//rover + landing site spaceship
+		if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
+			(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
+			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
+			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
+
+			rover.position[0] += rover.direction[0] * rover.speed * delta;
+			rover.position[2] -= rover.direction[2] * rover.speed * delta;
+			rover.speed = 0;
+
+			isRoverHittingSomething = true;
+			break;
+		}
+
 	}
 
 	// collision with pillars
-	isHittingPillar = false;
+	isRoverHittingSomething = false;
 	for each (Pillar pillar in pillars) {
 
 		float maxX = pillar.position[0] + pillar.radius;
@@ -575,13 +606,12 @@ void checkCollisions() {
 			rover.position[2] -= rover.direction[2] * rover.speed * delta;
 			rover.speed = 0;
 
-			isHittingPillar = true;
+			isRoverHittingSomething = true;
 			break;
 		}
 	}
 
 }
-
 
 
 void animate(int value) {
@@ -625,60 +655,62 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 	memcpy(aux, &m, sizeof(float) * 16);
 	multMatrix(MODEL, aux);
 
-	//for (unsigned int i = 0; i < models.size(); i++) {
-		// draw all meshes assigned to this node
-		for (unsigned int n = 0; n < nd->mNumMeshes; ++n) {
+	translate(MODEL, 4.0f, 0.0f, -28.0f);
+	rotate(MODEL, 60.0f, 0.0f, 1.0f, 0.0f);
+	scale(MODEL, 0.12f, 0.14f, 0.12f);
 
+	
+	// draw all meshes assigned to this node
+	for (unsigned int n = 0; n < nd->mNumMeshes; ++n) {
+		// send the material
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+		glUniform4fv(loc, 1, spaceship[nd->mMeshes[n]].mat.ambient);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+		glUniform4fv(loc, 1, spaceship[nd->mMeshes[n]].mat.diffuse);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+		glUniform4fv(loc, 1, spaceship[nd->mMeshes[n]].mat.specular);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.emissive");
+		glUniform4fv(loc, 1, spaceship[nd->mMeshes[n]].mat.emissive);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+		glUniform1f(loc, spaceship[nd->mMeshes[n]].mat.shininess);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.texCount");
+		glUniform1i(loc, spaceship[nd->mMeshes[n]].mat.texCount);
 
-			// send the material
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.ambient);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.diffuse);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.specular);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.emissive");
-			glUniform4fv(loc, 1, myMeshes[nd->mMeshes[n]].mat.emissive);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-			glUniform1f(loc, myMeshes[nd->mMeshes[n]].mat.shininess);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.texCount");
-			glUniform1i(loc, myMeshes[nd->mMeshes[n]].mat.texCount);
+		unsigned int  diffMapCount = 0;  //read 2 diffuse textures
 
-			unsigned int  diffMapCount = 0;  //read 2 diffuse textures
+		//devido ao fragment shader suporta 2 texturas difusas simultaneas, 1 especular e 1 normal map
 
-			//devido ao fragment shader suporta 2 texturas difusas simultaneas, 1 especular e 1 normal map
+		glUniform1i(normalMap_loc, false);   //GLSL normalMap variable initialized to 0
+		glUniform1i(specularMap_loc, false);
+		glUniform1ui(diffMapCount_loc, 0);
 
-			glUniform1i(normalMap_loc, false);   //GLSL normalMap variable initialized to 0
-			glUniform1i(specularMap_loc, false);
-			glUniform1ui(diffMapCount_loc, 0);
-
-		if (myMeshes[nd->mMeshes[n]].mat.texCount != 0)
-			for (unsigned int i = 0; i < myMeshes[nd->mMeshes[n]].mat.texCount; ++i) {
-				if (myMeshes[nd->mMeshes[n]].texTypes[i] == DIFFUSE) {
+		if (spaceship[nd->mMeshes[n]].mat.texCount != 0)
+			for (unsigned int i = 0; i < spaceship[nd->mMeshes[n]].mat.texCount; ++i) {
+				if (spaceship[nd->mMeshes[n]].texTypes[i] == DIFFUSE) {
 					if (diffMapCount == 0) {
 						diffMapCount++;
 						loc = glGetUniformLocation(shader.getProgramIndex(), "texUnitDiff");
-						glUniform1i(loc, myMeshes[nd->mMeshes[n]].texUnits[i]);
+						glUniform1i(loc, spaceship[nd->mMeshes[n]].texUnits[i]);
 						glUniform1ui(diffMapCount_loc, diffMapCount);
 					}
 					else if (diffMapCount == 1) {
 						diffMapCount++;
 						loc = glGetUniformLocation(shader.getProgramIndex(), "texUnitDiff1");
-						glUniform1i(loc, myMeshes[nd->mMeshes[n]].texUnits[i]);
+						glUniform1i(loc, spaceship[nd->mMeshes[n]].texUnits[i]);
 						glUniform1ui(diffMapCount_loc, diffMapCount);
 					}
 					else printf("Only supports a Material with a maximum of 2 diffuse textures\n");
 				}
-				else if (myMeshes[nd->mMeshes[n]].texTypes[i] == SPECULAR) {
+				else if (spaceship[nd->mMeshes[n]].texTypes[i] == SPECULAR) {
 					loc = glGetUniformLocation(shader.getProgramIndex(), "texUnitSpec");
-					glUniform1i(loc, myMeshes[nd->mMeshes[n]].texUnits[i]);
+					glUniform1i(loc, spaceship[nd->mMeshes[n]].texUnits[i]);
 					glUniform1i(specularMap_loc, true);
 				}
-				else if (myMeshes[nd->mMeshes[n]].texTypes[i] == NORMALS) { //Normal map
+				else if (spaceship[nd->mMeshes[n]].texTypes[i] == NORMALS) { //Normal map
 					loc = glGetUniformLocation(shader.getProgramIndex(), "texUnitNormalMap");
 					if (normalMapKey)
 						glUniform1i(normalMap_loc, normalMapKey);
-					glUniform1i(loc, myMeshes[nd->mMeshes[n]].texUnits[i]);
+					glUniform1i(loc, spaceship[nd->mMeshes[n]].texUnits[i]);
 
 					}
 					else printf("Texture Map not supported\n");
@@ -692,22 +724,25 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
 			// bind VAO
-			glBindVertexArray(myMeshes[nd->mMeshes[n]].vao);
+			glBindVertexArray(spaceship[nd->mMeshes[n]].vao);
 
 			if (!shader.isProgramValid()) {
 				printf("Program Not Valid!\n");
 				exit(1);
 			}
 			// draw
-			glDrawElements(myMeshes[nd->mMeshes[n]].type, myMeshes[nd->mMeshes[n]].numIndexes, GL_UNSIGNED_INT, 0);
+			glDrawElements(spaceship[nd->mMeshes[n]].type, spaceship[nd->mMeshes[n]].numIndexes, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 		}
-	//}
+
 	// draw all children
 	for (unsigned int n = 0; n < nd->mNumChildren; ++n) {
 		aiRecursive_render(sc, nd->mChildren[n]);
 	}
 	popMatrix(MODEL);
+	//glUniform1i(normalMap_loc, false);   //GLSL normalMap variable initialized to 0
+	//glUniform1i(specularMap_loc, false);
+	//glUniform1ui(diffMapCount_loc, 0);
 }
 
 
@@ -819,7 +854,8 @@ void renderScene(void) {
 	}
 
 	myObjects.clear();
-	myObjects.push_back(landingSite.ground);
+	myObjects.push_back(landingSiteSpaceship.ground);
+	myObjects.push_back(landingSiteRover.ground);
 	for (int j = 0; j < rollingRocks.size(); j++)
 		myObjects.push_back(rollingRocks[j].object);
 	for (int j = 0; j < staticRocks.size(); j++)
@@ -1064,11 +1100,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		if (pauseActive || gameOver)
 			return;
 
-		if (isHittingPillar && isGoingForward)
+		if (isRoverHittingSomething && isGoingForward)
 			return;
 
-		if (isHittingRock && isGoingForward)
-			return;
 		initParticles();
 		rover.speed += 0.8f;
 		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
@@ -1079,11 +1113,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		if (pauseActive || gameOver)
 			return;
 
-		if (isHittingPillar && !isGoingForward)
+		if (isRoverHittingSomething && !isGoingForward)
 			return;
 
-		if (isHittingRock && !isGoingForward)
-			return;
 		initParticles();
 		rover.speed -= 0.8f;
 		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
@@ -1255,6 +1287,8 @@ GLuint setupShaders() {
 	glBindAttribLocation(shader.getProgramIndex(), VERTEX_COORD_ATTRIB, "position");
 	glBindAttribLocation(shader.getProgramIndex(), NORMAL_ATTRIB, "normal");
 	glBindAttribLocation(shader.getProgramIndex(), TEXTURE_COORD_ATTRIB, "texCoord");
+	glBindAttribLocation(shader.getProgramIndex(), TANGENT_ATTRIB, "tangent");
+	glBindAttribLocation(shader.getProgramIndex(), BITANGENT_ATTRIB, "bitangent");
 
 	glLinkProgram(shader.getProgramIndex());
 	printf("InfoLog for Model Rendering Shader\n%s\n\n", shaderText.getAllInfoLogs().c_str());
@@ -1268,6 +1302,9 @@ GLuint setupShaders() {
 	vm_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_viewModel");
 	normal_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_normal");
 	lPos_uniformId = glGetUniformLocation(shader.getProgramIndex(), "l_pos");
+	normalMap_loc = glGetUniformLocation(shader.getProgramIndex(), "normalMap");
+	specularMap_loc = glGetUniformLocation(shader.getProgramIndex(), "specularMap");
+	//diffMapCount_loc = glGetUniformLocation(shader.getProgramIndex(), "diffMapCount");
 	tex_loc = glGetUniformLocation(shader.getProgramIndex(), "texmap");
 	tex_loc1 = glGetUniformLocation(shader.getProgramIndex(), "texmap1");
 	tex_loc2 = glGetUniformLocation(shader.getProgramIndex(), "texmap2");
@@ -1311,30 +1348,101 @@ void setMeshColor(MyMesh* amesh, float r, float g, float b, float a)
 
 void createGround() {
 	//surface
-	setIdentityMatrix(landingSite.ground.objectTransform, 4);
-
-	Pillar pillar1, pillar2, pillar3, pillar4;
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
-
+	setIdentityMatrix(landingSiteRover.ground.objectTransform, 4);
 	setMeshColor(&amesh, 0.8f, 0.4f, 0.0f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
 	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 
-	landingSite.ground.meshes.push_back(amesh);
+	landingSiteRover.ground.meshes.push_back(amesh);
 
-	// landing site
-	float side = 8.0f;
+	Pillar pillar1, pillar2, pillar3, pillar4;
+	
+	// landing site spaceship
+	float side = 28.0f;
+	landingSiteSpaceship.side = side;
+	landingSiteSpaceship.position[0] = 0.0f;
+	landingSiteSpaceship.position[1] = 0.15f;
+	landingSiteSpaceship.position[2] = -30.0f;
+
 	amesh = createQuad(side, side);
-	setIdentityMatrix(landingSite.ground.objectTransform, 4);
+	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
 	setMeshColor(&amesh, 0.8f, 0.8f, 0.8f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 
-	myTranslate(amesh.meshTransform, 0.0f, 0.15f, 0.0f);
+	myTranslate(amesh.meshTransform, landingSiteSpaceship.position[0], landingSiteSpaceship.position[1], landingSiteSpaceship.position[2]);
 	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
-	landingSite.ground.meshes.push_back(amesh);
+	landingSiteSpaceship.ground.meshes.push_back(amesh);
 
-	landingSite.side = side;
+	
+
+	// path
+	side = 3.0f;
+	amesh = createQuad(side, side);
+	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.9f, 0.8f, 0.8f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -5.5f);
+	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	landingSiteSpaceship.ground.meshes.push_back(amesh);
+
+	amesh = createQuad(side, side);
+	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.9f, 0.8f, 0.8f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -8.5f);
+	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	landingSiteSpaceship.ground.meshes.push_back(amesh);
+
+	amesh = createQuad(side, side);
+	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.9f, 0.8f, 0.8f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -11.5f);
+	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	landingSiteSpaceship.ground.meshes.push_back(amesh);
+
+	amesh = createQuad(side, side);
+	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.9f, 0.8f, 0.8f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -14.5f);
+	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	landingSiteSpaceship.ground.meshes.push_back(amesh);
+
+	amesh = createQuad(side, side);
+	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.9f, 0.8f, 0.8f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -17.5f);
+	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	landingSiteSpaceship.ground.meshes.push_back(amesh);
+
+	amesh = createQuad(side, side);
+	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.9f, 0.8f, 0.8f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -20.5f);
+	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	landingSiteSpaceship.ground.meshes.push_back(amesh);
+
+	// landing site rover
+	side = 8.0f;
+	landingSiteRover.side = side;
+	landingSiteRover.position[0] = 0.0f;
+	landingSiteRover.position[1] = 0.15f;
+	landingSiteRover.position[2] = 0.0f;
+
+	amesh = createQuad(side, side);
+	setIdentityMatrix(landingSiteRover.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.8f, 0.8f, 0.8f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+
+	myTranslate(amesh.meshTransform, landingSiteRover.position[0], landingSiteRover.position[1], landingSiteRover.position[2]);
+	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	landingSiteRover.ground.meshes.push_back(amesh);
+
 
 	// pillar
 	pillar1.radius = 0.2f;
@@ -1346,7 +1454,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar1.position[0], pillar1.position[1], pillar1.position[2]);
-	landingSite.ground.meshes.push_back(amesh);
+	landingSiteRover.ground.meshes.push_back(amesh);
 
 
 	pillar2.radius = 0.2f;
@@ -1358,7 +1466,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar2.position[0], pillar2.position[1], pillar2.position[2]);
-	landingSite.ground.meshes.push_back(amesh);
+	landingSiteRover.ground.meshes.push_back(amesh);
 
 	pillar3.radius = 0.2f;
 	pillar3.position[0] = -side / 2;
@@ -1369,7 +1477,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar3.position[0], pillar3.position[1], pillar3.position[2]);
-	landingSite.ground.meshes.push_back(amesh);
+	landingSiteRover.ground.meshes.push_back(amesh);
 
 	pillar4.radius = 0.2f;
 	pillar4.position[0] = -side / 2;
@@ -1380,7 +1488,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar4.position[0], pillar4.position[1], pillar4.position[2]);
-	landingSite.ground.meshes.push_back(amesh);
+	landingSiteRover.ground.meshes.push_back(amesh);
 
 	pillars.push_back(pillar1);
 	pillars.push_back(pillar2);
@@ -1497,53 +1605,30 @@ void createStaticRocks() {
 	
 }
 
-void initModels(){
-	Model alien, arch;
+void createSpaceship(){
+	//model_dir = "backpack";
+	model_dir = "SciFi_Fighter_AK5";
 
-	alien.model_dir = "backpack";
+	ostringstream oss;
+	oss << model_dir << "/" << model_dir << ".obj";
+	string filepath = oss.str(); 
 
-	alien.position[0] = 10;
-	alien.position[1] = 0;
-	alien.position[2] = 20;
-
-	arch.model_dir = "spider";
-
-	arch.position[0] = 10;
-	arch.position[1] = 0;
-	arch.position[2] = 20;
-
-	models.push_back(alien);
-	//models.push_back(arch);
-}
-
-void createModels(){
-	//initModels();
-
-	//for (int i = 0; i < models.size(); i++){
-		
-		model_dir = "backpack";
-
-		ostringstream oss;
-		oss << model_dir << "/" << model_dir << ".obj";
-		string filepath = oss.str(); 
-
-		model_dir += "/";
+	model_dir += "/";
 	
-		//check if file exists
-		ifstream fin(filepath.c_str());
-		if (!fin.fail()) {
-			fin.close();
-		}
-		else
-			printf("Couldn't open file: %s\n", filepath.c_str());
+	//check if file exists
+	ifstream fin(filepath.c_str());
+	if (!fin.fail()) {
+		fin.close();
+	}
+	else
+		printf("Couldn't open file: %s\n", filepath.c_str());
 
-		//import 3D file into Assimp scene graph
-		if (!Import3DFromFile(filepath))
-			return;
+	//import 3D file into Assimp scene graph
+	if (!Import3DFromFile(filepath))
+		return;
 
-		//creation of Mymesh array with VAO Geometry and Material
-		myMeshes = createMeshFromAssimp(scene);
-	//}
+	//creation of Mymesh array with VAO Geometry and Material
+	spaceship = createMeshFromAssimp(scene);
 }
 
 
@@ -1581,7 +1666,7 @@ void init()
 	createRollingRocks(10);
 	createRover();
 	createCameras();
-	createModels();
+	createSpaceship();
 
 	particleMesh = createQuad(0.03f, 0.01f);
 	//particleMesh.mat.texCount = 3; // attribute for texture

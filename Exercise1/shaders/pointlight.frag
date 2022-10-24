@@ -78,6 +78,7 @@ in Data {
 	vec4 pos;
 	vec3 normal;
 	vec3 eye;
+	vec3 lightDir;
 	vec2 tex_coord;
 } DataIn;
 
@@ -89,19 +90,33 @@ void main() {
 	vec4 texel, texel1; 
 	float intensity;
 	vec3 specSum = vec3(0.0);
+	vec3 n;
 
+	if(normalMap)
+		n = normalize(2.0 * texture(texUnitNormalMap, DataIn.tex_coord).rgb - 1.0);  //normal in tangent space
+	else
+		n = normalize(DataIn.normal);
 	
-	if(diffMapCount == 0)
-		diff = mat.diffuse;
-	else if(diffMapCount == 1)
-		diff = mat.diffuse * texture(texUnitDiff, DataIn.tex_coord);
-	else
-		diff = mat.diffuse * texture(texUnitDiff, DataIn.tex_coord) * texture(texUnitDiff1, DataIn.tex_coord);
+	vec3 l = normalize(DataIn.lightDir);
+	vec3 e = normalize(DataIn.eye);
 
-	if(specularMap) 
-		auxSpec = mat.specular * texture(texUnitSpec, DataIn.tex_coord);
-	else
+	if(mat.texCount == 0) {
+		diff = mat.diffuse;
 		auxSpec = mat.specular;
+	} else{
+		if(diffMapCount == 0)
+			diff = mat.diffuse;
+		else if(diffMapCount == 1)
+			diff = mat.diffuse * texture(texUnitDiff, DataIn.tex_coord);
+		else
+			diff = mat.diffuse * texture(texUnitDiff, DataIn.tex_coord) * texture(texUnitDiff1, DataIn.tex_coord);
+	
+		if(specularMap) 
+			auxSpec = mat.specular * texture(texUnitSpec, DataIn.tex_coord);
+		else
+			auxSpec = mat.specular;
+	}
+	
 
 	if(sun_mode){
 		
