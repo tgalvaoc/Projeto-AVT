@@ -164,7 +164,6 @@
     <ClCompile Include="AVTmathLib.cpp" />
     <ClCompile Include="basic_geometry.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Flare.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="meshFromAssimp.cpp" />
     <ClCompile Include="Rover.cpp" />

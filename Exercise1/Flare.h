@@ -12,18 +12,12 @@ typedef struct FLARE_ELEMENT {
 	int textureId;	
 } FLARE_ELEMENT;
 
-class Flare {
-public:
-    char* flareTextureName[NUMBER_OF_TEXTURES] = {"crcl", "flar", "hxgn", "ring", "sun"};
-    float scale;
-    float maxSize;
-    int numberOfPieces;
-    FLARE_ELEMENT element[MAX_ELEMENTS_PER_FLARE];
 
-    Flare();
-    Flare(char* filename);
-    unsigned int getTextureId(char *name);
-    void renderFlare(int lx, int ly, int *m_viewport);
-    inline double clamp(const double x, const double min, const double max);
-    inline int clampi(const int x, const int min, const int max);
-};
+typedef struct FLARE_DEF {
+    float           scale;     // Scale factor for adjusting overall size of flare elements.
+    float           maxSize;   // Max size of largest element, as proportion of screen width (0.0-1.0)
+    int             numberOfPieces;    // Number of elements in use
+    FLARE_ELEMENT    element[MAX_ELEMENTS_PER_FLARE];
+} FLARE_DEF;
+
+char* flareTextureNames[NUMBER_OF_TEXTURES] = { "crcl", "flar", "hxgn", "ring", "sun" };

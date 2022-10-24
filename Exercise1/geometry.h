@@ -65,6 +65,11 @@ struct LandingSite {
 	MyObject ground;
 };
 
+struct Flag {
+	float position[3] = { 0.0f, 0.0f, 0.f };
+	MyObject object;
+};
+
 MyMesh createCube();
 MyMesh createQuad(float size_x, float size_y);
 MyMesh createSphere(float radius, int divisions);

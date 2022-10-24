@@ -30,7 +30,6 @@
 #include "flare.h"
 #include "Camera.h"
 #include "Rover.h"
-#include "l3dBillboard.h"
 
 #include <list>
 #define _USE_MATH_DEFINES
@@ -71,9 +70,9 @@ const string font_name = "fonts/arial.ttf";
 vector<MyObject> myObjects;
 MyMesh particleMesh;
 vector<struct MyMesh> spaceship;
-MyObject flag;
 
 
+Flag flag;
 Rover rover;
 LandingSite landingSiteRover;
 LandingSite landingSiteSpaceship;
@@ -82,7 +81,10 @@ vector<StaticRock> staticRocks;
 list<Pillar> pillars;
 
 //Flare effect
-Flare AVTflare; 
+FLARE_DEF flare; 
+float lightScreenPos[3];  //Position of the light in Window Coordinates
+GLuint FlareTextureArray[5];
+MyMesh flareMesh;
 
 bool pauseActive = false;
 bool gameOver = false;
@@ -754,6 +756,154 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 	//glUniform1ui(diffMapCount_loc, 0);
 }
 
+unsigned int getTextureId(char* name) {
+	int i;
+
+	for (i = 0; i < NUMBER_OF_TEXTURES; ++i)
+	{
+		if (strncmp(name, flareTextureNames[i], strlen(name)) == 0)
+			return i;
+	}
+	return -1;
+}
+
+inline double clamp(const double x, const double min, const double max) {
+	return (x < min ? min : (x > max ? max : x));
+}
+
+inline int clampi(const int x, const int min, const int max) {
+	return (x < min ? min : (x > max ? max : x));
+}
+
+
+void    loadFlareFile(FLARE_DEF* flare, char* filename)
+{
+	int     n = 0;
+	FILE* f;
+	char    buf[256];
+	int fields;
+
+	memset(flare, 0, sizeof(FLARE_DEF));
+
+	f = fopen(filename, "r");
+	if (f)
+	{
+		fgets(buf, sizeof(buf), f);
+		sscanf(buf, "%f %f", &flare->scale, &flare->maxSize);
+
+		while (!feof(f))
+		{
+			char            name[8] = { '\0', };
+			double          dDist = 0.0, dSize = 0.0;
+			float			color[4];
+			int				id;
+
+			fgets(buf, sizeof(buf), f);
+			fields = sscanf(buf, "%4s %lf %lf ( %f %f %f %f )", name, &dDist, &dSize, &color[3], &color[0], &color[1], &color[2]);
+			if (fields == 7)
+			{
+				for (int i = 0; i < 4; ++i) color[i] = clamp(color[i] / 255.0f, 0.0f, 1.0f);
+				id = getTextureId(name);
+				if (id < 0) printf("Texture name not recognized\n");
+				else
+					flare->element[n].textureId = id;
+				flare->element[n].distance = (float)dDist;
+				flare->element[n].size = (float)dSize;
+				memcpy(flare->element[n].matDiffuse, color, 4 * sizeof(float));
+				++n;
+			}
+		}
+
+		flare->numberOfPieces = n;
+		fclose(f);
+	}
+	else printf("Flare file opening error\n");
+}
+
+void renderFlare(FLARE_DEF* flare, int lx, int ly, int* m_viewport) {  //lx, ly represent the projected position of light on viewport
+
+	int     dx, dy;          // Screen coordinates of "destination"
+	int     px, py;          // Screen coordinates of flare element
+	int		cx, cy;
+	float   maxflaredist, flaredist, flaremaxsize, flarescale, scaleDistance;
+	int     width, height, alpha;    // Piece parameters;
+	int     i;
+	float	diffuse[4];
+
+	GLint loc;
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	int screenMaxCoordX = m_viewport[0] + m_viewport[2] - 1;
+	int screenMaxCoordY = m_viewport[1] + m_viewport[3] - 1;
+
+	//viewport center
+	cx = m_viewport[0] + (int)(0.5f * (float)m_viewport[2]) - 1;
+	cy = m_viewport[1] + (int)(0.5f * (float)m_viewport[3]) - 1;
+
+	// Compute how far off-center the flare source is.
+	maxflaredist = sqrt(cx * cx + cy * cy);
+	flaredist = sqrt((lx - cx) * (lx - cx) + (ly - cy) * (ly - cy));
+	scaleDistance = (maxflaredist - flaredist) / maxflaredist;
+	flaremaxsize = (int)(m_viewport[2] * flare->maxSize);
+	flarescale = (int)(m_viewport[2] * flare->scale);
+
+	// Destination is opposite side of centre from source
+	dx = clampi(cx + (cx - lx), m_viewport[0], screenMaxCoordX);
+	dy = clampi(cy + (cy - ly), m_viewport[1], screenMaxCoordY);
+
+	// Render each element. To be used Texture Unit 0
+
+	glUniform1i(texMode, 5); // draw modulated textured particles
+
+	for (i = 0; i < flare->numberOfPieces; ++i)
+	{
+		// Position is interpolated along line between start and destination.
+		px = (int)((1.0f - flare->element[i].distance) * lx + flare->element[i].distance * dx);
+		py = (int)((1.0f - flare->element[i].distance) * ly + flare->element[i].distance * dy);
+		px = clampi(px, m_viewport[0], screenMaxCoordX);
+		py = clampi(py, m_viewport[1], screenMaxCoordY);
+
+		// Piece size are 0 to 1; flare size is proportion of screen width; scale by flaredist/maxflaredist.
+		width = (int)(scaleDistance * flarescale * flare->element[i].size);
+
+		// Width gets clamped, to allows the off-axis flaresto keep a good size without letting the elements get big when centered.
+		if (width > flaremaxsize)  width = flaremaxsize;
+
+		height = (int)((float)m_viewport[3] / (float)m_viewport[2] * (float)width);
+		memcpy(diffuse, flare->element[i].matDiffuse, 4 * sizeof(float));
+		diffuse[3] *= scaleDistance;   //scale the alpha channel
+
+		if (width > 1)
+		{
+			// send the material - diffuse color modulated with texture
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, diffuse);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, FlareTextureArray[flare->element[i].textureId]);
+			pushMatrix(MODEL);
+			translate(MODEL, (float)(px - width * 0.0f), (float)(py - height * 0.0f), 0.0f);
+			scale(MODEL, (float)width, (float)height, 1);
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			glBindVertexArray(flareMesh.vao);
+			glDrawElements(flareMesh.type, flareMesh.numIndexes, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+			popMatrix(MODEL);
+		}
+	}
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+}
 
 void renderScene(void) {
 	//desenha efetivamente os objetos
@@ -1025,59 +1175,66 @@ void renderScene(void) {
 	glDepthMask(GL_TRUE); //make depth buffer again writeable
 
 	// Flag
-	
-	/*glUniform1i(texMode, 4);
 
-	
+	glBindTexture(GL_TEXTURE_2D, TextureArray[4]);
+
+	glUniform1i(texMode, 4);
+	meshes = flag.object.meshes;
 	pushMatrix(MODEL);
-	translate(MODEL, 5 + i * 10.0, 0, 5 + j * 10.0);
+	multMatrix(MODEL, flag.object.objectTransform);
+	translate(MODEL, flag.position[0], flag.position[1], flag.position[2]);
+	
+	float lookAt[3] = { 0,0,1 }, objToCamProj[3], upAux[3], angleCosine;
 
-	pos[0] = 5 + i * 10.0; pos[1] = 0; pos[2] = 5 + j * 10.0;
+	objToCamProj[0] = cameras[2].position[0] - flag.position[0];
+	objToCamProj[1] = 0;
+	objToCamProj[2] = cameras[2].position[2] - flag.position[2];
 
-	if (type == 2)
-		l3dBillboardSphericalBegin(cam, pos);
-	else if (type == 3)
-		l3dBillboardCylindricalBegin(cam, pos);
+	normalize(objToCamProj);
+	crossProduct(lookAt, objToCamProj, upAux);
 
-	objId = 5;  //quad for tree
+	// compute the angle
+	angleCosine = dotProduct(lookAt, objToCamProj);
+	if ((angleCosine < 0.99990) && (angleCosine > -0.9999))
+		rotate(MODEL, acos(angleCosine) * 180 / 3.14, upAux[0], upAux[1], upAux[2]);
 
-	//diffuse and ambient color are not used in the tree quads
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-	glUniform4fv(loc, 1, mesh[objId].mat.specular);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-	glUniform1f(loc, mesh[objId].mat.shininess);
+	for (int objId = 0; objId < meshes.size(); objId++) {
 
-	pushMatrix(MODEL);
-	translate(MODEL, 0.0, 3.0, 0.0f);
+		// send the material
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+		glUniform4fv(loc, 1, meshes[objId].mat.ambient);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+		glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+		glUniform4fv(loc, 1, meshes[objId].mat.specular);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+		glUniform1f(loc, meshes[objId].mat.shininess);
+		
+		pushMatrix(MODEL);
+		multMatrix(MODEL, meshes[objId].meshTransform);
+		translate(MODEL, 0.0, 3.0, 0.0f);
 
-	// send matrices to OGL
-	if (type == 0 || type == 1) {     //Cheating matrix reset billboard techniques
-		computeDerivedMatrix(VIEW_MODEL);
+		// send matrices to OGL
+		computeDerivedMatrix(PROJ_VIEW_MODEL);
+		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+		computeNormalMatrix3x3();
+		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
-		//reset VIEW_MODEL
-		if (type == 0) BillboardCheatSphericalBegin();
-		else BillboardCheatCylindricalBegin();
+		// Render mesh
 
-		computeDerivedMatrix_PVM(); // calculate PROJ_VIEW_MODEL
+		glBindVertexArray(meshes[objId].vao);
+		glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		popMatrix(MODEL);
 	}
-	else computeDerivedMatrix(PROJ_VIEW_MODEL);
-
-	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-	computeNormalMatrix3x3();
-	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
-	glBindVertexArray(mesh[objId].vao);
-	glDrawElements(mesh[objId].type, mesh[objId].numIndexes, GL_UNSIGNED_INT, 0);
-	popMatrix(MODEL);
-
-	//	if (type==0 || type==1) // restore matrix VIEW_MODEL não é necessário pois a PVM é sempre calculada a pArtir da MODEL e da VIEW que não são ALTERADAS
-
 	popMatrix(MODEL);
 
 
-	*/
+	// spaceship
 
-	// ASSIMP
+	glUniform1i(texMode, 0);
 	aiRecursive_render(scene, scene->mRootNode);
 
 	// Flare Effect
@@ -1143,6 +1300,38 @@ void renderScene(void) {
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
+
+	// Flare Effect ---------------------------------
+	if (flareEffect) {
+
+		int flarePos[2];
+		int m_viewport[4];
+		glGetIntegerv(GL_VIEWPORT, m_viewport);
+
+		pushMatrix(MODEL);
+		loadIdentity(MODEL);
+		computeDerivedMatrix(PROJ_VIEW_MODEL);  //pvm to be applied to lightPost. pvm is used in project function
+
+		if (!project(directionalLightPos, lightScreenPos, m_viewport))
+			printf("Error in getting projected light in screen\n");  //Calculate the window Coordinates of the light position: the projected position of light on viewport
+		flarePos[0] = clampi((int)lightScreenPos[0], m_viewport[0], m_viewport[0] + m_viewport[2] - 1);
+		flarePos[1] = clampi((int)lightScreenPos[1], m_viewport[1], m_viewport[1] + m_viewport[3] - 1);
+		popMatrix(MODEL);
+
+		//viewer looking down at  negative z direction
+		pushMatrix(PROJECTION);
+		loadIdentity(PROJECTION);
+		pushMatrix(VIEW);
+		loadIdentity(VIEW);
+		ortho(m_viewport[0], m_viewport[0] + m_viewport[2] - 1, m_viewport[1], m_viewport[1] + m_viewport[3] - 1, -1, 1);
+		renderFlare(&flare, flarePos[0], flarePos[1], m_viewport);
+		popMatrix(PROJECTION);
+		popMatrix(VIEW);
+	}
+
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
@@ -1677,19 +1866,24 @@ void createSpaceship(){
 
 	//import 3D file into Assimp scene graph
 	if (!Import3DFromFile(filepath))
-		return;
+		return ;
 
 	//creation of Mymesh array with VAO Geometry and Material
 	spaceship = createMeshFromAssimp(scene);
 }
 
 void createFlag() {
-	MyMesh amesh = createQuad(6, 6);
-	setIdentityMatrix(flag.objectTransform, 4);
+	MyMesh amesh = createQuad(6.0f, 6.0f);
+	MyObject object;
+	setIdentityMatrix(object.objectTransform, 4);
 	setMeshColor(&amesh, 0.2f, 0.2f, 0.2f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, 1.0f, 2.0f, 3.0f);
-	flag.meshes.push_back(amesh);
+	flag.position[0] = -8.0f;
+	flag.position[1] = 0.0f;
+	flag.position[2] = 3.0f;
+	myTranslate(amesh.meshTransform, flag.position[0], flag.position[1], flag.position[1]);
+	object.meshes.push_back(amesh);
+	flag.object = object;
 }
 
 // ------------------------------------------------------------
@@ -1713,11 +1907,11 @@ void init()
 	ilInit();
 
 	glGenTextures(5, TextureArray);
-	Texture2D_Loader(TextureArray, "mars_texture.tga", 0);
-	Texture2D_Loader(TextureArray, "rock_texture.tga", 1);
-	Texture2D_Loader(TextureArray, "steel_texture.tga", 2);
-	Texture2D_Loader(TextureArray, "particle.tga", 3);
-	Texture2D_Loader(TextureArray, "tree.tga", 4);
+	Texture2D_Loader(TextureArray, "textures/ground0.tga", 0);
+	Texture2D_Loader(TextureArray, "textures/ground1.tga", 1);
+	Texture2D_Loader(TextureArray, "textures/rover.tga", 2);
+	Texture2D_Loader(TextureArray, "textures/particle.tga", 3);
+	Texture2D_Loader(TextureArray, "textures/tree.tga", 4);
 
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
@@ -1733,9 +1927,11 @@ void init()
 	particleMesh = createQuad(0.03f, 0.01f);
 	//particleMesh.mat.texCount = 3; // attribute for texture
 
-	//Load flare from file
-	//AVTflare = Flare("flare.txt");
+	// create geometry and VAO of the quad for flare elements
+	flareMesh = createQuad(1, 1);
 
+	//Load flare from file
+	loadFlareFile(&flare, "flare.txt");
 	initialState(true);
 	glutTimerFunc(0, animate, 0);
 
