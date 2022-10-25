@@ -71,13 +71,12 @@ vector<MyObject> myObjects;
 MyMesh particleMesh;
 vector<struct MyMesh> spaceship;
 
-
-Flag flag;
 Rover rover;
 LandingSite landingSiteRover;
 LandingSite landingSiteSpaceship;
 vector<RollingRock> rollingRocks;
 vector<StaticRock> staticRocks;
+vector<Flag> flags;
 list<Pillar> pillars;
 
 //Flare effect
@@ -964,7 +963,6 @@ void renderScene(void) {
 	glUniform1f(loc, 0.99f);
 
 
-
 	//Associar os Texture Units aos Objects Texture
 	//stone.tga loaded in TU0; checker.tga loaded in TU1;  lightwood.tga loaded in TU2
 
@@ -982,7 +980,6 @@ void renderScene(void) {
 
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, TextureArray[4]);
-
 
 	//Indicar aos tres samplers do GLSL quais os Texture Units a serem usados
 	glUniform1i(texMap0, 0);
@@ -1174,63 +1171,61 @@ void renderScene(void) {
 	}
 	glDepthMask(GL_TRUE); //make depth buffer again writeable
 
-	// Flag
+	// Flags!
 
-	glBindTexture(GL_TEXTURE_2D, TextureArray[4]);
+	for (int i = 0; i < flags.size(); i++) {
 
-	glUniform1i(texMode, 4);
-	meshes = flag.object.meshes;
-	pushMatrix(MODEL);
-	multMatrix(MODEL, flag.object.objectTransform);
-	translate(MODEL, flag.position[0], flag.position[1], flag.position[2]);
-	
-	float lookAt[3] = { 0,0,1 }, objToCamProj[3], upAux[3], angleCosine;
+		glBindTexture(GL_TEXTURE_2D, TextureArray[4 + i]);
 
-	objToCamProj[0] = cameras[2].position[0] - flag.position[0];
-	objToCamProj[1] = 0;
-	objToCamProj[2] = cameras[2].position[2] - flag.position[2];
-
-	normalize(objToCamProj);
-	crossProduct(lookAt, objToCamProj, upAux);
-
-	// compute the angle
-	angleCosine = dotProduct(lookAt, objToCamProj);
-	if ((angleCosine < 0.99990) && (angleCosine > -0.9999))
-		rotate(MODEL, acos(angleCosine) * 180 / 3.14, upAux[0], upAux[1], upAux[2]);
-
-	for (int objId = 0; objId < meshes.size(); objId++) {
-
-		// send the material
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-		glUniform4fv(loc, 1, meshes[objId].mat.ambient);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-		glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-		glUniform4fv(loc, 1, meshes[objId].mat.specular);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-		glUniform1f(loc, meshes[objId].mat.shininess);
-		
+		glUniform1i(texMode, 4 + i);
+		meshes = flags[i].object.meshes;
 		pushMatrix(MODEL);
-		multMatrix(MODEL, meshes[objId].meshTransform);
-		translate(MODEL, 0.0, 3.0, 0.0f);
+		multMatrix(MODEL, flags[i].object.objectTransform);
+		translate(MODEL, flags[i].position[0], flags[i].position[1] + 1, flags[i].position[2]);
 
-		// send matrices to OGL
-		computeDerivedMatrix(PROJ_VIEW_MODEL);
-		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-		computeNormalMatrix3x3();
-		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+		for (int objId = 0; objId < meshes.size(); objId++) {
 
-		// Render mesh
+			// send the material
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+			glUniform4fv(loc, 1, meshes[objId].mat.specular);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+			glUniform1f(loc, meshes[objId].mat.shininess);
 
-		glBindVertexArray(meshes[objId].vao);
-		glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+			pushMatrix(MODEL);
 
+			// send matrices to OGL
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+
+			int i, j;
+
+			for (i = 0; i < 3; i += 2)
+				for (j = 0; j < 3; j++) {
+					if (i == j)
+						mCompMatrix[VIEW_MODEL][i * 4 + j] = 1.0;
+					else
+						mCompMatrix[VIEW_MODEL][i * 4 + j] = 0.0;
+				}
+			computeDerivedMatrix_PVM();
+
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			// Render mesh
+
+			glBindVertexArray(meshes[objId].vao);
+			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+
+			popMatrix(MODEL);
+		}
 		popMatrix(MODEL);
 	}
-	popMatrix(MODEL);
-
 
 	// spaceship
 
@@ -1872,18 +1867,34 @@ void createSpaceship(){
 	spaceship = createMeshFromAssimp(scene);
 }
 
-void createFlag() {
-	MyMesh amesh = createQuad(6.0f, 6.0f);
-	MyObject object;
-	setIdentityMatrix(object.objectTransform, 4);
+void createFlags() {
+	MyMesh amesh = createQuad(3.0f, 3.0f);
+	Flag portugal, austria;
+
+	setIdentityMatrix(portugal.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.2f, 0.2f, 0.2f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	flag.position[0] = -8.0f;
-	flag.position[1] = 0.0f;
-	flag.position[2] = 3.0f;
-	myTranslate(amesh.meshTransform, flag.position[0], flag.position[1], flag.position[1]);
-	object.meshes.push_back(amesh);
-	flag.object = object;
+	portugal.position[0] = -8.0f;
+	portugal.position[1] = 0.0f;
+	portugal.position[2] = 3.0f;
+	myTranslate(amesh.meshTransform, portugal.position[0], portugal.position[1], portugal.position[1]);
+	
+	portugal.object.meshes.push_back(amesh);
+
+	amesh = createQuad(3.0f, 3.0f);
+
+	setIdentityMatrix(austria.object.objectTransform, 4);
+	setMeshColor(&amesh, 0.2f, 0.2f, 0.2f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	austria.position[0] = -11.0f;
+	austria.position[1] = 0.0f;
+	austria.position[2] = 3.0f;
+	myTranslate(amesh.meshTransform, austria.position[0], austria.position[1], austria.position[1]);
+
+	austria.object.meshes.push_back(amesh);
+
+	flags.push_back(portugal);
+	//flags.push_back(austria);
 }
 
 // ------------------------------------------------------------
@@ -1911,7 +1922,7 @@ void init()
 	Texture2D_Loader(TextureArray, "textures/ground1.tga", 1);
 	Texture2D_Loader(TextureArray, "textures/rover.tga", 2);
 	Texture2D_Loader(TextureArray, "textures/particle.tga", 3);
-	Texture2D_Loader(TextureArray, "textures/tree.tga", 4);
+	Texture2D_Loader(TextureArray, "textures/flagAustria.tga", 4);
 
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
@@ -1922,7 +1933,7 @@ void init()
 	createRover();
 	createCameras();
 	createSpaceship();
-	createFlag();
+	createFlags();
 
 	particleMesh = createQuad(0.03f, 0.01f);
 	//particleMesh.mat.texCount = 3; // attribute for texture

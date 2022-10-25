@@ -1,17 +1,47 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(513,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (Exercise1.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  avtFreeType.cpp
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\avtFreeType.cpp(88,35): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\avtFreeType.cpp(88,62): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+  AVTmathLib.cpp
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\AVTmathLib.cpp(513,62): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\AVTmathLib.cpp(514,62): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\AVTmathLib.cpp(516,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  basic_geometry.cpp
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(174,65): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(296,44): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(298,44): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(301,48): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(303,48): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(319,45): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(321,45): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(324,53): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(326,53): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(410,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(418,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(438,11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(459,48): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\basic_geometry.cpp(460,48): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Camera.cpp
   main.cpp
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(699,31): warning C4018: '<': signed/unsigned mismatch
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(805,49): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(848,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(849,18): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(851,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(852,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(874,38): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(829,25): warning C4101: 'alpha': unreferenced local variable
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1199,41): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1326,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1326,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1326,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1326,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(698,31): warning C4018: '<': signed/unsigned mismatch
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(804,49): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(847,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(848,18): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(850,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(851,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(873,38): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(828,25): warning C4101: 'alpha': unreferenced local variable
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1321,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1321,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1321,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1321,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  meshFromAssimp.cpp
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\meshFromAssimp.cpp(142,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\meshFromAssimp.cpp(194,16): warning C4101: 'aMesh': unreferenced local variable
+  Rover.cpp
+  Texture_Loader.cpp
+  vsShaderLib.cpp
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\vsShaderLib.cpp(569,49): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
   Exercise1.vcxproj -> C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\x64\Debug\Projeto-AVT.exe
   0 File(s) copied
