@@ -62,6 +62,9 @@ uniform bool spotlight_mode;
 uniform bool fog_mode;
 uniform vec4 coneDir;	
 uniform float spotCosCutOff;
+uniform bool particles;
+uniform bool billboard;
+uniform bool rover;
 
 uniform PointLight pointLights[NUMBER_POINT_LIGHTS];
 uniform SpotLight spotLights[NUMBER_SPOT_LIGHTS];
@@ -182,32 +185,34 @@ void main() {
 		}
 	}
 
-	if (texMode == 1){ // multitexturing for ground
+	if (texMode == 2){ // multitexturing for ground
 		texel = texture(texmap0, DataIn.tex_coord * 40);  // texel from mars_texture.tga
 		texel1 = texture(texmap1, DataIn.tex_coord * 40);  // texel from rock_texture.tga
 		auxColorOut += vec4(max(intensity*texel.rgb*texel1.rgb + specSum, 0.07*texel.rgb*texel1.rgb), texel.a*texel1.a);
 	}
-	
-	if (texMode == 2){ // rover
-		texel = texture(texmap2, DataIn.tex_coord * 2);  // texel from steel.tga
-
-		auxColorOut += vec4(max(intensity*texel.rgb*0.7 + specSum, 0.07*texel.rgb), texel.a);
-	}
-
-	if (texMode == 3){ // particles
-		texel = texture(texmap3, DataIn.tex_coord); // texel from particle.tga
+	else if(texMode == 1){ // rover
+		if(rover){
+			texel = texture(texmap0, DataIn.tex_coord * 2);  // texel from steel.tga
+			auxColorOut += vec4(max(intensity*texel.rgb*0.7 + specSum, 0.07*texel.rgb), texel.a);
+		}
+		else if(particles){
+			texel = texture(texmap0, DataIn.tex_coord); // texel from particle.tga
 		
-		if((texel.a == 0.0)  || (mat.diffuse.a == 0.0) ) discard;
-		else
-			auxColorOut += mat.diffuse * texel;
-	}
-
-	if (texMode == 4)  { // texel from billboard.tga
-		texel = texture(texmap4, DataIn.tex_coord);
+			if((texel.a == 0.0)  || (mat.diffuse.a == 0.0) ) discard;
+			else
+				auxColorOut += mat.diffuse * texel;
+		}
+		else if(billboard){
+			texel = texture(texmap0, DataIn.tex_coord);
 	
-		if(texel.a == 0.0) discard;
-		else
-			auxColorOut += vec4(max(intensity*texel.rgb + specSum, 0.1*texel.rgb), texel.a);
+			if(texel.a == 0.0) discard;
+			else
+				auxColorOut += vec4(max(intensity*texel.rgb + specSum, 0.1*texel.rgb), texel.a);
+		}	
+		else{
+			texel = texture(texmap0, DataIn.tex_coord);  // texel from steel.tga
+			auxColorOut += vec4(max(intensity*texel.rgb + specSum, texel.rgb), texel.a);
+		}
 	}
 
 	auxColorOut[3] = mat.diffuse.a;

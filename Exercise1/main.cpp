@@ -94,7 +94,7 @@ bool sun_mode = true;
 bool point_lights_mode = false;
 bool fog_mode = false;
 bool multitexture_mode = false;
-bool flareEffect = false;
+bool flareEffect = true;
 
 bool normalMapKey = TRUE; // by default if there is a normal map then bump effect is implemented. press key "b" to enable/disable normal mapping 
 
@@ -140,7 +140,8 @@ char s[32];
 #define NUMBER_SPOT_LIGHTS 2
 #define MAX_PARTICLES 50
 
-float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 0.0f };
+//float directionalLightPos[4] = { -10.0f, 5.0f, 1.0f, 1.0f };
+float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 1.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
 	{5.0f, 8.0f, -5.0f, 1.0f}, {5.0f, 8.0f, 5.0f, 1.0f}, {-5.0f, 8.0f, 0.0f, 1.0f},
 	{5.0f, 8.0f, 0.0f, 1.0f} };
@@ -752,7 +753,7 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 	popMatrix(MODEL);
 	//glUniform1i(normalMap_loc, false);   //GLSL normalMap variable initialized to 0
 	//glUniform1i(specularMap_loc, false);
-	//glUniform1ui(diffMapCount_loc, 0);
+	glUniform1ui(diffMapCount_loc, 0);
 }
 
 unsigned int getTextureId(char* name) {
@@ -775,7 +776,7 @@ inline int clampi(const int x, const int min, const int max) {
 }
 
 
-void    loadFlareFile(FLARE_DEF* flare, char* filename)
+void loadFlareFile(FLARE_DEF* flare, char* filename)
 {
 	int     n = 0;
 	FILE* f;
@@ -856,7 +857,7 @@ void renderFlare(FLARE_DEF* flare, int lx, int ly, int* m_viewport) {  //lx, ly 
 
 	// Render each element. To be used Texture Unit 0
 
-	glUniform1i(texMode, 5); // draw modulated textured particles
+	glUniform1i(texMode, 1); // draw modulated textured particles
 
 	for (i = 0; i < flare->numberOfPieces; ++i)
 	{
@@ -963,33 +964,6 @@ void renderScene(void) {
 	glUniform1f(loc, 0.99f);
 
 
-	//Associar os Texture Units aos Objects Texture
-	//stone.tga loaded in TU0; checker.tga loaded in TU1;  lightwood.tga loaded in TU2
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, TextureArray[1]);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, TextureArray[2]);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, TextureArray[3]); 
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, TextureArray[4]);
-
-	//Indicar aos tres samplers do GLSL quais os Texture Units a serem usados
-	glUniform1i(texMap0, 0);
-	glUniform1i(texMap1, 1);
-	glUniform1i(texMap2, 2);
-	glUniform1i(texMap3, 3);
-	glUniform1i(texMap4, 4);
-
-	glUniform1i(texMode, -1);
-
 	//lightPos definido em World Coord so is converted to eye space
 
 	for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
@@ -1030,10 +1004,16 @@ void renderScene(void) {
 
 		for (int objId = 0; objId < meshes.size(); objId++) {
 
-			if (i == 0 && objId == 0 && multitexture_mode)
-				glUniform1i(texMode, 1);
+			if (i == 0 && objId == 0 && multitexture_mode) {
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, TextureArray[1]);
+				glUniform1i(texMode, 2);
+			}
 			else
 				glUniform1i(texMode, 0);
+
 			// send the material
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
@@ -1068,6 +1048,11 @@ void renderScene(void) {
 
 	// Rover ---------------------------------------------------
 	glUniform1i(texMode, 0);
+	
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "rover");
+	glUniform1i(loc, 1);
+	
 	vector<MyMesh> meshes = rover.object.meshes;
 
 	pushMatrix(MODEL);
@@ -1076,7 +1061,8 @@ void renderScene(void) {
 	
 	translate(MODEL, rover.position[0], 0, rover.position[2]);
 	rotate(MODEL, rover.angle, 0, 1, 0);
-
+	
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, TextureArray[2]); // rover.tga 
 
 	for (int objId = 0; objId < meshes.size(); objId++) {
@@ -1101,10 +1087,9 @@ void renderScene(void) {
 		computeNormalMatrix3x3();
 		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
-
 		// Render mesh
 		if (objId == 0 || objId == 1)
-			glUniform1i(texMode, 2); // textura para o corpo do rover
+			glUniform1i(texMode, 1); // textura para o corpo do rover
 		else 
 			glUniform1i(texMode, 0);
 
@@ -1116,7 +1101,13 @@ void renderScene(void) {
 	}
 	popMatrix(MODEL);
 
+	loc = glGetUniformLocation(shader.getProgramIndex(), "rover");
+	glUniform1i(loc, 0);
+
 	// Particles --------------------------------------------
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "particles");
+	glUniform1i(loc, 1);
 
 	float particle_color[4];
 	
@@ -1125,15 +1116,15 @@ void renderScene(void) {
 	// draw fireworks particles
 	//objId = 6;  //quad for particle
 
-	glBindTexture(GL_TEXTURE_2D, TextureArray[3]); //particle.tga 
-
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, TextureArray[3]);  //particle.tga 
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDepthMask(GL_FALSE);  //Depth Buffer Read Only
 
-	glUniform1i(texMode, 3); // draw modulated textured particles 
+	glUniform1i(texMode, 1); // draw modulated textured particles 
 
 	for (int i = 0; i < particles.size(); i++)
 	{
@@ -1171,13 +1162,22 @@ void renderScene(void) {
 	}
 	glDepthMask(GL_TRUE); //make depth buffer again writeable
 
-	// Flags!
+	loc = glGetUniformLocation(shader.getProgramIndex(), "particles");
+	glUniform1i(loc, 0);
+
+	// Flags! ----------------------------------------------------------
+
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
+	glUniform1i(loc, 1);
 
 	for (int i = 0; i < flags.size(); i++) {
 
+
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, TextureArray[4 + i]);
 
-		glUniform1i(texMode, 4 + i);
+		glUniform1i(texMode, 1);
 		meshes = flags[i].object.meshes;
 		pushMatrix(MODEL);
 		multMatrix(MODEL, flags[i].object.objectTransform);
@@ -1227,41 +1227,46 @@ void renderScene(void) {
 		popMatrix(MODEL);
 	}
 
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
+	glUniform1i(loc, 0);
+
 	// spaceship
 
 	glUniform1i(texMode, 0);
 	aiRecursive_render(scene, scene->mRootNode);
 
-	// Flare Effect
+
+	// Flare Effect ---------------------------------
 	if (flareEffect) {
 
-		/*int flarePos[2];
+		int flarePos[2];
 		int m_viewport[4];
 		glGetIntegerv(GL_VIEWPORT, m_viewport);
 
 		pushMatrix(MODEL);
 		loadIdentity(MODEL);
 		computeDerivedMatrix(PROJ_VIEW_MODEL);  //pvm to be applied to lightPost. pvm is used in project function
-		
-		if (!project(lightPos, lightScreenPos, m_viewport))
+
+		if (!project(directionalLightPos, lightScreenPos, m_viewport))
 			printf("Error in getting projected light in screen\n");  //Calculate the window Coordinates of the light position: the projected position of light on viewport
 		flarePos[0] = clampi((int)lightScreenPos[0], m_viewport[0], m_viewport[0] + m_viewport[2] - 1);
 		flarePos[1] = clampi((int)lightScreenPos[1], m_viewport[1], m_viewport[1] + m_viewport[3] - 1);
+		printf("Flare pos[0]: %d, FlarePos[1]: %d", flarePos[0], flarePos[1]);
 		popMatrix(MODEL);
 
-		   //viewer looking down at  negative z direction
+		//viewer looking down at  negative z direction
 		pushMatrix(PROJECTION);
 		loadIdentity(PROJECTION);
 		pushMatrix(VIEW);
 		loadIdentity(VIEW);
 		ortho(m_viewport[0], m_viewport[0] + m_viewport[2] - 1, m_viewport[1], m_viewport[1] + m_viewport[3] - 1, -1, 1);
-		render_flare(&AVTflare, flarePos[0], flarePos[1], m_viewport);
+		renderFlare(&flare, flarePos[0], flarePos[1], m_viewport);
 		popMatrix(PROJECTION);
 		popMatrix(VIEW);
-		*/
 	}
 
-
+	/*
 	// Text -------------------------------------------------
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
@@ -1296,36 +1301,7 @@ void renderScene(void) {
 	popMatrix(VIEW);
 	popMatrix(MODEL);
 
-	// Flare Effect ---------------------------------
-	if (flareEffect) {
-
-		int flarePos[2];
-		int m_viewport[4];
-		glGetIntegerv(GL_VIEWPORT, m_viewport);
-
-		pushMatrix(MODEL);
-		loadIdentity(MODEL);
-		computeDerivedMatrix(PROJ_VIEW_MODEL);  //pvm to be applied to lightPost. pvm is used in project function
-
-		if (!project(directionalLightPos, lightScreenPos, m_viewport))
-			printf("Error in getting projected light in screen\n");  //Calculate the window Coordinates of the light position: the projected position of light on viewport
-		flarePos[0] = clampi((int)lightScreenPos[0], m_viewport[0], m_viewport[0] + m_viewport[2] - 1);
-		flarePos[1] = clampi((int)lightScreenPos[1], m_viewport[1], m_viewport[1] + m_viewport[3] - 1);
-		popMatrix(MODEL);
-
-		//viewer looking down at  negative z direction
-		pushMatrix(PROJECTION);
-		loadIdentity(PROJECTION);
-		pushMatrix(VIEW);
-		loadIdentity(VIEW);
-		ortho(m_viewport[0], m_viewport[0] + m_viewport[2] - 1, m_viewport[1], m_viewport[1] + m_viewport[3] - 1, -1, 1);
-		renderFlare(&flare, flarePos[0], flarePos[1], m_viewport);
-		popMatrix(PROJECTION);
-		popMatrix(VIEW);
-	}
-
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
+	*/
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -1578,14 +1554,11 @@ GLuint setupShaders() {
 	lPos_uniformId = glGetUniformLocation(shader.getProgramIndex(), "l_pos");
 	normalMap_loc = glGetUniformLocation(shader.getProgramIndex(), "normalMap");
 	specularMap_loc = glGetUniformLocation(shader.getProgramIndex(), "specularMap");
-	//diffMapCount_loc = glGetUniformLocation(shader.getProgramIndex(), "diffMapCount");
+	diffMapCount_loc = glGetUniformLocation(shader.getProgramIndex(), "diffMapCount");
 	texMap0 = glGetUniformLocation(shader.getProgramIndex(), "texmap0");
 	texMap1= glGetUniformLocation(shader.getProgramIndex(), "texmap1");
-	texMap2 = glGetUniformLocation(shader.getProgramIndex(), "texmap2");
-	texMap3 = glGetUniformLocation(shader.getProgramIndex(), "texmap3");
-	texMap4 = glGetUniformLocation(shader.getProgramIndex(), "texmap4");
 
-	texMode = glGetUniformLocation(shader.getProgramIndex(), "texMode");
+	texMode = glGetUniformLocation(shader.getProgramIndex(), "texMode"); // multitex, one tex or o tex
 
 
 	printf("InfoLog for Per Fragment Phong Lightning Shader\n%s\n\n", shader.getAllInfoLogs().c_str());
@@ -1923,6 +1896,15 @@ void init()
 	Texture2D_Loader(TextureArray, "textures/rover.tga", 2);
 	Texture2D_Loader(TextureArray, "textures/particle.tga", 3);
 	Texture2D_Loader(TextureArray, "textures/flagAustria.tga", 4);
+
+
+	//Flare elements textures
+	glGenTextures(5, FlareTextureArray);
+	Texture2D_Loader(FlareTextureArray, "textures/crcl.tga", 0);
+	Texture2D_Loader(FlareTextureArray, "textures/flar.tga", 1);
+	Texture2D_Loader(FlareTextureArray, "textures/hxgn.tga", 2);
+	Texture2D_Loader(FlareTextureArray, "textures/ring.tga", 3);
+	Texture2D_Loader(FlareTextureArray, "textures/sun.tga", 4);
 
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
