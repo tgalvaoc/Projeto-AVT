@@ -192,11 +192,6 @@
     <None Include="shaders\text.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="mars_texture.tga" />
-    <Image Include="rock_texture.tga" />
-    <Image Include="steel_texture.tga" />
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="flare.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

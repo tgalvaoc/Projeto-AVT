@@ -76,11 +76,12 @@ LandingSite landingSiteRover;
 LandingSite landingSiteSpaceship;
 vector<RollingRock> rollingRocks;
 vector<StaticRock> staticRocks;
+vector<Item> items;
 vector<Flag> flags;
 list<Pillar> pillars;
 
 //Flare effect
-FLARE_DEF flare; 
+FLARE_DEF flare;
 float lightScreenPos[3];  //Position of the light in Window Coordinates
 GLuint FlareTextureArray[5];
 MyMesh flareMesh;
@@ -101,7 +102,7 @@ bool normalMapKey = TRUE; // by default if there is a normal map then bump effec
 bool isGoingForward = false;
 bool isRoverHittingSomething = false;
 
-GLuint TextureArray[5];
+GLuint TextureArray[6];
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -161,6 +162,25 @@ vector <Particle> particles;
 int dead_num_particles = 0;
 
 
+
+void setMeshColor(MyMesh* amesh, float r, float g, float b, float a)
+{
+	float amb[] = { r / 4.0f, g / 4.0f, b / 4.0f, 1.0f };
+	float diff[] = { r, g, b, a };
+
+	float spec[] = { r, g, b, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	memcpy(amesh->mat.ambient, amb, 4 * sizeof(float));
+	memcpy(amesh->mat.diffuse, diff, 4 * sizeof(float));
+	memcpy(amesh->mat.specular, spec, 4 * sizeof(float));
+	memcpy(amesh->mat.emissive, emissive, 4 * sizeof(float));
+
+	amesh->mat.shininess = 50.0f;
+	amesh->mat.texCount = 0;
+}
+
+
 void initialState(bool livesReset) {
 
 	if (livesReset) {
@@ -195,8 +215,56 @@ void createCameras() {
 }
 
 
+void createItems(int numToCreate) {
+	MyMesh amesh = createTorus(0.8f, 1.0f, 3, 10); // randomize size in the future
+	int low, high;
+	int signal;
+
+	setMeshColor(&amesh, 1.0f, 1.0f, 1.0f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+
+	for (int i = 0; i < numToCreate; i++) {
+
+		Item item;
+		low = 5;
+		high = 40;
+		signal = rand() % 2;
+
+		float r1 = rand() % high + low;
+		if (signal)
+			r1 = -r1;
+		float r2 = rand() % high + low;
+		if (signal)
+			r2 = -r2;
+
+		signal = rand() % 2;
+		item.position[0] = r1 + rover.position[0];
+		if (signal) {
+			item.position[0] = -item.position[0];
+		}
+		item.position[1] = 1.5;
+		signal = rand() % 2;
+		item.position[2] = r2 + rover.position[2];
+		if (signal)
+			item.position[2] = -item.position[2];
+
+		item.radius = 1.0f;
+
+		item.object.meshes.push_back(amesh);
+
+		setIdentityMatrix(item.object.objectTransform, 4);
+
+		myTranslate(item.object.objectTransform, item.position[0], 1, item.position[2]);
+		myRotate(item.object.objectTransform, 90.0f, 0.0f, 0.0f, 1.0f);
+		myRotate(item.object.objectTransform, item.position[0], 0.0f, 1.0f, 0.0f);
+
+		items.push_back(item);
+	}
+}
+
+
 vector<RollingRock> createRollingRocks(int numToCreate) {
-	
+
 	MyMesh amesh = createSphere(1.0f, 10); // randomize size in the future
 	MyObject stone;
 	RollingRock rock;
@@ -242,21 +310,21 @@ vector<RollingRock> createRollingRocks(int numToCreate) {
 		signal = rand() % 2;
 		rock.speed = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
-			rock.speed = - rock.speed;
+			rock.speed = -rock.speed;
 
 		low = 0;
 		high = 1;
-		
+
 		signal = rand() % 2;
 		rock.direction[0] = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
-			rock.direction[0] = - rock.direction[0];
+			rock.direction[0] = -rock.direction[0];
 
 		signal = rand() % 2;
 		rock.direction[2] = low + static_cast<float>(rand()) * static_cast<float>(high - low) / RAND_MAX;
 		if (signal)
-			rock.direction[2] = - rock.direction[2];
-		
+			rock.direction[2] = -rock.direction[2];
+
 
 		signal = rand() % 2;
 		rock.position[0] = r1 + rover.position[0];
@@ -366,9 +434,25 @@ void updateParticles()
 
 }
 
+void updateItems() {
+	vector< Item >::iterator it = items.begin();
+	int numErased = 0;
+
+	while (it != items.end()) {
+
+		if ((*it).position[0] > rover.position[0] + 200 || (*it).position[2] > rover.position[2] + 200 ||
+			(*it).position[0] < rover.position[0] - 200 || (*it).position[2] < rover.position[2] - 200) {
+
+			it = items.erase(it);
+			numErased++;
+		}
+		else ++it;
+	}
+
+	createItems(numErased);
+}
 
 void updateRollingRocks() {
-	vector<RollingRock> aux;
 
 	for (int i = 0; i < rollingRocks.size(); i++) {
 		rollingRocks[i].speed += rollingRocks[i].speed * 0.005f;
@@ -445,7 +529,7 @@ void updateSpotlight() {
 	coneDir[1] = rover.direction[1];
 	coneDir[2] = rover.direction[2];
 	coneDir[3] = 0.0f;
-	
+
 	spotlightPos[0][0] = rover.position[0] - 0.3f * rover.direction[0] + 0.6f * rover.direction[2];
 	spotlightPos[0][1] = rover.position[1] + 0.5f;
 	spotlightPos[0][2] = rover.position[2] - 0.4f * rover.direction[2] + 0.6f * rover.direction[0];
@@ -480,145 +564,188 @@ void checkCollisions() {
 
 	float roverFactor = 2.0;
 
-	float roverMaxX = rover.position[0] + roverFactor;
+	Point point1, point2, point3, point4;
+	vector<Point> allPoints;
+
 	float roverMinX = rover.position[0] - roverFactor;
-	float roverMaxZ = rover.position[2] + roverFactor;
+	float roverMaxX = rover.position[0] + roverFactor;
 	float roverMinZ = rover.position[2] - roverFactor;
+	float roverMaxZ = rover.position[2] + roverFactor;
 
-	// collision with static rocks
-	isRoverHittingSomething = false;
-	for (int i = 0; i < staticRocks.size(); i++) {
+	point1.x = roverMinX, point1.z = roverMinZ;
+	point2.x = roverMinX, point2.z = roverMaxZ;
+	point3.x = roverMaxX, point3.z = roverMinZ;
+	point4.x = roverMaxX, point4.z = roverMaxZ;
 
-		float maxX = staticRocks[i].position[0] + staticRocks[i].radius;
-		float minX = staticRocks[i].position[0] - staticRocks[i].radius;
-		float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
-		float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
+	allPoints.push_back(point1);
+	allPoints.push_back(point2);
+	allPoints.push_back(point3);
+	allPoints.push_back(point4);
 
-		//cout << "\nRadius of : " << i << " :" << staticRocks[i].radius;
-		if ((minX <= roverMaxX && minX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
-			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+	for each (Point point in allPoints) {
 
-			staticRocks[i].speed = abs(rover.speed * 0.01f / staticRocks[i].radius);
+		float pointX = point.x * cos(rover.angle) - point.z * sin(rover.angle);
+		float pointZ = point.x * sin(rover.angle) + point.z * cos(rover.angle);
 
-			rover.position[0] += rover.direction[0] * rover.speed * delta;
-			rover.position[2] -= rover.direction[2] * rover.speed * delta;
+		// collision with static rocks
+		isRoverHittingSomething = false;
+		for (int i = 0; i < staticRocks.size(); i++) {
 
-			rover.speed = 0;
+			float maxX = staticRocks[i].position[0] + staticRocks[i].radius;
+			float minX = staticRocks[i].position[0] - staticRocks[i].radius;
+			float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
+			float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
 
-			if (isGoingForward) {
-				staticRocks[i].direction[0] = -rover.direction[0];
-				staticRocks[i].direction[2] = rover.direction[2];
-			}
-			else {
-				staticRocks[i].direction[0] = rover.direction[0];
-				staticRocks[i].direction[2] = -rover.direction[2];
-			}
+			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
+				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
 
-			isRoverHittingSomething = true;
-			break;
-		}
-	}
+				staticRocks[i].speed = abs(rover.speed * 0.01f / staticRocks[i].radius);
 
-	// collision with rolling rocks
-	for (int i = 0; i < rollingRocks.size(); i++) {
-		RollingRock rock = rollingRocks[i];
+				rover.position[0] += rover.direction[0] * rover.speed * delta;
+				rover.position[2] -= rover.direction[2] * rover.speed * delta;
 
-		float maxX = rock.position[0] + rock.radius;
-		float minX = rock.position[0] - rock.radius;
-		float maxZ = rock.position[2] + rock.radius;
-		float minZ = rock.position[2] - rock.radius;
+				rover.speed = 0;
 
-		// rolling rocks + rover
-		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
-			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+				if (isGoingForward) {
+					staticRocks[i].direction[0] = -rover.direction[0];
+					staticRocks[i].direction[2] = rover.direction[2];
+				}
+				else {
+					staticRocks[i].direction[0] = rover.direction[0];
+					staticRocks[i].direction[2] = -rover.direction[2];
+				}
 
-
-			if (--livesCount <= 0) {
-				livesCount = 0;
-				gameOver = true;
-			}
-			else {
-				initialState(false);
-				rollingRocks.clear();
-				createRollingRocks(7);
+				isRoverHittingSomething = true;
 				break;
 			}
 		}
 
-		float groundMaxX = landingSiteRover.position[0] + landingSiteRover.side / 2 + 0.5f;
-		float groundMinX = landingSiteRover.position[0] - landingSiteRover.side / 2 + 0.5f;
-		float groundMaxZ = landingSiteRover.position[2] + landingSiteRover.side / 2 + 0.5f;
-		float groundMinZ = landingSiteRover.position[2] - landingSiteRover.side / 2 + 0.5f;
+		// collision with rolling rocks
+		for (int i = 0; i < rollingRocks.size(); i++) {
+			RollingRock rock = rollingRocks[i];
 
-		// rolling rocks + landing site rover
-		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+			float maxX = rock.position[0] + rock.radius;
+			float minX = rock.position[0] - rock.radius;
+			float maxZ = rock.position[2] + rock.radius;
+			float minZ = rock.position[2] - rock.radius;
 
-			rollingRocks.erase(rollingRocks.begin() + i);
-			createRollingRocks(1);
-			break;
+
+			// rolling rocks + rover
+			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
+				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
+
+
+				if (--livesCount <= 0) {
+					livesCount = 0;
+					gameOver = true;
+				}
+				else {
+					initialState(false);
+					rollingRocks.clear();
+					createRollingRocks(7);
+					break;
+				}
+			}
+
+			float groundMaxX = landingSiteRover.position[0] + landingSiteRover.side / 2 + 0.5f;
+			float groundMinX = landingSiteRover.position[0] - landingSiteRover.side / 2 + 0.5f;
+			float groundMaxZ = landingSiteRover.position[2] + landingSiteRover.side / 2 + 0.5f;
+			float groundMinZ = landingSiteRover.position[2] - landingSiteRover.side / 2 + 0.5f;
+
+			// rolling rocks + landing site rover
+			if ((minX >= groundMinX && minX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+				(maxX >= groundMinX && maxX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+				(minZ >= groundMinZ && minZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX) ||
+				(maxZ >= groundMinZ && maxZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX)) {
+
+				rollingRocks.erase(rollingRocks.begin() + i);
+				createRollingRocks(1);
+				break;
+
+			}
+
+			// rolling rocks + landing site spaceship
+			groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
+			groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
+			groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
+			groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
+
+			if ((minX >= groundMinX && minX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+				(maxX >= groundMinX && maxX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+				(minZ >= groundMinZ && minZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX) ||
+				(maxZ >= groundMinZ && maxZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX)) {
+
+				rollingRocks.erase(rollingRocks.begin() + i);
+				createRollingRocks(1);
+				break;
+
+			}
+
+			//rover + landing site spaceship
+			if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
+				(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
+				(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
+				(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
+
+				rover.position[0] += rover.direction[0] * rover.speed * delta;
+				rover.position[2] -= rover.direction[2] * rover.speed * delta;
+				rover.speed = 0;
+
+				isRoverHittingSomething = true;
+				break;
+			}
 
 		}
 
-		// rolling rocks + landing site spaceship
-		groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
-		groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
-		groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
-		groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
+		// collision with pillars
+		isRoverHittingSomething = false;
+		for each (Pillar pillar in pillars) {
 
-		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+			float maxX = pillar.position[0] + pillar.radius;
+			float minX = pillar.position[0] - pillar.radius;
+			float maxZ = pillar.position[2] + pillar.radius;
+			float minZ = pillar.position[2] - pillar.radius;
 
-			rollingRocks.erase(rollingRocks.begin() + i);
-			createRollingRocks(1);
-			break;
+			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
+				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
 
+				rover.position[0] += rover.direction[0] * rover.speed * delta;
+				rover.position[2] -= rover.direction[2] * rover.speed * delta;
+				rover.speed = 0;
+
+				isRoverHittingSomething = true;
+				break;
+			}
 		}
 
-		//rover + landing site spaceship
-		if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
-			(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
-			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
-			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
+		// collision with items
+		for (int i = 0; i < items.size(); i++) {
 
-			rover.position[0] += rover.direction[0] * rover.speed * delta;
-			rover.position[2] -= rover.direction[2] * rover.speed * delta;
-			rover.speed = 0;
+			Item item = items[i];
 
-			isRoverHittingSomething = true;
-			break;
-		}
+			float maxX = item.position[0] + item.radius;
+			float minX = item.position[0] - item.radius;
+			float maxZ = item.position[2] + item.radius;
+			float minZ = item.position[2] - item.radius;
 
-	}
+			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
+				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
 
-	// collision with pillars
-	isRoverHittingSomething = false;
-	for each (Pillar pillar in pillars) {
-
-		float maxX = pillar.position[0] + pillar.radius;
-		float minX = pillar.position[0] - pillar.radius;
-		float maxZ = pillar.position[2] + pillar.radius;
-		float minZ = pillar.position[2] - pillar.radius;
-
-		if ((minX <= roverMaxX && minX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
-			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
-
-			rover.position[0] += rover.direction[0] * rover.speed * delta;
-			rover.position[2] -= rover.direction[2] * rover.speed * delta;
-			rover.speed = 0;
-
-			isRoverHittingSomething = true;
-			break;
+				items.erase(items.begin() + i);
+				createItems(1);
+				points += 100;
+				if (points >= 1000 && livesCount < 5)
+					livesCount++;
+				break;
+			}
 		}
 	}
 
@@ -630,11 +757,12 @@ void animate(int value) {
 	if (!pauseActive && !gameOver) {
 
 		checkCollisions();
-		
+
 		updateRoverPosition();
 		updateSpotlight();
 		updateRollingRocks();
 		updateStaticRocks();
+		updateItems();
 
 		if (tracking == 0)
 			updateRoverCamera();
@@ -670,7 +798,7 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 	rotate(MODEL, 60.0f, 0.0f, 1.0f, 0.0f);
 	scale(MODEL, 0.12f, 0.14f, 0.12f);
 
-	
+
 	// draw all meshes assigned to this node
 	for (unsigned int n = 0; n < nd->mNumMeshes; ++n) {
 		// send the material
@@ -723,28 +851,28 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 						glUniform1i(normalMap_loc, normalMapKey);
 					glUniform1i(loc, spaceship[nd->mMeshes[n]].texUnits[i]);
 
-					}
-					else printf("Texture Map not supported\n");
 				}
-
-			// send matrices to OGL
-			computeDerivedMatrix(PROJ_VIEW_MODEL);
-			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-			computeNormalMatrix3x3();
-			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
-
-			// bind VAO
-			glBindVertexArray(spaceship[nd->mMeshes[n]].vao);
-
-			if (!shader.isProgramValid()) {
-				printf("Program Not Valid!\n");
-				exit(1);
+				else printf("Texture Map not supported\n");
 			}
-			// draw
-			glDrawElements(spaceship[nd->mMeshes[n]].type, spaceship[nd->mMeshes[n]].numIndexes, GL_UNSIGNED_INT, 0);
-			glBindVertexArray(0);
+
+		// send matrices to OGL
+		computeDerivedMatrix(PROJ_VIEW_MODEL);
+		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+		computeNormalMatrix3x3();
+		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+		// bind VAO
+		glBindVertexArray(spaceship[nd->mMeshes[n]].vao);
+
+		if (!shader.isProgramValid()) {
+			printf("Program Not Valid!\n");
+			exit(1);
 		}
+		// draw
+		glDrawElements(spaceship[nd->mMeshes[n]].type, spaceship[nd->mMeshes[n]].numIndexes, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+	}
 
 	// draw all children
 	for (unsigned int n = 0; n < nd->mNumChildren; ++n) {
@@ -995,7 +1123,8 @@ void renderScene(void) {
 		myObjects.push_back(rollingRocks[j].object);
 	for (int j = 0; j < staticRocks.size(); j++)
 		myObjects.push_back(staticRocks[j].object);
-
+	for (int j = 0; j < items.size(); j++)
+		myObjects.push_back(items[j].object);
 
 	for (int i = 0; i < myObjects.size(); i++) {
 
@@ -1051,26 +1180,26 @@ void renderScene(void) {
 
 	// Rover ---------------------------------------------------
 	glUniform1i(texMode, 0);
-	
+
 
 	loc = glGetUniformLocation(shader.getProgramIndex(), "rover");
 	glUniform1i(loc, 1);
-	
+
 	vector<MyMesh> meshes = rover.object.meshes;
 
 	pushMatrix(MODEL);
 
 	multMatrix(MODEL, rover.object.objectTransform);
-	
+
 	translate(MODEL, rover.position[0], 0, rover.position[2]);
 	rotate(MODEL, rover.angle, 0, 1, 0);
-	
+
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, TextureArray[2]); // rover.tga 
 	glUniform1i(texMap0, 4);
 
 	for (int objId = 0; objId < meshes.size(); objId++) {
-		
+
 		// send the material
 		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 		glUniform4fv(loc, 1, meshes[objId].mat.ambient);
@@ -1094,7 +1223,7 @@ void renderScene(void) {
 		// Render mesh
 		if (objId == 0 || objId == 1)
 			glUniform1i(texMode, 1); // textura para o corpo do rover
-		else 
+		else
 			glUniform1i(texMode, 0);
 
 		glBindVertexArray(meshes[objId].vao);
@@ -1114,7 +1243,7 @@ void renderScene(void) {
 	glUniform1i(loc, 1);
 
 	float particle_color[4];
-	
+
 	updateParticles();
 
 	// draw fireworks particles
@@ -1170,7 +1299,6 @@ void renderScene(void) {
 	glUniform1i(loc, 0);
 
 	// Flags! ----------------------------------------------------------
-
 
 	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
 	glUniform1i(loc, 1);
@@ -1277,7 +1405,6 @@ void renderScene(void) {
 		glUniform1i(loc, 0);
 	}
 
-	/*
 	// Text -------------------------------------------------
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
@@ -1295,24 +1422,22 @@ void renderScene(void) {
 	pushMatrix(VIEW);
 	loadIdentity(VIEW);
 	ortho(float(m_viewport[0]), float(m_viewport[0] + m_viewport[2] - 1), float(m_viewport[1]), float(m_viewport[1] + m_viewport[3] - 1), -1.0f, 1.0f);
-	
+
 	RenderText(shaderText, (const GLchar*)("Lives: " + to_string(livesCount)).c_str(), float(WinX - 190), float(WinY - 48), 1.0f, 0.8f, 0.8f, 0.8f);
-	
+
 	string num = to_string(points);
 	string str = "00000";
 	str.replace(str.size() - num.size(), 5, num);
 	RenderText(shaderText, str, 10, float(WinY - 48), 1.0f, 0.8f, 0.8f, 0.8f);
-	
+
 	if (pauseActive)
 		RenderText(shaderText, "PAUSE", float(WinX/2 - 80), float(WinY /2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
 	if (gameOver)
 		RenderText(shaderText, "GAME OVER", float(WinX / 2 - 150) , float(WinY / 2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
-	
+
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
-
-	*/
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -1461,6 +1586,8 @@ void processKeys(unsigned char key, int xx, int yy)
 		initialState(true);
 		rollingRocks.clear();
 		createRollingRocks(7);
+		items.clear();
+		createItems(10);
 		break;
 	case 'b':  // press key "b" to enable/disable normal mapping 
 		if (!normalMapKey) normalMapKey = TRUE;
@@ -1503,8 +1630,8 @@ void processMouseMotion(int xx, int yy)
 
 	int deltaX, deltaY;
 	float alphaAux = alpha, betaAux = beta;
-	
-	deltaX = - xx + startX;
+
+	deltaX = -xx + startX;
 	deltaY = yy - startY;
 
 	// left mouse button: move camera
@@ -1568,7 +1695,7 @@ GLuint setupShaders() {
 	specularMap_loc = glGetUniformLocation(shader.getProgramIndex(), "specularMap");
 	diffMapCount_loc = glGetUniformLocation(shader.getProgramIndex(), "diffMapCount");
 	texMap0 = glGetUniformLocation(shader.getProgramIndex(), "texmap0");
-	texMap1= glGetUniformLocation(shader.getProgramIndex(), "texmap1");
+	texMap1 = glGetUniformLocation(shader.getProgramIndex(), "texmap1");
 
 	texMode = glGetUniformLocation(shader.getProgramIndex(), "texMode"); // multitex, one tex or o tex
 
@@ -1591,24 +1718,6 @@ GLuint setupShaders() {
 	return(shader.isProgramLinked() && shaderText.isProgramLinked());
 }
 
-
-void setMeshColor(MyMesh* amesh, float r, float g, float b, float a)
-{
-	float amb[] = { r / 4.0f, g / 4.0f, b / 4.0f, 1.0f };
-	float diff[] = { r, g, b, a };
-
-	float spec[] = { r, g, b, 1.0f };
-	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-	memcpy(amesh->mat.ambient, amb, 4 * sizeof(float));
-	memcpy(amesh->mat.diffuse, diff, 4 * sizeof(float));
-	memcpy(amesh->mat.specular, spec, 4 * sizeof(float));
-	memcpy(amesh->mat.emissive, emissive, 4 * sizeof(float));
-
-	amesh->mat.shininess = 50.0f;
-	amesh->mat.texCount = 0;
-}
-
 void createGround() {
 	//surface
 	MyMesh amesh = createQuad(1000.0f, 1000.0f);
@@ -1621,7 +1730,7 @@ void createGround() {
 	landingSiteRover.ground.meshes.push_back(amesh);
 
 	Pillar pillar1, pillar2, pillar3, pillar4;
-	
+
 	// landing site spaceship
 	float side = 28.0f;
 	landingSiteSpaceship.side = side;
@@ -1679,7 +1788,7 @@ void createGround() {
 
 
 	pillar2.radius = 0.2f;
-	pillar2.position[0] = side /2;
+	pillar2.position[0] = side / 2;
 	pillar2.position[1] = 0;
 	pillar2.position[2] = -side / 2;
 
@@ -1790,13 +1899,13 @@ void createStaticRocks() {
 
 	MyMesh amesh = createSphere(4.0f, 10);
 	StaticRock rock1;
-    MyObject obj1;
-    setIdentityMatrix(obj1.objectTransform, 4);
+	MyObject obj1;
+	setIdentityMatrix(obj1.objectTransform, 4);
 
-    setMeshColor(&amesh, 0.27f, 0.71f, 0.77f, 1.0f);
-    setIdentityMatrix(amesh.meshTransform, 4);
-    myTranslate(amesh.meshTransform, 20.0f, 0.2f, 10.0f);
-    obj1.meshes.push_back(amesh);
+	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 20.0f, 0.2f, 10.0f);
+	obj1.meshes.push_back(amesh);
 	rock1.object = obj1;
 	rock1.radius = 4.0f;
 	rock1.originalPos[0] = 20.0f;
@@ -1804,17 +1913,17 @@ void createStaticRocks() {
 	rock1.position[0] = 20.0f;
 	rock1.position[2] = 10.0f;
 	rock1.speed = 0.0f;
-    staticRocks.push_back(rock1);
+	staticRocks.push_back(rock1);
 
 	StaticRock rock2;
 	MyObject obj2;
 
 	setIdentityMatrix(obj2.objectTransform, 4);
-    amesh = createSphere(1.0f, 10);
-    setMeshColor(&amesh, 0.27f, 0.71f, 0.77f, 1.0f);
-    setIdentityMatrix(amesh.meshTransform, 4);
-    myTranslate(amesh.meshTransform, -15.0f, 0.2f, -15.0f);
-    obj2.meshes.push_back(amesh);
+	amesh = createSphere(1.0f, 10);
+	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, -15.0f, 0.2f, -15.0f);
+	obj2.meshes.push_back(amesh);
 	rock2.object = obj2;
 	rock2.radius = 1.0f;
 	rock2.originalPos[0] = -15.0f;
@@ -1823,19 +1932,19 @@ void createStaticRocks() {
 	rock2.position[2] = -15.0f;
 	rock2.speed = 0.0f;
 	staticRocks.push_back(rock2);
-	
+
 }
 
-void createSpaceship(){
+void createSpaceship() {
 	//model_dir = "backpack";
 	model_dir = "SciFi_Fighter_AK5";
 
 	ostringstream oss;
 	oss << model_dir << "/" << model_dir << ".obj";
-	string filepath = oss.str(); 
+	string filepath = oss.str();
 
 	model_dir += "/";
-	
+
 	//check if file exists
 	ifstream fin(filepath.c_str());
 	if (!fin.fail()) {
@@ -1846,7 +1955,7 @@ void createSpaceship(){
 
 	//import 3D file into Assimp scene graph
 	if (!Import3DFromFile(filepath))
-		return ;
+		return;
 
 	//creation of Mymesh array with VAO Geometry and Material
 	spaceship = createMeshFromAssimp(scene);
@@ -1863,7 +1972,7 @@ void createFlags() {
 	portugal.position[1] = 0.0f;
 	portugal.position[2] = 3.0f;
 	myTranslate(amesh.meshTransform, portugal.position[0], portugal.position[1], portugal.position[1]);
-	
+
 	portugal.object.meshes.push_back(amesh);
 
 	amesh = createQuad(3.0f, 3.0f);
@@ -1879,9 +1988,8 @@ void createFlags() {
 	austria.object.meshes.push_back(amesh);
 
 	flags.push_back(portugal);
-	//flags.push_back(austria);
+	flags.push_back(austria);
 }
-
 // ------------------------------------------------------------
 //
 // Model loading and OpenGL setup
@@ -1902,12 +2010,13 @@ void init()
 	}
 	ilInit();
 
-	glGenTextures(5, TextureArray);
+	glGenTextures(6, TextureArray);
 	Texture2D_Loader(TextureArray, "textures/ground0.tga", 0);
 	Texture2D_Loader(TextureArray, "textures/ground1.tga", 1);
 	Texture2D_Loader(TextureArray, "textures/rover.tga", 2);
 	Texture2D_Loader(TextureArray, "textures/particle.tga", 3);
-	Texture2D_Loader(TextureArray, "textures/flagAustria.tga", 4);
+	Texture2D_Loader(TextureArray, "textures/flagPortugal.tga", 4);
+	Texture2D_Loader(TextureArray, "textures/flagAustria.tga", 5);
 
 
 	//Flare elements textures
@@ -1928,6 +2037,7 @@ void init()
 	createCameras();
 	createSpaceship();
 	createFlags();
+	createItems(10);
 
 	particleMesh = createQuad(0.03f, 0.01f);
 	//particleMesh.mat.texCount = 3; // attribute for texture
@@ -1974,7 +2084,7 @@ int main(int argc, char** argv) {
 	//  Callback Registration
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
-	
+
 	glutTimerFunc(0, timerFPS, 0);
 	glutTimerFunc(0, refresh, 0);
 
@@ -1982,7 +2092,7 @@ int main(int argc, char** argv) {
 	glutKeyboardFunc(processKeys);
 	glutMouseFunc(processMouseButtons);
 	glutMotionFunc(processMouseMotion);
-	
+
 
 	//	return from main loop
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);

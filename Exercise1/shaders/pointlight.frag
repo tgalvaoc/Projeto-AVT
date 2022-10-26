@@ -188,7 +188,7 @@ void main() {
 		texel1 = texture(texmap1, DataIn.tex_coord * 40);  // texel from rock_texture.tga
 		auxColorOut += vec4(max(intensity*texel.rgb*texel1.rgb + specSum, 0.07*texel.rgb*texel1.rgb), texel.a*texel1.a);
 	}
-	else if(texMode == 1){ // rover
+	else if(texMode == 1){
 		if(rover){
 			texel = texture(texmap0, DataIn.tex_coord * 2);  // texel from steel.tga
 			auxColorOut += vec4(max(intensity*texel.rgb*0.7 + specSum, 0.07*texel.rgb), texel.a);

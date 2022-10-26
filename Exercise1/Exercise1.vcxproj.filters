@@ -97,17 +97,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="mars_texture.tga">
-      <Filter>Source Files</Filter>
-    </Image>
-    <Image Include="rock_texture.tga">
-      <Filter>Source Files</Filter>
-    </Image>
-    <Image Include="steel_texture.tga">
-      <Filter>Source Files</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="flare.txt" />
   </ItemGroup>
 </Project>
