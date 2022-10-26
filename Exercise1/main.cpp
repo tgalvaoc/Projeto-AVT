@@ -140,7 +140,7 @@ char s[32];
 #define NUMBER_SPOT_LIGHTS 2
 #define MAX_PARTICLES 50
 
-float directionalLightPos[4] = { -10.0f, 5.0f, 1.0f, 0.0f };
+float directionalLightPos[4] = { -5.0f, 2.0f, 1.0f, 1.0f };
 //float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 1.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
 	{5.0f, 8.0f, -5.0f, 1.0f}, {5.0f, 8.0f, 5.0f, 1.0f}, {-5.0f, 8.0f, 0.0f, 1.0f},
@@ -885,6 +885,7 @@ void renderFlare(FLARE_DEF* flare, int lx, int ly, int* m_viewport) {  //lx, ly 
 
 			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_2D, FlareTextureArray[flare->element[i].textureId]);
+			glUniform1i(texMap0, 4);
 			pushMatrix(MODEL);
 			translate(MODEL, (float)(px - width * 0.0f), (float)(py - height * 0.0f), 0.0f);
 			scale(MODEL, (float)width, (float)height, 1);
@@ -1242,9 +1243,11 @@ void renderScene(void) {
 	glUniform1i(texMode, 1);
 	aiRecursive_render(scene, scene->mRootNode);
 
-	// Flare Effect ---------------------------------
+	// Flare Effect ---------------------------------------------------
 	if (flareEffect) {
 
+		loc = glGetUniformLocation(shader.getProgramIndex(), "flare");
+		glUniform1i(loc, 1);
 		int flarePos[2];
 		int m_viewport[4];
 		glGetIntegerv(GL_VIEWPORT, m_viewport);
@@ -1269,6 +1272,9 @@ void renderScene(void) {
 		renderFlare(&flare, flarePos[0], flarePos[1], m_viewport);
 		popMatrix(PROJECTION);
 		popMatrix(VIEW);
+
+		loc = glGetUniformLocation(shader.getProgramIndex(), "flare");
+		glUniform1i(loc, 0);
 	}
 
 	/*
@@ -1311,6 +1317,7 @@ void renderScene(void) {
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glutSwapBuffers();
 }
 
@@ -1941,7 +1948,6 @@ void init()
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_MULTISAMPLE);
 	glClearColor(243.0f / 255.0f, 206.0f / 255.0f, 180.0f / 255.0f, 1.0f);
-
 
 }
 

@@ -62,6 +62,7 @@ uniform float spotCosCutOff;
 uniform bool particles;
 uniform bool billboard;
 uniform bool rover;
+uniform bool flare;
 
 uniform PointLight pointLights[NUMBER_POINT_LIGHTS];
 uniform SpotLight spotLights[NUMBER_SPOT_LIGHTS];
@@ -205,14 +206,20 @@ void main() {
 			if(texel.a == 0.0) discard;
 			else
 				auxColorOut += vec4(max(intensity*texel.rgb + specSum, 0.1*texel.rgb), texel.a);
-		}	
+		}
+		else if(flare){
+			texel = texture(texmap0, DataIn.tex_coord);  //texel from element flare texture
+			if((texel.a == 0.0)  || (mat.diffuse.a == 0.0) ) discard;
+			else
+				auxColorOut = mat.diffuse * texel;
+		}
 		else{
-			texel = texture(texmap0, DataIn.tex_coord);  // texel from steel.tga
+			texel = texture(texmap0, DataIn.tex_coord);
 			auxColorOut += vec4(max(intensity*texel.rgb + specSum, texel.rgb), texel.a);
 		}
 	}
-
-	auxColorOut[3] = mat.diffuse.a;
+	if(!flare)
+		auxColorOut[3] = mat.diffuse.a;
 	if (fog_mode) {
 		
 		float fogAmount = exp( -dist*0.05 );
