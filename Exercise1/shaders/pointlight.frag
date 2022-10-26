@@ -5,9 +5,6 @@
 
 uniform sampler2D texmap0;
 uniform sampler2D texmap1;
-uniform sampler2D texmap2;
-uniform sampler2D texmap3;
-uniform sampler2D texmap4;
 
 uniform int texMode;
 

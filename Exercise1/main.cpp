@@ -116,7 +116,7 @@ GLint pvm_uniformId;
 GLint vm_uniformId;
 GLint normal_uniformId;
 GLint lPos_uniformId; // ?
-GLint texMap0, texMap1, texMap2, texMap3, texMap4;
+GLint texMap0, texMap1;
 GLint texMode;
 
 GLint normalMap_loc;
@@ -140,8 +140,8 @@ char s[32];
 #define NUMBER_SPOT_LIGHTS 2
 #define MAX_PARTICLES 50
 
-//float directionalLightPos[4] = { -10.0f, 5.0f, 1.0f, 1.0f };
-float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 1.0f };
+float directionalLightPos[4] = { -10.0f, 5.0f, 1.0f, 0.0f };
+//float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 1.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
 	{5.0f, 8.0f, -5.0f, 1.0f}, {5.0f, 8.0f, 5.0f, 1.0f}, {-5.0f, 8.0f, 0.0f, 1.0f},
 	{5.0f, 8.0f, 0.0f, 1.0f} };
@@ -883,7 +883,7 @@ void renderFlare(FLARE_DEF* flare, int lx, int ly, int* m_viewport) {  //lx, ly 
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
 			glUniform4fv(loc, 1, diffuse);
 
-			glActiveTexture(GL_TEXTURE0);
+			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_2D, FlareTextureArray[flare->element[i].textureId]);
 			pushMatrix(MODEL);
 			translate(MODEL, (float)(px - width * 0.0f), (float)(py - height * 0.0f), 0.0f);
@@ -920,6 +920,8 @@ void renderScene(void) {
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
 
+	glUniform1i(texMap0, 4);
+	glUniform1i(texMap1, 5);
 
 	// set the camera using a function similar to gluLookAt
 
@@ -1005,9 +1007,9 @@ void renderScene(void) {
 		for (int objId = 0; objId < meshes.size(); objId++) {
 
 			if (i == 0 && objId == 0 && multitexture_mode) {
-				glActiveTexture(GL_TEXTURE0);
+				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
-				glActiveTexture(GL_TEXTURE1);
+				glActiveTexture(GL_TEXTURE5);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[1]);
 				glUniform1i(texMode, 2);
 			}
@@ -1062,8 +1064,9 @@ void renderScene(void) {
 	translate(MODEL, rover.position[0], 0, rover.position[2]);
 	rotate(MODEL, rover.angle, 0, 1, 0);
 	
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, TextureArray[2]); // rover.tga 
+	glUniform1i(texMap0, 4);
 
 	for (int objId = 0; objId < meshes.size(); objId++) {
 		
@@ -1116,7 +1119,7 @@ void renderScene(void) {
 	// draw fireworks particles
 	//objId = 6;  //quad for particle
 
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, TextureArray[3]);  //particle.tga 
 
 	glEnable(GL_BLEND);
@@ -1174,7 +1177,7 @@ void renderScene(void) {
 	for (int i = 0; i < flags.size(); i++) {
 
 
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, TextureArray[4 + i]);
 
 		glUniform1i(texMode, 1);
@@ -1232,10 +1235,12 @@ void renderScene(void) {
 	glUniform1i(loc, 0);
 
 	// spaceship
-
-	glUniform1i(texMode, 0);
+	glUniform1i(texMap0, 0);
+	glUniform1i(texMap1, 0);
+	glBindTextureUnit(5, 0);
+	glBindTextureUnit(4, 0);
+	glUniform1i(texMode, 1);
 	aiRecursive_render(scene, scene->mRootNode);
-
 
 	// Flare Effect ---------------------------------
 	if (flareEffect) {
