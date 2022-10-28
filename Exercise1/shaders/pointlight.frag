@@ -177,7 +177,7 @@ void main() {
 					float intSpec = max(dot(h,n), 0.0);
 					spec = auxSpec.rgb * pow(intSpec, mat.shininess) * att;
 					specSum += spec;
-					auxColorOut +=  vec4(max(intensity * diff.rgb + spec, mat.ambient.rgb), diff.a);
+					auxColorOut +=  vec4(0.2*max(intensity * diff.rgb + spec, mat.ambient.rgb), diff.a);
 				}
 			}
 		}

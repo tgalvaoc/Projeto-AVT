@@ -213,11 +213,18 @@ void createCameras() {
 	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
 }
 
+int signal() {
+	srand((unsigned int)time(NULL));
+	int signal = rand() % 2;
+	if (signal)
+		return -1;
+	return 1;
+}
 
 void createItems(int numToCreate) {
+	srand((unsigned int)time(NULL));
 	MyMesh amesh = createTorus(0.8f, 1.0f, 3, 10); // randomize size in the future
-	int low, high;
-	int signal;
+	int min = 5, max = 40;
 
 	setMeshColor(&amesh, 1.0f, 1.0f, 1.0f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
@@ -225,27 +232,12 @@ void createItems(int numToCreate) {
 	for (int i = 0; i < numToCreate; i++) {
 
 		Item item;
-		low = 5;
-		high = 40;
-		signal = rand() % 2;
+		float r1 = rand() % (max - min + 1) + min;
+		float r2 = rand() % (max - min + 1) + min;
 
-		float r1 = rand() % high + low;
-		if (signal)
-			r1 = -r1;
-		float r2 = rand() % high + low;
-		if (signal)
-			r2 = -r2;
-
-		signal = rand() % 2;
-		item.position[0] = r1 + rover.position[0];
-		if (signal) {
-			item.position[0] = -item.position[0];
-		}
+		item.position[0] = signal() * (signal() * r1 + rover.position[0]);
 		item.position[1] = 1.5;
-		signal = rand() % 2;
-		item.position[2] = r2 + rover.position[2];
-		if (signal)
-			item.position[2] = -item.position[2];
+		item.position[2] = signal() * (signal() * r2 + rover.position[2]);
 
 		item.radius = 1.0f;
 
@@ -256,6 +248,7 @@ void createItems(int numToCreate) {
 		myTranslate(item.object.objectTransform, item.position[0], 1, item.position[2]);
 		myRotate(item.object.objectTransform, 90.0f, 0.0f, 0.0f, 1.0f);
 		myRotate(item.object.objectTransform, item.position[0], 0.0f, 1.0f, 0.0f);
+		myRotate(item.object.objectTransform, item.position[0], 1.0f, 0.0f, 0.0f);
 
 		items.push_back(item);
 	}
@@ -263,6 +256,7 @@ void createItems(int numToCreate) {
 
 
 vector<RollingRock> createRollingRocks(int numToCreate) {
+	srand((unsigned int)time(NULL));
 
 	MyMesh amesh = createSphere(1.0f, 10); // randomize size in the future
 	MyObject stone;
@@ -434,6 +428,10 @@ void updateParticles()
 }
 
 void updateItems() {
+	for (int i = 0; i < items.size(); i++) {
+		myRotate(items[i].object.objectTransform, 1, 1, 0, 0);
+	}
+
 	vector< Item >::iterator it = items.begin();
 	int numErased = 0;
 
@@ -1127,8 +1125,8 @@ void renderScene(void) {
 		myObjects.push_back(staticRocks[j].object);
 	for (int j = 0; j < items.size(); j++)
 		myObjects.push_back(items[j].object);
-	
-	
+
+
 	for (int i = 0; i < myObjects.size(); i++) {
 
 		vector<MyMesh> meshes = myObjects[i].meshes;
@@ -1267,7 +1265,7 @@ void renderScene(void) {
 	{
 		if (particles[i].life > 0.0f) /* só desenha as que ainda estão vivas */
 		{
-			
+
 			particle_color[0] = particles[i].r;
 			particle_color[1] = particles[i].g;
 			particle_color[2] = particles[i].b;
@@ -1362,14 +1360,14 @@ void renderScene(void) {
 
 	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
 	glUniform1i(loc, 0);
-	
-	
+
+
 	// Spaceship
 	glUniform1i(texMap0, 0);
 	glUniform1i(texMap1, 0);
 	glBindTextureUnit(5, 0);
 	glBindTextureUnit(4, 0);
-	glUniform1i(texMode, 1); 
+	glUniform1i(texMode, 1);
 
 	aiRecursive_render(scene, scene->mRootNode);
 
@@ -1449,7 +1447,6 @@ void renderScene(void) {
 	}
 
 	glBindTextureUnit(0, 0);
-
 	// Text -------------------------------------------------
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
@@ -2156,5 +2153,3 @@ int main(int argc, char** argv) {
 
 	return(0);
 }
-
-
