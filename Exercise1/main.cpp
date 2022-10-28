@@ -78,7 +78,7 @@ vector<RollingRock> rollingRocks;
 vector<StaticRock> staticRocks;
 vector<Item> items;
 vector<Flag> flags;
-list<Pillar> pillars;
+vector<Pillar> pillars;
 
 //Flare effect
 FLARE_DEF flare;
@@ -117,7 +117,7 @@ GLint pvm_uniformId;
 GLint vm_uniformId;
 GLint normal_uniformId;
 GLint lPos_uniformId; // ?
-GLint texMap0, texMap1;
+GLint texMap0, texMap1, texText;
 GLint texMode;
 
 GLint normalMap_loc;
@@ -141,8 +141,8 @@ char s[32];
 #define NUMBER_SPOT_LIGHTS 2
 #define MAX_PARTICLES 50
 
-float directionalLightPos[4] = { -5.0f, 2.0f, 1.0f, 1.0f };
-//float directionalLightPos[4] = { 1.0f, 1000.0f, 1.0f, 1.0f };
+//float directionalLightPos[4] = { -5.0f, 2.0f, 1.0f, 1.0f };
+float directionalLightPos[4] = { -1000.0f, 1000.0f, 1.0f, 1.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
 	{5.0f, 8.0f, -5.0f, 1.0f}, {5.0f, 8.0f, 5.0f, 1.0f}, {-5.0f, 8.0f, 0.0f, 1.0f},
 	{5.0f, 8.0f, 0.0f, 1.0f} };
@@ -160,7 +160,6 @@ typedef struct {
 
 vector <Particle> particles;
 int dead_num_particles = 0;
-
 
 
 void setMeshColor(MyMesh* amesh, float r, float g, float b, float a)
@@ -1014,6 +1013,7 @@ void renderFlare(FLARE_DEF* flare, int lx, int ly, int* m_viewport) {  //lx, ly 
 			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_2D, FlareTextureArray[flare->element[i].textureId]);
 			glUniform1i(texMap0, 4);
+			//glUniform1i(texMode, 1);
 			pushMatrix(MODEL);
 			translate(MODEL, (float)(px - width * 0.0f), (float)(py - height * 0.0f), 0.0f);
 			scale(MODEL, (float)width, (float)height, 1);
@@ -1119,13 +1119,16 @@ void renderScene(void) {
 	myObjects.clear();
 	myObjects.push_back(landingSiteRover.ground);
 	myObjects.push_back(landingSiteSpaceship.ground);
+
+
 	for (int j = 0; j < rollingRocks.size(); j++)
 		myObjects.push_back(rollingRocks[j].object);
 	for (int j = 0; j < staticRocks.size(); j++)
 		myObjects.push_back(staticRocks[j].object);
 	for (int j = 0; j < items.size(); j++)
 		myObjects.push_back(items[j].object);
-
+	
+	
 	for (int i = 0; i < myObjects.size(); i++) {
 
 		vector<MyMesh> meshes = myObjects[i].meshes;
@@ -1139,8 +1142,10 @@ void renderScene(void) {
 			if (i == 0 && objId == 0 && multitexture_mode) {
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
+				glUniform1i(texMap0, 4);
 				glActiveTexture(GL_TEXTURE5);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[1]);
+				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}
 			else
@@ -1180,7 +1185,6 @@ void renderScene(void) {
 
 	// Rover ---------------------------------------------------
 	glUniform1i(texMode, 0);
-
 
 	loc = glGetUniformLocation(shader.getProgramIndex(), "rover");
 	glUniform1i(loc, 1);
@@ -1237,8 +1241,8 @@ void renderScene(void) {
 	loc = glGetUniformLocation(shader.getProgramIndex(), "rover");
 	glUniform1i(loc, 0);
 
-	// Particles --------------------------------------------
 
+	// Particles --------------------------------------------
 	loc = glGetUniformLocation(shader.getProgramIndex(), "particles");
 	glUniform1i(loc, 1);
 
@@ -1257,16 +1261,13 @@ void renderScene(void) {
 
 	glDepthMask(GL_FALSE);  //Depth Buffer Read Only
 
-	glUniform1i(texMode, 1); // draw modulated textured particles 
+	glUniform1i(texMode, 1);
 
 	for (int i = 0; i < particles.size(); i++)
 	{
 		if (particles[i].life > 0.0f) /* só desenha as que ainda estão vivas */
 		{
-
-			/* A vida da partícula representa o canal alpha da cor. Como o blend está activo a cor final é a soma da cor rgb do fragmento multiplicada pelo
-			alpha com a cor do pixel destino */
-
+			
 			particle_color[0] = particles[i].r;
 			particle_color[1] = particles[i].g;
 			particle_color[2] = particles[i].b;
@@ -1349,7 +1350,6 @@ void renderScene(void) {
 			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
 			// Render mesh
-
 			glBindVertexArray(meshes[objId].vao);
 			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
@@ -1362,18 +1362,62 @@ void renderScene(void) {
 
 	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
 	glUniform1i(loc, 0);
-
-	// spaceship
+	
+	
+	// Spaceship
 	glUniform1i(texMap0, 0);
 	glUniform1i(texMap1, 0);
 	glBindTextureUnit(5, 0);
 	glBindTextureUnit(4, 0);
-	glUniform1i(texMode, 1);
+	glUniform1i(texMode, 1); 
+
 	aiRecursive_render(scene, scene->mRootNode);
+
+	// Pillars -------------------------------------------------------------------
+	glUniform1i(texMode, 0);
+	for (int i = 0; i < pillars.size(); i++) {
+
+		MyMesh mesh = pillars[i].object.meshes[0];
+
+		pushMatrix(MODEL);
+
+		multMatrix(MODEL, pillars[i].object.objectTransform);
+
+		// send the material
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+		glUniform4fv(loc, 1, mesh.mat.ambient);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+		glUniform4fv(loc, 1, mesh.mat.diffuse);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+		glUniform4fv(loc, 1, mesh.mat.specular);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+		glUniform1f(loc, mesh.mat.shininess);
+		pushMatrix(MODEL);
+
+		multMatrix(MODEL, mesh.meshTransform);
+
+		// send matrices to OGL
+		computeDerivedMatrix(PROJ_VIEW_MODEL);
+		glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+		computeNormalMatrix3x3();
+		glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+		// Render mesh
+
+		glBindVertexArray(mesh.vao);
+		glDrawElements(mesh.type, mesh.numIndexes, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		popMatrix(MODEL);
+
+		popMatrix(MODEL);
+	}
+
 
 	// Flare Effect ---------------------------------------------------
 	if (flareEffect) {
-
+		glEnable(GL_BLEND);
 		loc = glGetUniformLocation(shader.getProgramIndex(), "flare");
 		glUniform1i(loc, 1);
 		int flarePos[2];
@@ -1388,7 +1432,6 @@ void renderScene(void) {
 			printf("Error in getting projected light in screen\n");  //Calculate the window Coordinates of the light position: the projected position of light on viewport
 		flarePos[0] = clampi((int)lightScreenPos[0], m_viewport[0], m_viewport[0] + m_viewport[2] - 1);
 		flarePos[1] = clampi((int)lightScreenPos[1], m_viewport[1], m_viewport[1] + m_viewport[3] - 1);
-		printf("Flare pos[0]: %d, FlarePos[1]: %d", flarePos[0], flarePos[1]);
 		popMatrix(MODEL);
 
 		//viewer looking down at  negative z direction
@@ -1405,12 +1448,14 @@ void renderScene(void) {
 		glUniform1i(loc, 0);
 	}
 
+	glBindTextureUnit(0, 0);
+
 	// Text -------------------------------------------------
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
 	glDisable(GL_DEPTH_TEST);
 	//the glyph contains transparent background colors and non-transparent for the actual character pixels. So we use the blending
-
+	glEnable(GL_BLEND);
 	int m_viewport[4];
 	glGetIntegerv(GL_VIEWPORT, m_viewport);
 
@@ -1423,6 +1468,7 @@ void renderScene(void) {
 	loadIdentity(VIEW);
 	ortho(float(m_viewport[0]), float(m_viewport[0] + m_viewport[2] - 1), float(m_viewport[1]), float(m_viewport[1] + m_viewport[3] - 1), -1.0f, 1.0f);
 
+	glUniform1i(texText, 4);
 	RenderText(shaderText, (const GLchar*)("Lives: " + to_string(livesCount)).c_str(), float(WinX - 190), float(WinY - 48), 1.0f, 0.8f, 0.8f, 0.8f);
 
 	string num = to_string(points);
@@ -1431,10 +1477,12 @@ void renderScene(void) {
 	RenderText(shaderText, str, 10, float(WinY - 48), 1.0f, 0.8f, 0.8f, 0.8f);
 
 	if (pauseActive)
-		RenderText(shaderText, "PAUSE", float(WinX/2 - 80), float(WinY /2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
+		RenderText(shaderText, "PAUSE", float(WinX / 2 - 80), float(WinY / 2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
 	if (gameOver)
-		RenderText(shaderText, "GAME OVER", float(WinX / 2 - 150) , float(WinY / 2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
+		RenderText(shaderText, "GAME OVER", float(WinX / 2 - 150), float(WinY / 2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
 
+
+	glBindTextureUnit(0, 0);
 	popMatrix(PROJECTION);
 	popMatrix(VIEW);
 	popMatrix(MODEL);
@@ -1651,8 +1699,6 @@ void processMouseMotion(int xx, int yy)
 		std::copy(rover.position, rover.position + 3, cameras[2].target);
 	}
 
-
-	//  uncomment this if not using an idle or refresh func
 	glutPostRedisplay();
 }
 
@@ -1706,6 +1752,7 @@ GLuint setupShaders() {
 	shaderText.init();
 	shaderText.loadShader(VSShaderLib::VERTEX_SHADER, "shaders/text.vert");
 	shaderText.loadShader(VSShaderLib::FRAGMENT_SHADER, "shaders/text.frag");
+	texText = glGetUniformLocation(shaderText.getProgramIndex(), "text");
 
 	glLinkProgram(shaderText.getProgramIndex());
 	printf("InfoLog for Text Rendering Shader\n%s\n\n", shaderText.getAllInfoLogs().c_str());
@@ -1728,8 +1775,6 @@ void createGround() {
 	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 
 	landingSiteRover.ground.meshes.push_back(amesh);
-
-	Pillar pillar1, pillar2, pillar3, pillar4;
 
 	// landing site spaceship
 	float side = 28.0f;
@@ -1772,6 +1817,16 @@ void createGround() {
 	myTranslate(amesh.meshTransform, landingSiteRover.position[0], landingSiteRover.position[1], landingSiteRover.position[2]);
 	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 	landingSiteRover.ground.meshes.push_back(amesh);
+}
+
+void createPillars() {
+	Pillar pillar1, pillar2, pillar3, pillar4;
+	float side = 8.0f;
+
+	setIdentityMatrix(pillar1.object.objectTransform, 4);
+	setIdentityMatrix(pillar2.object.objectTransform, 4);
+	setIdentityMatrix(pillar3.object.objectTransform, 4);
+	setIdentityMatrix(pillar4.object.objectTransform, 4);
 
 
 	// pillar
@@ -1780,12 +1835,11 @@ void createGround() {
 	pillar1.position[1] = 0;
 	pillar1.position[2] = side / 2;
 
-	amesh = createCylinder(7.0f, pillar1.radius, 10);
+	MyMesh amesh = createCylinder(7.0f, pillar1.radius, 10);
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 0.5f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar1.position[0], pillar1.position[1], pillar1.position[2]);
-	landingSiteRover.ground.meshes.push_back(amesh);
-
+	pillar1.object.meshes.push_back(amesh);
 
 	pillar2.radius = 0.2f;
 	pillar2.position[0] = side / 2;
@@ -1796,7 +1850,8 @@ void createGround() {
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 0.5f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar2.position[0], pillar2.position[1], pillar2.position[2]);
-	landingSiteRover.ground.meshes.push_back(amesh);
+	pillar2.object.meshes.push_back(amesh);
+
 
 	pillar3.radius = 0.2f;
 	pillar3.position[0] = -side / 2;
@@ -1807,7 +1862,7 @@ void createGround() {
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 0.5f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar3.position[0], pillar3.position[1], pillar3.position[2]);
-	landingSiteRover.ground.meshes.push_back(amesh);
+	pillar3.object.meshes.push_back(amesh);
 
 	pillar4.radius = 0.2f;
 	pillar4.position[0] = -side / 2;
@@ -1818,13 +1873,12 @@ void createGround() {
 	setMeshColor(&amesh, 0.82f, 0.17f, 0.03f, 0.5f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myTranslate(amesh.meshTransform, pillar4.position[0], pillar4.position[1], pillar4.position[2]);
-	landingSiteRover.ground.meshes.push_back(amesh);
+	pillar4.object.meshes.push_back(amesh);
 
 	pillars.push_back(pillar1);
 	pillars.push_back(pillar2);
 	pillars.push_back(pillar3);
 	pillars.push_back(pillar4);
-
 }
 
 void createRover() {
@@ -1838,19 +1892,6 @@ void createRover() {
 	myScale(body.meshTransform, 3.0f, 1.0f, 1.5f); // ajusta as dimensoes
 	myTranslate(body.meshTransform, -0.75f / 2, 0.5f, -0.75f / 4); // coloca o corpo no centro, tocando no chao
 	myTranslate(body.meshTransform, 0.0f, 0.25f, 0.0f); // tira o corpo do chao
-
-	// vista de frente
-	// =        = 0.25
-	// =|------|=
-	// =|------|=
-	// =|------|= 1.0
-	// =|------|=
-	// =        = 0.25
-
-	// altura da roda: 0.25 + 1.0 + 0.25 = 1.5
-	// altura do corpo: 1.0
-	// distancia do corpo pro chao: 0.25
-
 
 	MyMesh wheel1 = createTorus(0.5f, 0.75f, 80, 80);
 	setMeshColor(&wheel1, 0.35f, 0.18f, 0.08f, 1.0f);
@@ -1936,7 +1977,6 @@ void createStaticRocks() {
 }
 
 void createSpaceship() {
-	//model_dir = "backpack";
 	model_dir = "SciFi_Fighter_AK5";
 
 	ostringstream oss;
@@ -1995,7 +2035,6 @@ void createFlags() {
 // Model loading and OpenGL setup
 //
 
-
 void init()
 {
 
@@ -2031,6 +2070,7 @@ void init()
 	freeType_init(font_name);
 
 	createGround();
+	createPillars();
 	createStaticRocks();
 	createRollingRocks(10);
 	createRover();

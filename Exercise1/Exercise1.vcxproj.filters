@@ -96,7 +96,4 @@
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="flare.txt" />
-  </ItemGroup>
 </Project>
