@@ -88,6 +88,11 @@ struct Alien {
 	MyObject object;
 };
 
+struct AliensBase {
+	float position[3] = { 0.0f, 0.0f, 0.f };
+	int side = 0;
+};
+
 MyMesh createCube();
 MyMesh createQuad(float size_x, float size_y);
 MyMesh createSphere(float radius, int divisions);

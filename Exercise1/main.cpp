@@ -74,6 +74,7 @@ vector<struct MyMesh> spaceship;
 Rover rover;
 LandingSite landingSiteRover;
 LandingSite landingSiteSpaceship;
+AliensBase aliensBase;
 vector<RollingRock> rollingRocks;
 vector<StaticRock> staticRocks;
 vector<Item> items;
@@ -560,188 +561,201 @@ void checkCollisions() {
 
 	float roverFactor = 2.0;
 
-	Point point1, point2, point3, point4;
-	vector<Point> allPoints;
-
-	float roverMinX = rover.position[0] - roverFactor;
 	float roverMaxX = rover.position[0] + roverFactor;
-	float roverMinZ = rover.position[2] - roverFactor;
+	float roverMinX = rover.position[0] - roverFactor;
 	float roverMaxZ = rover.position[2] + roverFactor;
+	float roverMinZ = rover.position[2] - roverFactor;
 
-	point1.x = roverMinX, point1.z = roverMinZ;
-	point2.x = roverMinX, point2.z = roverMaxZ;
-	point3.x = roverMaxX, point3.z = roverMinZ;
-	point4.x = roverMaxX, point4.z = roverMaxZ;
+	// collision with static rocks
+	isRoverHittingSomething = false;
+	for (int i = 0; i < staticRocks.size(); i++) {
 
-	allPoints.push_back(point1);
-	allPoints.push_back(point2);
-	allPoints.push_back(point3);
-	allPoints.push_back(point4);
+		float maxX = staticRocks[i].position[0] + staticRocks[i].radius;
+		float minX = staticRocks[i].position[0] - staticRocks[i].radius;
+		float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
+		float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
 
-	for each (Point point in allPoints) {
+		//cout << "\nRadius of : " << i << " :" << staticRocks[i].radius;
+		if ((minX <= roverMaxX && minX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
+			(maxX <= roverMaxX && maxX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
+			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
-		float pointX = point.x * cos(rover.angle) - point.z * sin(rover.angle);
-		float pointZ = point.x * sin(rover.angle) + point.z * cos(rover.angle);
+			staticRocks[i].speed = abs(rover.speed * 0.01f / staticRocks[i].radius);
 
-		// collision with static rocks
-		isRoverHittingSomething = false;
-		for (int i = 0; i < staticRocks.size(); i++) {
+			rover.position[0] += rover.direction[0] * rover.speed * delta;
+			rover.position[2] -= rover.direction[2] * rover.speed * delta;
 
-			float maxX = staticRocks[i].position[0] + staticRocks[i].radius;
-			float minX = staticRocks[i].position[0] - staticRocks[i].radius;
-			float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
-			float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
+			rover.speed = 0;
 
-			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
-				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
+			if (isGoingForward) {
+				staticRocks[i].direction[0] = -rover.direction[0];
+				staticRocks[i].direction[2] = rover.direction[2];
+			}
+			else {
+				staticRocks[i].direction[0] = rover.direction[0];
+				staticRocks[i].direction[2] = -rover.direction[2];
+			}
 
-				staticRocks[i].speed = abs(rover.speed * 0.01f / staticRocks[i].radius);
+			isRoverHittingSomething = true;
+			break;
+		}
+	}
 
-				rover.position[0] += rover.direction[0] * rover.speed * delta;
-				rover.position[2] -= rover.direction[2] * rover.speed * delta;
+	// collision with rolling rocks
+	for (int i = 0; i < rollingRocks.size(); i++) {
+		RollingRock rock = rollingRocks[i];
 
-				rover.speed = 0;
+		float maxX = rock.position[0] + rock.radius;
+		float minX = rock.position[0] - rock.radius;
+		float maxZ = rock.position[2] + rock.radius;
+		float minZ = rock.position[2] - rock.radius;
 
-				if (isGoingForward) {
-					staticRocks[i].direction[0] = -rover.direction[0];
-					staticRocks[i].direction[2] = rover.direction[2];
-				}
-				else {
-					staticRocks[i].direction[0] = rover.direction[0];
-					staticRocks[i].direction[2] = -rover.direction[2];
-				}
+		// rolling rocks + rover
+		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
-				isRoverHittingSomething = true;
+
+			if (--livesCount <= 0) {
+				livesCount = 0;
+				gameOver = true;
+			}
+			else {
+				initialState(false);
+				rollingRocks.clear();
+				createRollingRocks(7);
 				break;
 			}
 		}
 
-		// collision with rolling rocks
-		for (int i = 0; i < rollingRocks.size(); i++) {
-			RollingRock rock = rollingRocks[i];
+		float groundMaxX = landingSiteRover.position[0] + landingSiteRover.side / 2 + 0.5f;
+		float groundMinX = landingSiteRover.position[0] - landingSiteRover.side / 2 + 0.5f;
+		float groundMaxZ = landingSiteRover.position[2] + landingSiteRover.side / 2 + 0.5f;
+		float groundMinZ = landingSiteRover.position[2] - landingSiteRover.side / 2 + 0.5f;
 
-			float maxX = rock.position[0] + rock.radius;
-			float minX = rock.position[0] - rock.radius;
-			float maxZ = rock.position[2] + rock.radius;
-			float minZ = rock.position[2] - rock.radius;
+		// rolling rocks + landing site rover
+		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
 
-
-			// rolling rocks + rover
-			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
-				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
-
-
-				if (--livesCount <= 0) {
-					livesCount = 0;
-					gameOver = true;
-				}
-				else {
-					initialState(false);
-					rollingRocks.clear();
-					createRollingRocks(7);
-					break;
-				}
-			}
-
-			float groundMaxX = landingSiteRover.position[0] + landingSiteRover.side / 2 + 0.5f;
-			float groundMinX = landingSiteRover.position[0] - landingSiteRover.side / 2 + 0.5f;
-			float groundMaxZ = landingSiteRover.position[2] + landingSiteRover.side / 2 + 0.5f;
-			float groundMinZ = landingSiteRover.position[2] - landingSiteRover.side / 2 + 0.5f;
-
-			// rolling rocks + landing site rover
-			if ((minX >= groundMinX && minX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-				(maxX >= groundMinX && maxX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-				(minZ >= groundMinZ && minZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX) ||
-				(maxZ >= groundMinZ && maxZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX)) {
-
-				rollingRocks.erase(rollingRocks.begin() + i);
-				createRollingRocks(1);
-				break;
-
-			}
-
-			// rolling rocks + landing site spaceship
-			groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
-			groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
-			groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
-			groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
-
-			if ((minX >= groundMinX && minX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-				(maxX >= groundMinX && maxX <= groundMaxX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-				(minZ >= groundMinZ && minZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX) ||
-				(maxZ >= groundMinZ && maxZ <= groundMaxZ && rock.position[0] >= groundMinX && rock.position[0] <= groundMaxX)) {
-
-				rollingRocks.erase(rollingRocks.begin() + i);
-				createRollingRocks(1);
-				break;
-
-			}
-
-			//rover + landing site spaceship
-			if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
-				(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
-				(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
-				(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
-
-				rover.position[0] += rover.direction[0] * rover.speed * delta;
-				rover.position[2] -= rover.direction[2] * rover.speed * delta;
-				rover.speed = 0;
-
-				isRoverHittingSomething = true;
-				break;
-			}
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
 
 		}
 
-		// collision with pillars
-		isRoverHittingSomething = false;
-		for each (Pillar pillar in pillars) {
+		// rolling rocks + landing site spaceship
+		groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
+		groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
+		groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
+		groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
 
-			float maxX = pillar.position[0] + pillar.radius;
-			float minX = pillar.position[0] - pillar.radius;
-			float maxZ = pillar.position[2] + pillar.radius;
-			float minZ = pillar.position[2] - pillar.radius;
+		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
 
-			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
-				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
 
-				rover.position[0] += rover.direction[0] * rover.speed * delta;
-				rover.position[2] -= rover.direction[2] * rover.speed * delta;
-				rover.speed = 0;
-
-				isRoverHittingSomething = true;
-				break;
-			}
 		}
 
-		// collision with items
-		for (int i = 0; i < items.size(); i++) {
+		//rover + landing site spaceship
+		if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
+			(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
+			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
+			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
 
-			Item item = items[i];
+			rover.position[0] += rover.direction[0] * rover.speed * delta;
+			rover.position[2] -= rover.direction[2] * rover.speed * delta;
+			rover.speed = 0;
 
-			float maxX = item.position[0] + item.radius;
-			float minX = item.position[0] - item.radius;
-			float maxZ = item.position[2] + item.radius;
-			float minZ = item.position[2] - item.radius;
+			isRoverHittingSomething = true;
+			break;
+		}
 
-			if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
-				(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
-				(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
+		// rolling rocks + aliens base
+		groundMaxX = aliensBase.position[0] + aliensBase.side / 2 + 0.5f;
+		groundMinX = aliensBase.position[0] - aliensBase.side / 2 + 0.5f;
+		groundMaxZ = aliensBase.position[2] + aliensBase.side / 2 + 0.5f;
+		groundMinZ = aliensBase.position[2] - aliensBase.side / 2 + 0.5f;
 
-				items.erase(items.begin() + i);
-				createItems(1);
-				points += 100;
-				if (points >= 1000 && livesCount < 5)
-					livesCount++;
-				break;
-			}
+		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
+
+		}
+
+		//rover + aliensBase
+		if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && aliensBase.position[2] >= roverMinZ && aliensBase.position[2] <= roverMaxZ) ||
+			(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && aliensBase.position[2] >= roverMinZ && aliensBase.position[2] <= roverMaxZ) ||
+			(aliensBase.position[0] <= roverMaxX && aliensBase.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
+			(aliensBase.position[0] <= roverMaxX && aliensBase.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
+
+			rover.position[0] += rover.direction[0] * rover.speed * delta;
+			rover.position[2] -= rover.direction[2] * rover.speed * delta;
+			rover.speed = 0;
+
+			isRoverHittingSomething = true;
+			break;
+		}
+
+	}
+
+	// collision with pillars
+	isRoverHittingSomething = false;
+	for each (Pillar pillar in pillars) {
+
+		float maxX = pillar.position[0] + pillar.radius;
+		float minX = pillar.position[0] - pillar.radius;
+		float maxZ = pillar.position[2] + pillar.radius;
+		float minZ = pillar.position[2] - pillar.radius;
+
+		if ((minX <= roverMaxX && minX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
+			(maxX <= roverMaxX && maxX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
+			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+
+			rover.position[0] += rover.direction[0] * rover.speed * delta;
+			rover.position[2] -= rover.direction[2] * rover.speed * delta;
+			rover.speed = 0;
+
+			isRoverHittingSomething = true;
+			break;
+		}
+	}
+
+
+	// collision with items
+	for (int i = 0; i < items.size(); i++) {
+
+		Item item = items[i];
+
+		float maxX = item.position[0] + item.radius;
+		float minX = item.position[0] - item.radius;
+		float maxZ = item.position[2] + item.radius;
+		float minZ = item.position[2] - item.radius;
+
+		if ((roverMinX >= minX && roverMinX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+			(roverMaxX >= minX && roverMaxX <= maxX && rover.position[2] >= minZ && rover.position[2] <= maxZ) ||
+			(roverMinZ >= minZ && roverMinZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX) ||
+			(roverMaxZ >= minZ && roverMaxZ <= maxZ && rover.position[0] >= minX && rover.position[0] <= maxX)) {
+
+			items.erase(items.begin() + i);
+			createItems(1);
+			points += 100;
+			if (points >= 1000 && livesCount < 5)
+				livesCount++;
+			break;
 		}
 	}
 
@@ -1147,7 +1161,7 @@ void renderScene(void) {
 				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}
-			else if (i > 1 && i <= 5) { // static rocks
+			else if (i > 1 && i <= staticRocks.size() + 1) { // static rocks
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
 				glUniform1i(texMap0, 4);
@@ -1894,13 +1908,34 @@ void createGround() {
 
 	// aliens base
 
-	amesh = createCone(25.0f, 3.0f, 10.0f);
+	amesh = createCone(20.0f, 3.0f, 10.0f);
 	setIdentityMatrix(landingSiteRover.ground.objectTransform, 4);
 	setMeshColor(&amesh, 0.2f, 0.2f, 0.2f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, 0.0f, 0.0f, 48.0f);
+	myTranslate(amesh.meshTransform, 0.0f, 0.0f, 78.0f);
 
 	landingSiteRover.ground.meshes.push_back(amesh);
+
+	amesh = createCone(15.0f, 3.0f, 10.0f);
+	setIdentityMatrix(landingSiteRover.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.2f, 0.2f, 0.2f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 4.0f, 0.0f, 80.0f);
+
+	landingSiteRover.ground.meshes.push_back(amesh);
+
+	amesh = createCone(18.0f, 3.0f, 10.0f);
+	setIdentityMatrix(landingSiteRover.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.2f, 0.2f, 0.2f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, -3.0f, 0.0f, 82.0f);
+
+	landingSiteRover.ground.meshes.push_back(amesh);
+
+	aliensBase.position[0] = 0.0f;
+	aliensBase.position[1] = 0.0f;
+	aliensBase.position[2] = 80.0f;
+	aliensBase.side = 14;
 }
 
 void createPillars() {
@@ -2022,79 +2057,104 @@ void createRover() {
 
 void createStaticRocks() {
 
-	MyMesh amesh = createSphere(4.0f, 10);
-	StaticRock rock1;
-	MyObject obj1;
-	setIdentityMatrix(obj1.objectTransform, 4);
-
+	MyMesh amesh;
+	StaticRock rock;
+	
+	rock.radius = 4.0f;
+	rock.originalPos[0] = 20.0f;
+	rock.originalPos[1] = 0.2f;
+	rock.originalPos[2] = 10.0f;
+	rock.position[0] = 20.0f;
+	rock.position[1] = 0.2f;
+	rock.position[2] = 10.0f;
+	rock.speed = 0.0f;
+	amesh = createSphere(rock.radius, 10);
+	setIdentityMatrix(rock.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, 20.0f, 0.2f, 10.0f);
-	obj1.meshes.push_back(amesh);
-	rock1.object = obj1;
-	rock1.radius = 4.0f;
-	rock1.originalPos[0] = 20.0f;
-	rock1.originalPos[2] = 10.0f;
-	rock1.position[0] = 20.0f;
-	rock1.position[2] = 10.0f;
-	rock1.speed = 0.0f;
-	staticRocks.push_back(rock1);
+	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
+	rock.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock);
 
-	StaticRock rock2;
-	MyObject obj2;
-
-	setIdentityMatrix(obj2.objectTransform, 4);
-	amesh = createSphere(1.0f, 10);
+	rock.radius = 1.0f;
+	rock.originalPos[0] = -15.0f;
+	rock.originalPos[1] = 0.2f;
+	rock.originalPos[2] = -15.0f;
+	rock.position[0] = -15.0f;
+	rock.position[1] = 0.2f;
+	rock.position[2] = -15.0f;
+	rock.speed = 0.0f;
+	amesh = createSphere(rock.radius, 10);
+	setIdentityMatrix(rock.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, -15.0f, 0.2f, -15.0f);
-	obj2.meshes.push_back(amesh);
-	rock2.object = obj2;
-	rock2.radius = 1.0f;
-	rock2.originalPos[0] = -15.0f;
-	rock2.originalPos[2] = -15.0f;
-	rock2.position[0] = -15.0f;
-	rock2.position[2] = -15.0f;
-	rock2.speed = 0.0f;
-	staticRocks.push_back(rock2);
+	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
+	rock.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock);
 
-
-	StaticRock rock3;
-	MyObject obj3;
-
-	setIdentityMatrix(obj3.objectTransform, 4);
-	amesh = createSphere(3.0f, 10);
+	rock.radius = 3.0f;
+	rock.originalPos[0] = -10.0f;
+	rock.originalPos[1] = 0.2f;
+	rock.originalPos[2] = 15.0f;
+	rock.position[0] = -10.0f;
+	rock.position[1] = 0.2f;
+	rock.position[2] = 15.0f;
+	rock.speed = 0.0f;
+	amesh = createSphere(rock.radius, 10);
+	setIdentityMatrix(rock.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, -10.0f, 0.2f, 15.0f);
-	obj3.meshes.push_back(amesh);
-	rock3.object = obj3;
-	rock3.radius = 3.0f;
-	rock3.originalPos[0] = -10.0f;
-	rock3.originalPos[2] = 15.0f;
-	rock3.position[0] = -10.0f;
-	rock3.position[2] = 15.0f;
-	rock3.speed = 0.0f;
-	staticRocks.push_back(rock3);
+	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
+	rock.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock);
 
-
-	StaticRock rock4;
-	MyObject obj4;
-
-	setIdentityMatrix(obj4.objectTransform, 4);
-	amesh = createSphere(2.5f, 10);
+	rock.radius = 3.0f;
+	rock.originalPos[0] = -16.0f;
+	rock.originalPos[1] = 0.2f;
+	rock.originalPos[2] = 3.0f;
+	rock.position[0] = -16.0f;
+	rock.position[1] = 0.2f;
+	rock.position[2] = 3.0f;
+	rock.speed = 0.0f;
+	amesh = createSphere(rock.radius, 10);
+	setIdentityMatrix(rock.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, -16.0f, 0.2f, 3.0f);
-	obj4.meshes.push_back(amesh);
-	rock3.object = obj4;
-	rock3.radius = 3.0f;
-	rock3.originalPos[0] = -16.0f;
-	rock3.originalPos[2] = 3.0f;
-	rock3.position[0] = -16.0f;
-	rock3.position[2] = 3.0f;
-	rock3.speed = 0.0f;
-	staticRocks.push_back(rock3);
+	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
+	rock.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock);
+
+	rock.radius = 6.0f;
+	rock.originalPos[0] = -10.0f;
+	rock.originalPos[1] = 0.2f;
+	rock.originalPos[2] = 40.0f;
+	rock.position[0] = -15.0f;
+	rock.position[1] = 0.2f;
+	rock.position[2] = 50.0f;
+	rock.speed = 0.0f;
+	amesh = createSphere(rock.radius, 10);
+	setIdentityMatrix(rock.object.objectTransform, 4);
+	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
+	rock.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock);
+
+	rock.radius = 10.0f;
+	rock.originalPos[0] = 37.0f;
+	rock.originalPos[1] = 0.2f;
+	rock.originalPos[2] = -50.0f;
+	rock.position[0] = 37.0f;
+	rock.position[1] = 0.2f;
+	rock.position[2] = -50.0f;
+	rock.speed = 0.0f;
+	amesh = createSphere(rock.radius, 10);
+	setIdentityMatrix(rock.object.objectTransform, 4);
+	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
+	rock.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock);
 
 }
 
@@ -2164,8 +2224,8 @@ void createAliens() {
 	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	alien.position[0] = 0.0f;
-	alien.position[1] = 1.0f;
-	alien.position[2] = 40.0f;
+	alien.position[1] = 0.8f;
+	alien.position[2] = 70.0f;
 	alien.type = 0;
 	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
 
@@ -2178,8 +2238,8 @@ void createAliens() {
 	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	alien.position[0] = 3.0f;
-	alien.position[1] = 1.0f;
-	alien.position[2] = 45.0f;
+	alien.position[1] = 0.8f;
+	alien.position[2] = 75.0f;
 	alien.type = 0;
 	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
 
@@ -2192,8 +2252,8 @@ void createAliens() {
 	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	alien.position[0] = -5.0f;
-	alien.position[1] = 1.0f;
-	alien.position[2] = 41.5f;
+	alien.position[1] = 0.8f;
+	alien.position[2] = 71.5f;
 	alien.type = 1;
 	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
 
@@ -2206,8 +2266,8 @@ void createAliens() {
 	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	alien.position[0] = -8.0f;
-	alien.position[1] = 1.0f;
-	alien.position[2] = 41.5f;
+	alien.position[1] = 0.8f;
+	alien.position[2] = 71.5f;
 	alien.type = 2;
 	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
 
