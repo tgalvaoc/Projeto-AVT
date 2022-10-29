@@ -126,6 +126,7 @@ GLint normal_uniformId;
 GLint lPos_uniformId; // ?
 GLint texMap0, texMap1, texText;
 GLint texMode;
+GLint shadowMode;
 
 GLint normalMap_loc;
 GLint specularMap_loc;
@@ -1581,23 +1582,31 @@ void renderScene(void) {
 	if(mirror_mode) {
 
 		glEnable(GL_DEPTH_TEST);
+		float res[4];
+		float mat[16];
+		GLfloat plano_chao[4] = { 0,1,0,0 };
 
-		if (cameras[currentCamera].position[1] > 0.0f) { 
+		if (cameras[currentCamera].position[1] > 0.0f) {
 
-			glEnable(GL_STENCIL_TEST); 
+			glEnable(GL_STENCIL_TEST);
 			glStencilFunc(GL_NEVER, 0x1, 0x1);
 			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
+			// Fill stencil buffer with Ground shape
 			draw_mirror();
+
+			//glUniform1i(shadowMode, 0);
 
 			glStencilFunc(GL_EQUAL, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-			// Render the reflected geometry
-			//lightPos[1] *= (-1.0f);  //mirror the position of light
-			//multMatrixPoint(VIEW, lightPos, res);
+			//// Render the reflected geometry
+			//directionalLightPos[0] *= (-1.0f); //not sure which light
+			//directionalLightPos[1] *= (-1.0f);
+			//directionalLightPos[2] *= (-1.0f);
+			//multMatrixPoint(VIEW, directionalLightPos, res);
 
-			glUniform4fv(lPos_uniformId, 1, res);
+			//glUniform4fv(lPos_uniformId, 1, res);
 			pushMatrix(MODEL);
 			scale(MODEL, 1.0f, -1.0f, 1.0f);
 			glCullFace(GL_FRONT);
@@ -1605,21 +1614,41 @@ void renderScene(void) {
 			glCullFace(GL_BACK);
 			popMatrix(MODEL);
 
-			//lightPos[1] *= (-1.0f);  //reset the light position
-			//multMatrixPoint(VIEW, lightPos, res);
-			glUniform4fv(lPos_uniformId, 1, res);
+			//directionalLightPos[0] *= (-1.0f); //reset the light position
+			//directionalLightPos[1] *= (-1.0f);
+			//directionalLightPos[2] *= (-1.0f);  
+			//multMatrixPoint(VIEW, directionalLightPos, res);
+			//glUniform4fv(lPos_uniformId, 1, res);
 
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			draw_mirror();
 
+			//// Render the Shadows
+			//glUniform1i(shadowMode, 1);  //Render with constant color
+			//shadow_matrix(mat, plano_chao, directionalLightPos);
+
+			glDisable(GL_DEPTH_TEST); //To force the shadow geometry to be rendered even if behind the floor
+
+			////Dark the color stored in color buffer
+			//glBlendFunc(GL_DST_COLOR, GL_ZERO);
+			//glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+
+			//pushMatrix(MODEL);
+			//multMatrix(MODEL, mat);
+			//draw_objects();
+			//popMatrix(MODEL);
+
 			glDisable(GL_STENCIL_TEST);
 			glDisable(GL_BLEND);
+			glEnable(GL_DEPTH_TEST);
 
-	
+			//render the geometry
+			//glUniform1i(shadowMode, 0);
 			draw_objects();
 		}
-		else {
+		else {  //Camera behind the floor so render only the opaque objects
+			//glUniform1i(shadowMode, 0);
 			draw_mirror();
 			draw_objects();
 		}
@@ -1627,7 +1656,7 @@ void renderScene(void) {
 	else {
 		draw_objects();
 	}
-	//draw_objects();
+
 	// Text -------------------------------------------------
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
@@ -1924,6 +1953,7 @@ GLuint setupShaders() {
 	texMap1 = glGetUniformLocation(shader.getProgramIndex(), "texmap1");
 
 	texMode = glGetUniformLocation(shader.getProgramIndex(), "texMode"); // multitex, one tex or o tex
+	shadowMode = glGetUniformLocation(shader.getProgramIndex(), "shadowMode");
 
 
 	printf("InfoLog for Per Fragment Phong Lightning Shader\n%s\n\n", shader.getAllInfoLogs().c_str());
