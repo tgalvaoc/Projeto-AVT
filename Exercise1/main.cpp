@@ -88,6 +88,10 @@ float lightScreenPos[3];  //Position of the light in Window Coordinates
 GLuint FlareTextureArray[5];
 MyMesh flareMesh;
 
+// mirror
+MyMesh mirror;
+bool mirror_mode = false;
+
 bool pauseActive = false;
 bool gameOver = false;
 
@@ -1045,89 +1049,37 @@ void renderFlare(FLARE_DEF* flare, int lx, int ly, int* m_viewport) {  //lx, ly 
 	glDisable(GL_BLEND);
 }
 
-void renderScene(void) {
+static void draw_mirror(void)
+{
+	GLint loc;
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+	glUniform4fv(loc, 1, mirror.mat.ambient);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+	glUniform4fv(loc, 1, mirror.mat.diffuse);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+	glUniform4fv(loc, 1, mirror.mat.specular);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+	glUniform1f(loc, mirror.mat.shininess);
+	pushMatrix(MODEL);
+	translate(MODEL, -2.5f, 0.5f, -4.5f);
+	rotate(MODEL, 90, 0, 0, 1);
+	rotate(MODEL, 90, 1, 0, 0);
+	computeDerivedMatrix(PROJ_VIEW_MODEL);
+	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+	computeNormalMatrix3x3();
+	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+	//glUniform1i(texMode_uniformId, 2);
+	glBindVertexArray(mirror.vao);
+	glDrawElements(mirror.type, mirror.numIndexes, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	popMatrix(MODEL);
+}
+
+void draw_objects() {
 	//desenha efetivamente os objetos
 	GLint loc;
-
-	FrameCount++;
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Transparency
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// load identity matrices
-	loadIdentity(VIEW);
-	loadIdentity(MODEL);
-
-	glUniform1i(texMap0, 4);
-	glUniform1i(texMap1, 5);
-
-	// set the camera using a function similar to gluLookAt
-
-	cameras[currentCamera].setProjection((float)WinX, (float)WinY);
-	cameras[currentCamera].cameraLookAt();
-
-	// use our shader
-
-	glUseProgram(shader.getProgramIndex());
-
-	loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
-	if (sun_mode)
-		glUniform1i(loc, 1);
-	else
-		glUniform1i(loc, 0);
-
-
-	loc = glGetUniformLocation(shader.getProgramIndex(), "point_lights_mode");
-	if (point_lights_mode)
-		glUniform1i(loc, 1);
-	else
-		glUniform1i(loc, 0);
-
-
-	loc = glGetUniformLocation(shader.getProgramIndex(), "spotlight_mode");
-	if (spotlight_mode)
-		glUniform1i(loc, 1);
-	else
-		glUniform1i(loc, 0);
-
-	loc = glGetUniformLocation(shader.getProgramIndex(), "fog_mode");
-	if (fog_mode)
-		glUniform1i(loc, 1);
-	else
-		glUniform1i(loc, 0);
-
-	float res[4];
-	multMatrixPoint(VIEW, coneDir, res);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
-	glUniform4fv(loc, 1, res);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
-	glUniform1f(loc, 0.99f);
-
-
-	//lightPos definido em World Coord so is converted to eye space
-
-	for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
-		multMatrixPoint(VIEW, pointLightPos[i], res);
-		loc = glGetUniformLocation(shader.getProgramIndex(),
-			(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
-		glUniform4fv(loc, 1, res);
-	}
-
-	multMatrixPoint(VIEW, directionalLightPos, res);
-	loc = glGetUniformLocation(shader.getProgramIndex(),
-		"dirLight.position");
-	glUniform4fv(loc, 1, res);
-
-	for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
-		multMatrixPoint(VIEW, spotlightPos[i], res);
-		loc = glGetUniformLocation(shader.getProgramIndex(),
-			(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
-		glUniform4fv(loc, 1, res);
-	}
-
-
 	// Ground, Rocks --------------------------------------
 	myObjects.clear();
 	myObjects.push_back(landingSiteRover.ground);
@@ -1540,6 +1492,142 @@ void renderScene(void) {
 	}
 
 	glBindTextureUnit(0, 0);
+}
+
+void renderScene(void) {
+	//desenha efetivamente os objetos
+	GLint loc;
+
+	FrameCount++;
+	// Stencil
+	glClearStencil(0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	// Transparency
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// load identity matrices
+	loadIdentity(VIEW);
+	loadIdentity(MODEL);
+
+	glUniform1i(texMap0, 4);
+	glUniform1i(texMap1, 5);
+
+	// set the camera using a function similar to gluLookAt
+
+	cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+	cameras[currentCamera].cameraLookAt();
+
+	// use our shader
+
+	glUseProgram(shader.getProgramIndex());
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
+	if (sun_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "point_lights_mode");
+	if (point_lights_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "spotlight_mode");
+	if (spotlight_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "fog_mode");
+	if (fog_mode)
+		glUniform1i(loc, 1);
+	else
+		glUniform1i(loc, 0);
+
+	float res[4];
+	multMatrixPoint(VIEW, coneDir, res);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
+	glUniform4fv(loc, 1, res);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
+	glUniform1f(loc, 0.99f);
+
+
+	//lightPos definido em World Coord so is converted to eye space
+
+	for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+		multMatrixPoint(VIEW, pointLightPos[i], res);
+		loc = glGetUniformLocation(shader.getProgramIndex(),
+			(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
+		glUniform4fv(loc, 1, res);
+	}
+
+	multMatrixPoint(VIEW, directionalLightPos, res);
+	loc = glGetUniformLocation(shader.getProgramIndex(),
+		"dirLight.position");
+	glUniform4fv(loc, 1, res);
+
+	for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+		multMatrixPoint(VIEW, spotlightPos[i], res);
+		loc = glGetUniformLocation(shader.getProgramIndex(),
+			(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
+		glUniform4fv(loc, 1, res);
+	}
+
+	if(mirror_mode) {
+
+		glEnable(GL_DEPTH_TEST);
+
+		if (cameras[currentCamera].position[1] > 0.0f) { 
+
+			glEnable(GL_STENCIL_TEST); 
+			glStencilFunc(GL_NEVER, 0x1, 0x1);
+			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+			draw_mirror();
+
+			glStencilFunc(GL_EQUAL, 0x1, 0x1);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+			// Render the reflected geometry
+			//lightPos[1] *= (-1.0f);  //mirror the position of light
+			//multMatrixPoint(VIEW, lightPos, res);
+
+			glUniform4fv(lPos_uniformId, 1, res);
+			pushMatrix(MODEL);
+			scale(MODEL, 1.0f, -1.0f, 1.0f);
+			glCullFace(GL_FRONT);
+			draw_objects();
+			glCullFace(GL_BACK);
+			popMatrix(MODEL);
+
+			//lightPos[1] *= (-1.0f);  //reset the light position
+			//multMatrixPoint(VIEW, lightPos, res);
+			glUniform4fv(lPos_uniformId, 1, res);
+
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			draw_mirror();
+
+			glDisable(GL_STENCIL_TEST);
+			glDisable(GL_BLEND);
+
+	
+			draw_objects();
+		}
+		else {
+			draw_mirror();
+			draw_objects();
+		}
+	}
+	else {
+		draw_objects();
+	}
+	//draw_objects();
 	// Text -------------------------------------------------
 
 	//Render text (bitmap fonts) in screen coordinates. So use ortoghonal projection with viewport coordinates.
@@ -1733,6 +1821,10 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'l':
 	case 'L':
 		flareEffect = !flareEffect;
+		break;
+	case 'm':
+	case 'M':
+		mirror_mode = !mirror_mode;
 		break;
 	}
 }
@@ -2342,6 +2434,23 @@ void init()
 	loadFlareFile(&flare, "flare.txt");
 	initialState(true);
 	glutTimerFunc(0, animate, 0);
+
+	// mirror object
+	float amb2[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+	float diff2[] = { 0.99f, 0.99f, 0.99f, 1.0f };
+	float diff3[] = { 0.99f, 0.99f, 0.99f, 0.30f };
+	float spec2[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	float shininess = 100.0f;
+	int texcount = 0;
+
+	mirror = createQuad(5, 5);
+	memcpy(mirror.mat.ambient, amb2, 4 * sizeof(float));
+	memcpy(mirror.mat.diffuse, diff3, 4 * sizeof(float));
+	memcpy(mirror.mat.specular, spec2, 4 * sizeof(float));
+	memcpy(mirror.mat.emissive, emissive, 4 * sizeof(float));
+	mirror.mat.shininess = shininess;
+	mirror.mat.texCount = texcount;
 
 	// some GL settings
 	glEnable(GL_BLEND);
