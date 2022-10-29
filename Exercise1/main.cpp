@@ -79,6 +79,7 @@ vector<StaticRock> staticRocks;
 vector<Item> items;
 vector<Flag> flags;
 vector<Pillar> pillars;
+vector<Alien> aliens;
 
 //Flare effect
 FLARE_DEF flare;
@@ -103,7 +104,7 @@ bool normalMapKey = TRUE; // by default if there is a normal map then bump effec
 bool isGoingForward = false;
 bool isRoverHittingSomething = false;
 
-GLuint TextureArray[8];
+GLuint TextureArray[11];
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -215,7 +216,6 @@ void createCameras() {
 }
 
 int signal() {
-	srand((unsigned int)time(NULL));
 	int signal = rand() % 2;
 	if (signal)
 		return -1;
@@ -223,7 +223,6 @@ int signal() {
 }
 
 void createItems(int numToCreate) {
-	srand((unsigned int)time(NULL));
 	MyMesh amesh = createTorus(0.8f, 1.0f, 3, 10); // randomize size in the future
 	int min = 5, max = 40;
 
@@ -257,7 +256,6 @@ void createItems(int numToCreate) {
 
 
 vector<RollingRock> createRollingRocks(int numToCreate) {
-	srand((unsigned int)time(NULL));
 
 	MyMesh amesh = createSphere(1.0f, 10); // randomize size in the future
 	MyObject stone;
@@ -1315,6 +1313,69 @@ void renderScene(void) {
 	loc = glGetUniformLocation(shader.getProgramIndex(), "particles");
 	glUniform1i(loc, 0);
 
+	// Aliens
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
+	glUniform1i(loc, 1);
+
+	for (int i = 0; i < aliens.size(); i++) {
+
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, TextureArray[8 + aliens[i].type]);
+		glUniform1i(texMode, 1);
+
+		meshes = aliens[i].object.meshes;
+		pushMatrix(MODEL);
+		multMatrix(MODEL, aliens[i].object.objectTransform);
+		translate(MODEL, aliens[i].position[0], aliens[i].position[1] + 1, aliens[i].position[2]);
+
+		for (int objId = 0; objId < meshes.size(); objId++) {
+
+			// send the material
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+			glUniform4fv(loc, 1, meshes[objId].mat.specular);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+			glUniform1f(loc, meshes[objId].mat.shininess);
+
+			pushMatrix(MODEL);
+
+			// send matrices to OGL
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+
+			int i, j;
+
+			for (i = 0; i < 3; i += 2)
+				for (j = 0; j < 3; j++) {
+					if (i == j)
+						mCompMatrix[VIEW_MODEL][i * 4 + j] = 1.0;
+					else
+						mCompMatrix[VIEW_MODEL][i * 4 + j] = 0.0;
+				}
+			computeDerivedMatrix_PVM();
+
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			// Render mesh
+			glBindVertexArray(meshes[objId].vao);
+			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+
+			popMatrix(MODEL);
+		}
+		popMatrix(MODEL);
+	}
+
+
+	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
+	glUniform1i(loc, 0);
+
 	// Flags! ----------------------------------------------------------
 
 	loc = glGetUniformLocation(shader.getProgramIndex(), "billboard");
@@ -1830,6 +1891,16 @@ void createGround() {
 	myTranslate(amesh.meshTransform, landingSiteRover.position[0], landingSiteRover.position[1], landingSiteRover.position[2]);
 	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 	landingSiteRover.ground.meshes.push_back(amesh);
+
+	// aliens base
+
+	amesh = createCone(25.0f, 3.0f, 10.0f);
+	setIdentityMatrix(landingSiteRover.ground.objectTransform, 4);
+	setMeshColor(&amesh, 0.2f, 0.2f, 0.2f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, 0.0f, 0.0f, 48.0f);
+
+	landingSiteRover.ground.meshes.push_back(amesh);
 }
 
 void createPillars() {
@@ -2081,6 +2152,71 @@ void createFlags() {
 	flags.push_back(portugal);
 	flags.push_back(austria);
 }
+
+
+void createAliens() {
+	MyMesh amesh;
+	Alien alien;
+	
+	// standing
+	amesh = createQuad(4.0f, 4.0f);
+	setIdentityMatrix(alien.object.objectTransform, 4);
+	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	alien.position[0] = 0.0f;
+	alien.position[1] = 1.0f;
+	alien.position[2] = 40.0f;
+	alien.type = 0;
+	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
+
+	alien.object.meshes.push_back(amesh);
+	aliens.push_back(alien);
+
+	// standing
+	amesh = createQuad(4.0f, 4.0f);
+	setIdentityMatrix(alien.object.objectTransform, 4);
+	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	alien.position[0] = 3.0f;
+	alien.position[1] = 1.0f;
+	alien.position[2] = 45.0f;
+	alien.type = 0;
+	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
+
+	alien.object.meshes.push_back(amesh);
+	aliens.push_back(alien);
+
+	// pointing
+	amesh = createQuad(4.0f, 4.0f);
+	setIdentityMatrix(alien.object.objectTransform, 4);
+	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	alien.position[0] = -5.0f;
+	alien.position[1] = 1.0f;
+	alien.position[2] = 41.5f;
+	alien.type = 1;
+	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
+
+	alien.object.meshes.push_back(amesh);
+	aliens.push_back(alien);
+
+	// together
+	amesh = createQuad(4.0f, 4.0f);
+	setIdentityMatrix(alien.object.objectTransform, 4);
+	setMeshColor(&amesh, 0.5f, 0.5f, 0.5f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	alien.position[0] = -8.0f;
+	alien.position[1] = 1.0f;
+	alien.position[2] = 41.5f;
+	alien.type = 2;
+	myTranslate(amesh.meshTransform, alien.position[0], alien.position[1], alien.position[1]);
+
+	alien.object.meshes.push_back(amesh);
+	aliens.push_back(alien);
+
+}
+
+
 // ------------------------------------------------------------
 //
 // Model loading and OpenGL setup
@@ -2100,7 +2236,7 @@ void init()
 	}
 	ilInit();
 
-	glGenTextures(8, TextureArray);
+	glGenTextures(11, TextureArray);
 	Texture2D_Loader(TextureArray, "textures/ground0.tga", 0);
 	Texture2D_Loader(TextureArray, "textures/ground1.tga", 1);
 	Texture2D_Loader(TextureArray, "textures/rover.tga", 2);
@@ -2109,6 +2245,9 @@ void init()
 	Texture2D_Loader(TextureArray, "textures/flagAustria.tga", 5);
 	Texture2D_Loader(TextureArray, "textures/RockBaseTex.jpg", 6);
 	Texture2D_Loader(TextureArray, "textures/RockNormalTex.jpg", 7);
+	Texture2D_Loader(TextureArray, "textures/standing.tga", 8);
+	Texture2D_Loader(TextureArray, "textures/pointing.tga", 9);
+	Texture2D_Loader(TextureArray, "textures/together.tga", 10);
 
 
 	//Flare elements textures
@@ -2130,6 +2269,7 @@ void init()
 	createCameras();
 	createSpaceship();
 	createFlags();
+	createAliens();
 	createItems(10);
 
 	particleMesh = createQuad(0.03f, 0.01f);
@@ -2162,6 +2302,7 @@ void init()
 
 int main(int argc, char** argv) {
 
+	srand((unsigned int)time(NULL));
 	//  GLUT initialization
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE);

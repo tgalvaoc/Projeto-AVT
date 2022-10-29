@@ -82,6 +82,12 @@ struct Point {
 	float z = 0.0f;
 };
 
+struct Alien {
+	float position[3] = { 0.0f, 0.0f, 0.f };
+	int type = 0;
+	MyObject object;
+};
+
 MyMesh createCube();
 MyMesh createQuad(float size_x, float size_y);
 MyMesh createSphere(float radius, int divisions);
