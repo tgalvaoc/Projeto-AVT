@@ -95,14 +95,15 @@ bool sun_mode = true;
 bool point_lights_mode = false;
 bool fog_mode = false;
 bool multitexture_mode = false;
-bool flareEffect = true;
+bool bumpMapping = false;
+bool flareEffect = false;
 
 bool normalMapKey = TRUE; // by default if there is a normal map then bump effect is implemented. press key "b" to enable/disable normal mapping 
 
 bool isGoingForward = false;
 bool isRoverHittingSomething = false;
 
-GLuint TextureArray[6];
+GLuint TextureArray[8];
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -142,7 +143,7 @@ char s[32];
 #define MAX_PARTICLES 50
 
 //float directionalLightPos[4] = { -5.0f, 2.0f, 1.0f, 1.0f };
-float directionalLightPos[4] = { -1000.0f, 1000.0f, 1.0f, 1.0f };
+float directionalLightPos[4] = { 1000.0f, 1000.0f, 1.0f, 1.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
 	{5.0f, 8.0f, -5.0f, 1.0f}, {5.0f, 8.0f, 5.0f, 1.0f}, {-5.0f, 8.0f, 0.0f, 1.0f},
 	{5.0f, 8.0f, 0.0f, 1.0f} };
@@ -194,7 +195,7 @@ void initialState(bool livesReset) {
 	rover.speed = 0.0f;
 
 	cameras[2].position[0] = 10.0f;
-	cameras[2].position[1] = 5.0f;
+	cameras[2].position[1] = 4.0f;
 	cameras[2].position[2] = 0.0f;
 
 	r = float(sqrt(pow(cameras[2].position[0], 2) + pow(cameras[2].position[1], 2) + pow(cameras[2].position[2], 2)));
@@ -551,7 +552,7 @@ void updateRoverPosition() {
 
 void updateRoverCamera() {
 	cameras[2].position[0] = rover.position[0] + rover.direction[0] * 10;
-	cameras[2].position[1] = 5;
+	cameras[2].position[1] = 4;
 	cameras[2].position[2] = rover.position[2] - rover.direction[2] * 10;
 
 	std::copy(rover.position, rover.position + 3, cameras[2].target);
@@ -1114,15 +1115,17 @@ void renderScene(void) {
 		glUniform4fv(loc, 1, res);
 	}
 
+
+	// Ground, Rocks --------------------------------------
 	myObjects.clear();
 	myObjects.push_back(landingSiteRover.ground);
 	myObjects.push_back(landingSiteSpaceship.ground);
 
 
-	for (int j = 0; j < rollingRocks.size(); j++)
-		myObjects.push_back(rollingRocks[j].object);
 	for (int j = 0; j < staticRocks.size(); j++)
 		myObjects.push_back(staticRocks[j].object);
+	for (int j = 0; j < rollingRocks.size(); j++)
+		myObjects.push_back(rollingRocks[j].object);
 	for (int j = 0; j < items.size(); j++)
 		myObjects.push_back(items[j].object);
 
@@ -1146,9 +1149,24 @@ void renderScene(void) {
 				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}
-			else
+			else if (i > 1 && i <= 5) { // static rocks
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
+				glUniform1i(texMap0, 4);
+				if (bumpMapping) {
+					loc = glGetUniformLocation(shader.getProgramIndex(), "bumpmap");
+					glUniform1i(loc, 1);
+					glActiveTexture(GL_TEXTURE5);
+					glBindTexture(GL_TEXTURE_2D, TextureArray[7]);
+					glUniform1i(texMap1, 5);
+				}
+				glUniform1i(texMode, 1);
+			}
+			else {
 				glUniform1i(texMode, 0);
-
+				loc = glGetUniformLocation(shader.getProgramIndex(), "bumpmap");
+				glUniform1i(loc, 0);
+			}
 			// send the material
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
@@ -1634,10 +1652,8 @@ void processKeys(unsigned char key, int xx, int yy)
 		items.clear();
 		createItems(10);
 		break;
-	case 'b':  // press key "b" to enable/disable normal mapping 
-		if (!normalMapKey) normalMapKey = TRUE;
-		else
-			normalMapKey = FALSE;
+	case 'b':
+		bumpMapping = !bumpMapping;
 		break;
 	case 'l':
 	case 'L':
@@ -1791,11 +1807,11 @@ void createGround() {
 
 	// path
 	side = 3.0f;
-	amesh = createQuad(side, side * 5);
+	amesh = createQuad(side, side * 4);
 	setIdentityMatrix(landingSiteSpaceship.ground.objectTransform, 4);
 	setMeshColor(&amesh, 0.9f, 0.8f, 0.8f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -11.5f);
+	myTranslate(amesh.meshTransform, 0.0f, 0.15f, -10.0f);
 	myRotate(amesh.meshTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 	landingSiteSpaceship.ground.meshes.push_back(amesh);
 
@@ -1971,6 +1987,44 @@ void createStaticRocks() {
 	rock2.speed = 0.0f;
 	staticRocks.push_back(rock2);
 
+
+	StaticRock rock3;
+	MyObject obj3;
+
+	setIdentityMatrix(obj3.objectTransform, 4);
+	amesh = createSphere(3.0f, 10);
+	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, -10.0f, 0.2f, 15.0f);
+	obj3.meshes.push_back(amesh);
+	rock3.object = obj3;
+	rock3.radius = 3.0f;
+	rock3.originalPos[0] = -10.0f;
+	rock3.originalPos[2] = 15.0f;
+	rock3.position[0] = -10.0f;
+	rock3.position[2] = 15.0f;
+	rock3.speed = 0.0f;
+	staticRocks.push_back(rock3);
+
+
+	StaticRock rock4;
+	MyObject obj4;
+
+	setIdentityMatrix(obj4.objectTransform, 4);
+	amesh = createSphere(2.5f, 10);
+	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, -16.0f, 0.2f, 3.0f);
+	obj4.meshes.push_back(amesh);
+	rock3.object = obj4;
+	rock3.radius = 3.0f;
+	rock3.originalPos[0] = -16.0f;
+	rock3.originalPos[2] = 3.0f;
+	rock3.position[0] = -16.0f;
+	rock3.position[2] = 3.0f;
+	rock3.speed = 0.0f;
+	staticRocks.push_back(rock3);
+
 }
 
 void createSpaceship() {
@@ -2046,13 +2100,15 @@ void init()
 	}
 	ilInit();
 
-	glGenTextures(6, TextureArray);
+	glGenTextures(8, TextureArray);
 	Texture2D_Loader(TextureArray, "textures/ground0.tga", 0);
 	Texture2D_Loader(TextureArray, "textures/ground1.tga", 1);
 	Texture2D_Loader(TextureArray, "textures/rover.tga", 2);
 	Texture2D_Loader(TextureArray, "textures/particle.tga", 3);
 	Texture2D_Loader(TextureArray, "textures/flagPortugal.tga", 4);
 	Texture2D_Loader(TextureArray, "textures/flagAustria.tga", 5);
+	Texture2D_Loader(TextureArray, "textures/RockBaseTex.jpg", 6);
+	Texture2D_Loader(TextureArray, "textures/RockNormalTex.jpg", 7);
 
 
 	//Flare elements textures

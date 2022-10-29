@@ -63,6 +63,7 @@ uniform bool particles;
 uniform bool billboard;
 uniform bool rover;
 uniform bool flare;
+uniform bool bumpmap;
 
 uniform PointLight pointLights[NUMBER_POINT_LIGHTS];
 uniform SpotLight spotLights[NUMBER_SPOT_LIGHTS];
@@ -93,7 +94,7 @@ void main() {
 	vec3 n;
 
 	if(normalMap)
-		n = normalize(2.0 * texture(texUnitNormalMap, DataIn.tex_coord).rgb - 1.0);  //normal in tangent space
+		n = normalize(2.0 * texture(texmap1, DataIn.tex_coord).rgb - 1.0);  //normal in tangent space
 	else
 		n = normalize(DataIn.normal);
 	
@@ -122,7 +123,7 @@ void main() {
 		
 		vec3 spec = vec3(0.0);
 		vec3 lightDir = vec3(dirLight.position - DataIn.pos);
-		vec3 n = normalize(DataIn.normal);
+		//vec3 n = normalize(DataIn.normal);
 		vec3 l = normalize(lightDir);
 		vec3 e = normalize(DataIn.eye);
 
@@ -140,7 +141,7 @@ void main() {
 		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
 			vec3 spec = vec3(0.0);
 			vec3 lightDir = vec3(pointLights[i].position - DataIn.pos);
-			vec3 n = normalize(DataIn.normal);
+			//vec3 n = normalize(DataIn.normal);
 			vec3 l = normalize(lightDir);
 			vec3 e = normalize(DataIn.eye);
 
@@ -163,7 +164,7 @@ void main() {
 		for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
 			vec3 spec = vec3(0.0);
 			vec3 lightDir = vec3(spotLights[i].position - DataIn.pos);
-			vec3 n = normalize(DataIn.normal);
+			//vec3 n = normalize(DataIn.normal);
 			vec3 l = normalize(lightDir);
 			vec3 e = normalize(DataIn.eye);
 			vec3 sd = normalize(vec3(-coneDir));
@@ -212,6 +213,10 @@ void main() {
 			if((texel.a == 0.0)  || (mat.diffuse.a == 0.0) ) discard;
 			else
 				auxColorOut = mat.diffuse * texel;
+		}
+		else if(bumpmap){
+			texel = texture(texmap0, DataIn.tex_coord);  // texel from stone.tga
+			auxColorOut = vec4((max(intensity*texel + auxSpec, 0.2*texel)).rgb, 1.0);
 		}
 		else{
 			texel = texture(texmap0, DataIn.tex_coord);
