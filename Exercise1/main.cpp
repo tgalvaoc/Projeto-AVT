@@ -1071,9 +1071,8 @@ static void draw_mirror(void)
 	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
 	glUniform1f(loc, mirror.mat.shininess);
 	pushMatrix(MODEL);
-	translate(MODEL, -2.5f, 0.5f, -4.5f);
-	rotate(MODEL, 90, 0, 0, 1);
-	rotate(MODEL, 90, 1, 0, 0);
+	translate(MODEL, -0.5f, 0.02f, -4.5f);
+	rotate(MODEL, 270, 1, 0, 0);
 	computeDerivedMatrix(PROJ_VIEW_MODEL);
 	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
 	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
@@ -1604,6 +1603,8 @@ void renderScene(void) {
 
 	//lightPos definido em World Coord so is converted to eye space
 
+
+
 	for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
 		multMatrixPoint(VIEW, pointLightPos[i], res);
 		loc = glGetUniformLocation(shader.getProgramIndex(),
@@ -1639,18 +1640,121 @@ void renderScene(void) {
 			// Fill stencil buffer with Ground shape
 			draw_mirror();
 
+			//-------------------
+
+			//for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+			//	glUniform1i(shadowMode, 0);
+
+			//	glStencilFunc(GL_EQUAL, 0x1, 0x1);
+			//	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+
+			//	// Render the reflected geometry
+			//	pointLightPos[i][0] *= (-1.0f);
+			//	pointLightPos[i][1] *= (-1.0f);
+			//	pointLightPos[i][2] *= (-1.0f);
+			//	multMatrixPoint(VIEW, pointLightPos[i], res);
+			//	loc = glGetUniformLocation(shader.getProgramIndex(),
+			//		(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
+			//	glUniform4fv(loc, 1, res);
+
+			//	pushMatrix(MODEL);
+			//	scale(MODEL, 1.0f, -1.0f, 1.0f);
+			//	glCullFace(GL_FRONT);
+			//	draw_objects();
+			//	glCullFace(GL_BACK);
+			//	popMatrix(MODEL);
+
+			//	pointLightPos[i][0] *= (-1.0f);
+			//	pointLightPos[i][1] *= (-1.0f);
+			//	pointLightPos[i][2] *= (-1.0f);
+			//	multMatrixPoint(VIEW, pointLightPos[i], res);
+			//	glUniform4fv(loc, 1, res);
+
+			//	glEnable(GL_BLEND);
+			//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//	draw_mirror();
+
+			//	// Render the Shadows
+			//	glUniform1i(shadowMode, 1);  //Render with constant color
+			//	shadow_matrix(mat, plano_chao, pointLightPos[i]);
+
+			//	glDisable(GL_DEPTH_TEST); //To force the shadow geometry to be rendered even if behind the floor
+
+			//	//Dark the color stored in color buffer
+			//	glBlendFunc(GL_DST_COLOR, GL_ZERO);
+			//	glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+
+			//	pushMatrix(MODEL);
+			//	multMatrix(MODEL, mat);
+			//	draw_objects();
+			//	popMatrix(MODEL);
+			//}
+
+			//for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+			//	glUniform1i(shadowMode, 0);
+
+			//	glStencilFunc(GL_EQUAL, 0x1, 0x1);
+			//	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+
+			//	// Render the reflected geometry
+			//	spotlightPos[i][0] *= (-1.0f);
+			//	spotlightPos[i][1] *= (-1.0f);
+			//	spotlightPos[i][2] *= (-1.0f);
+			//	multMatrixPoint(VIEW, spotlightPos[i], res);
+			//	loc = glGetUniformLocation(shader.getProgramIndex(),
+			//		(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
+			//	glUniform4fv(loc, 1, res);
+
+			//	pushMatrix(MODEL);
+			//	scale(MODEL, 1.0f, -1.0f, 1.0f);
+			//	glCullFace(GL_FRONT);
+			//	draw_objects();
+			//	glCullFace(GL_BACK);
+			//	popMatrix(MODEL);
+
+			//	spotlightPos[i][0] *= (-1.0f);
+			//	spotlightPos[i][1] *= (-1.0f);
+			//	spotlightPos[i][2] *= (-1.0f);
+			//	multMatrixPoint(VIEW, spotlightPos[i], res);
+			//	glUniform4fv(loc, 1, res);
+
+			//	glEnable(GL_BLEND);
+			//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//	draw_mirror();
+
+			//	// Render the Shadows
+			//	glUniform1i(shadowMode, 1);  //Render with constant color
+			//	shadow_matrix(mat, plano_chao, spotlightPos[i]);
+
+			//	glDisable(GL_DEPTH_TEST); //To force the shadow geometry to be rendered even if behind the floor
+
+			//	//Dark the color stored in color buffer
+			//	glBlendFunc(GL_DST_COLOR, GL_ZERO);
+			//	glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+
+			//	pushMatrix(MODEL);
+			//	multMatrix(MODEL, mat);
+			//	draw_objects();
+			//	popMatrix(MODEL);
+			//}
+
 			//glUniform1i(shadowMode, 0);
 
 			glStencilFunc(GL_EQUAL, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-			//// Render the reflected geometry
-			//directionalLightPos[0] *= (-1.0f); //not sure which light
+			// Render the reflected geometry
+			//directionalLightPos[0] *= (-1.0f);
 			//directionalLightPos[1] *= (-1.0f);
 			//directionalLightPos[2] *= (-1.0f);
-			//multMatrixPoint(VIEW, directionalLightPos, res);
 
-			//glUniform4fv(lPos_uniformId, 1, res);
+			//multMatrixPoint(VIEW, directionalLightPos, res);
+			//loc = glGetUniformLocation(shader.getProgramIndex(),
+			//	"dirLight.position");
+			//glUniform4fv(loc, 1, res);
+
 			pushMatrix(MODEL);
 			scale(MODEL, 1.0f, -1.0f, 1.0f);
 			glCullFace(GL_FRONT);
@@ -1662,26 +1766,26 @@ void renderScene(void) {
 			//directionalLightPos[1] *= (-1.0f);
 			//directionalLightPos[2] *= (-1.0f);  
 			//multMatrixPoint(VIEW, directionalLightPos, res);
-			//glUniform4fv(lPos_uniformId, 1, res);
+			//glUniform4fv(loc, 1, res);
 
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			draw_mirror();
 
-			//// Render the Shadows
+			// Render the Shadows
 			//glUniform1i(shadowMode, 1);  //Render with constant color
 			//shadow_matrix(mat, plano_chao, directionalLightPos);
 
 			glDisable(GL_DEPTH_TEST); //To force the shadow geometry to be rendered even if behind the floor
 
-			////Dark the color stored in color buffer
-			//glBlendFunc(GL_DST_COLOR, GL_ZERO);
-			//glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+			//Dark the color stored in color buffer
+			glBlendFunc(GL_DST_COLOR, GL_ZERO);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
 
-			//pushMatrix(MODEL);
-			//multMatrix(MODEL, mat);
-			//draw_objects();
-			//popMatrix(MODEL);
+			/*pushMatrix(MODEL);
+			multMatrix(MODEL, mat);
+			draw_objects();
+			popMatrix(MODEL);*/
 
 			glDisable(GL_STENCIL_TEST);
 			glDisable(GL_BLEND);
@@ -2554,7 +2658,7 @@ void init()
 	float shininess = 100.0f;
 	int texcount = 0;
 
-	mirror = createQuad(5, 5);
+	mirror = createQuad(1000, 1000);
 	memcpy(mirror.mat.ambient, amb2, 4 * sizeof(float));
 	memcpy(mirror.mat.diffuse, diff3, 4 * sizeof(float));
 	memcpy(mirror.mat.specular, spec2, 4 * sizeof(float));
