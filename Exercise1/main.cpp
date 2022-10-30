@@ -70,6 +70,7 @@ const string font_name = "fonts/arial.ttf";
 vector<MyObject> myObjects;
 MyMesh particleMesh;
 vector<struct MyMesh> spaceship;
+MyObject skyboxCube;
 
 Rover rover;
 LandingSite landingSiteRover;
@@ -96,7 +97,6 @@ bool pauseActive = false;
 bool gameOver = false;
 
 bool spotlight_mode = true;
-bool flare_mode = false;
 bool sun_mode = true;
 bool point_lights_mode = false;
 bool fog_mode = false;
@@ -105,11 +105,12 @@ bool bumpMapping = false;
 bool flareEffect = false;
 
 bool normalMapKey = TRUE; // by default if there is a normal map then bump effect is implemented. press key "b" to enable/disable normal mapping 
+int reflect_perFragment = 0; //Reflection vetor for cube mapping computed in vertex shader(= 0) or fragment shader (= 1)
 
 bool isGoingForward = false;
 bool isRoverHittingSomething = false;
 
-GLuint TextureArray[11];
+GLuint TextureArray[12];
 
 //External array storage defined in AVTmathLib.cpp
 
@@ -120,6 +121,7 @@ extern float mCompMatrix[COUNT_COMPUTED_MATRICES][16];
 /// The normal matrix
 extern float mNormal3x3[9];
 
+GLint texMode_uniformId;
 GLint pvm_uniformId;
 GLint vm_uniformId;
 GLint normal_uniformId;
@@ -131,6 +133,12 @@ GLint shadowMode;
 GLint normalMap_loc;
 GLint specularMap_loc;
 GLint diffMapCount_loc;
+GLint tex_cube_loc;
+GLint reflect_perFragment_uniformId;
+GLint model_uniformId;
+GLint view_uniformId;
+
+
 
 Camera cameras[3];
 int currentCamera = 0;
@@ -1086,7 +1094,7 @@ void draw_objects() {
 	myObjects.clear();
 	myObjects.push_back(landingSiteRover.ground);
 	myObjects.push_back(landingSiteSpaceship.ground);
-
+	myObjects.push_back(skyboxCube);
 
 	for (int j = 0; j < staticRocks.size(); j++)
 		myObjects.push_back(staticRocks[j].object);
@@ -1115,7 +1123,7 @@ void draw_objects() {
 				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}
-			else if (i > 1 && i <= staticRocks.size() + 1) { // static rocks
+			else if (i > 2 && i <= staticRocks.size() + 1) { // static rocks
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
 				glUniform1i(texMap0, 4);
@@ -1130,8 +1138,22 @@ void draw_objects() {
 			}
 			else {
 				glUniform1i(texMode, 0);
-				loc = glGetUniformLocation(shader.getProgramIndex(), "bumpmap");
-				glUniform1i(loc, 0);
+				
+				if (i == 2) { // cubemap
+					glUniform1i(texMode, 0);
+					loc = glGetUniformLocation(shader.getProgramIndex(), "cubemapactive");
+					glUniform1i(loc, 1);
+					glUniform1i(texMode_uniformId, 0);
+					glActiveTexture(GL_TEXTURE4);
+					glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
+
+					glUniform1i(tex_cube_loc, 4); //  Environmental cube mapping
+					
+					if (!reflect_perFragment)
+						glUniform1i(reflect_perFragment_uniformId, 0); //reflected vector calculated in the vertex shader
+					else
+						glUniform1i(reflect_perFragment_uniformId, 1); //reflected vector calculated in the fragment shader
+				}
 			}
 			// send the material
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
@@ -1148,8 +1170,10 @@ void draw_objects() {
 
 
 			// send matrices to OGL
+			glUniformMatrix4fv(view_uniformId, 1, GL_FALSE, mMatrix[VIEW]);
 			computeDerivedMatrix(PROJ_VIEW_MODEL);
 			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(model_uniformId, 1, GL_FALSE, mMatrix[MODEL]); //Transformação de modelação do cubo unitário para o "Big Cube"
 			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
 			computeNormalMatrix3x3();
 			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
@@ -1159,6 +1183,11 @@ void draw_objects() {
 			glBindVertexArray(meshes[objId].vao);
 			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
+
+			loc = glGetUniformLocation(shader.getProgramIndex(), "bumpmap");
+			glUniform1i(loc, 0);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "cubemapactive");
+			glUniform1i(loc, 0);
 
 			popMatrix(MODEL);
 		}
@@ -1459,7 +1488,6 @@ void draw_objects() {
 		popMatrix(MODEL);
 	}
 
-
 	// Flare Effect ---------------------------------------------------
 	if (flareEffect) {
 		glEnable(GL_BLEND);
@@ -1512,6 +1540,21 @@ void renderScene(void) {
 	// load identity matrices
 	loadIdentity(VIEW);
 	loadIdentity(MODEL);
+
+
+	// Render Skybox 
+	/*loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
+	glUniform1i(loc, 1);
+
+	//it won't write anything to the zbuffer; all subsequently drawn scenery to be in front of the sky box. 
+	glDepthMask(GL_FALSE); 
+	glFrontFace(GL_CW); // set clockwise vertex order to mean the front
+	// matrizes a enviar 
+
+	glFrontFace(GL_CCW); // restore counter clockwise vertex order to mean the front
+	glDepthMask(GL_TRUE);
+	*/
+
 
 	glUniform1i(texMap0, 4);
 	glUniform1i(texMap1, 5);
@@ -1698,6 +1741,7 @@ void renderScene(void) {
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glutSwapBuffers();
 }
@@ -1846,15 +1890,30 @@ void processKeys(unsigned char key, int xx, int yy)
 		createItems(10);
 		break;
 	case 'b':
+		if (pauseActive || gameOver)
+			return;
 		bumpMapping = !bumpMapping;
 		break;
 	case 'l':
 	case 'L':
+		if (pauseActive || gameOver)
+			return;
 		flareEffect = !flareEffect;
 		break;
 	case 'm':
 	case 'M':
 		mirror_mode = !mirror_mode;
+		break;
+	case 'x':
+	case 'X':
+		if (reflect_perFragment == 0) {
+			reflect_perFragment = 1;
+			printf("Reflection vector calculated in the fragment shader\n");
+		}
+		else {
+			reflect_perFragment = 0;
+			printf("Reflection vector calculated in the vertex shader\n");
+		}
 		break;
 	}
 }
@@ -1943,6 +2002,7 @@ GLuint setupShaders() {
 		exit(1);
 	}
 
+	texMode_uniformId = glGetUniformLocation(shader.getProgramIndex(), "texModeVert"); // different modes of texturing
 	pvm_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_pvm");
 	vm_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_viewModel");
 	normal_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_normal");
@@ -1952,8 +2012,11 @@ GLuint setupShaders() {
 	diffMapCount_loc = glGetUniformLocation(shader.getProgramIndex(), "diffMapCount");
 	texMap0 = glGetUniformLocation(shader.getProgramIndex(), "texmap0");
 	texMap1 = glGetUniformLocation(shader.getProgramIndex(), "texmap1");
-
 	texMode = glGetUniformLocation(shader.getProgramIndex(), "texMode"); // multitex, one tex or o tex
+	tex_cube_loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMap");
+	reflect_perFragment_uniformId = glGetUniformLocation(shader.getProgramIndex(), "reflect_perFrag"); //reflection vector calculated in the frag shader
+	model_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_Model");
+	view_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_View");
 	shadowMode = glGetUniformLocation(shader.getProgramIndex(), "shadowMode");
 
 
@@ -2281,6 +2344,17 @@ void createStaticRocks() {
 
 }
 
+void createCubeSkybox() {
+	setIdentityMatrix(skyboxCube.objectTransform, 4);
+	// create geometry and VAO of the cube, objId=2;
+	MyMesh amesh = createCube();
+	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
+	setIdentityMatrix(amesh.meshTransform, 4);
+	myTranslate(amesh.meshTransform, -5, 0, 8);
+
+	skyboxCube.meshes.push_back(amesh);
+}
+
 void createSpaceship() {
 	model_dir = "SciFi_Fighter_AK5";
 
@@ -2441,6 +2515,10 @@ void init()
 	Texture2D_Loader(FlareTextureArray, "textures/ring.tga", 3);
 	Texture2D_Loader(FlareTextureArray, "textures/sun.tga", 4);
 
+	//Sky Box Texture Object
+	const char* filenames[] = { "textures/posx.jpg", "textures/negx.jpg", "textures/posy.jpg", "textures/negy.jpg", "textures/posz.jpg", "textures/negz.jpg" };
+	TextureCubeMap_Loader(TextureArray, filenames, 11);
+
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
@@ -2454,6 +2532,7 @@ void init()
 	createFlags();
 	createAliens();
 	createItems(10);
+	createCubeSkybox();
 
 	particleMesh = createQuad(0.03f, 0.01f);
 	//particleMesh.mat.texCount = 3; // attribute for texture
