@@ -211,6 +211,7 @@ void initialState(bool livesReset) {
 
 	for (int i = 0; i < staticRocks.size(); i++) {
 		staticRocks[i].position[0] = staticRocks[i].originalPos[0];
+		staticRocks[i].position[1] = staticRocks[i].originalPos[1];
 		staticRocks[i].position[2] = staticRocks[i].originalPos[2];
 	}
 }
@@ -2247,9 +2248,9 @@ void createStaticRocks() {
 	staticRocks.push_back(rock);
 
 	rock.radius = 6.0f;
-	rock.originalPos[0] = -10.0f;
+	rock.originalPos[0] = -15.0f;
 	rock.originalPos[1] = 0.2f;
-	rock.originalPos[2] = 40.0f;
+	rock.originalPos[2] = 50.0f;
 	rock.position[0] = -15.0f;
 	rock.position[1] = 0.2f;
 	rock.position[2] = 50.0f;
