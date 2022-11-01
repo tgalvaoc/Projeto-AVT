@@ -1642,118 +1642,18 @@ void renderScene(void) {
 
 			//-------------------
 
-			//for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
-			//	glUniform1i(shadowMode, 0);
-
-			//	glStencilFunc(GL_EQUAL, 0x1, 0x1);
-			//	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-
-			//	// Render the reflected geometry
-			//	pointLightPos[i][0] *= (-1.0f);
-			//	pointLightPos[i][1] *= (-1.0f);
-			//	pointLightPos[i][2] *= (-1.0f);
-			//	multMatrixPoint(VIEW, pointLightPos[i], res);
-			//	loc = glGetUniformLocation(shader.getProgramIndex(),
-			//		(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
-			//	glUniform4fv(loc, 1, res);
-
-			//	pushMatrix(MODEL);
-			//	scale(MODEL, 1.0f, -1.0f, 1.0f);
-			//	glCullFace(GL_FRONT);
-			//	draw_objects();
-			//	glCullFace(GL_BACK);
-			//	popMatrix(MODEL);
-
-			//	pointLightPos[i][0] *= (-1.0f);
-			//	pointLightPos[i][1] *= (-1.0f);
-			//	pointLightPos[i][2] *= (-1.0f);
-			//	multMatrixPoint(VIEW, pointLightPos[i], res);
-			//	glUniform4fv(loc, 1, res);
-
-			//	glEnable(GL_BLEND);
-			//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			//	draw_mirror();
-
-			//	// Render the Shadows
-			//	glUniform1i(shadowMode, 1);  //Render with constant color
-			//	shadow_matrix(mat, plano_chao, pointLightPos[i]);
-
-			//	glDisable(GL_DEPTH_TEST); //To force the shadow geometry to be rendered even if behind the floor
-
-			//	//Dark the color stored in color buffer
-			//	glBlendFunc(GL_DST_COLOR, GL_ZERO);
-			//	glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
-
-			//	pushMatrix(MODEL);
-			//	multMatrix(MODEL, mat);
-			//	draw_objects();
-			//	popMatrix(MODEL);
-			//}
-
-			//for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
-			//	glUniform1i(shadowMode, 0);
-
-			//	glStencilFunc(GL_EQUAL, 0x1, 0x1);
-			//	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-
-			//	// Render the reflected geometry
-			//	spotlightPos[i][0] *= (-1.0f);
-			//	spotlightPos[i][1] *= (-1.0f);
-			//	spotlightPos[i][2] *= (-1.0f);
-			//	multMatrixPoint(VIEW, spotlightPos[i], res);
-			//	loc = glGetUniformLocation(shader.getProgramIndex(),
-			//		(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
-			//	glUniform4fv(loc, 1, res);
-
-			//	pushMatrix(MODEL);
-			//	scale(MODEL, 1.0f, -1.0f, 1.0f);
-			//	glCullFace(GL_FRONT);
-			//	draw_objects();
-			//	glCullFace(GL_BACK);
-			//	popMatrix(MODEL);
-
-			//	spotlightPos[i][0] *= (-1.0f);
-			//	spotlightPos[i][1] *= (-1.0f);
-			//	spotlightPos[i][2] *= (-1.0f);
-			//	multMatrixPoint(VIEW, spotlightPos[i], res);
-			//	glUniform4fv(loc, 1, res);
-
-			//	glEnable(GL_BLEND);
-			//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			//	draw_mirror();
-
-			//	// Render the Shadows
-			//	glUniform1i(shadowMode, 1);  //Render with constant color
-			//	shadow_matrix(mat, plano_chao, spotlightPos[i]);
-
-			//	glDisable(GL_DEPTH_TEST); //To force the shadow geometry to be rendered even if behind the floor
-
-			//	//Dark the color stored in color buffer
-			//	glBlendFunc(GL_DST_COLOR, GL_ZERO);
-			//	glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
-
-			//	pushMatrix(MODEL);
-			//	multMatrix(MODEL, mat);
-			//	draw_objects();
-			//	popMatrix(MODEL);
-			//}
-
 			//glUniform1i(shadowMode, 0);
 
 			glStencilFunc(GL_EQUAL, 0x1, 0x1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
 			// Render the reflected geometry
-			//directionalLightPos[0] *= (-1.0f);
-			//directionalLightPos[1] *= (-1.0f);
-			//directionalLightPos[2] *= (-1.0f);
+			directionalLightPos[1] *= (-1.0f);
 
-			//multMatrixPoint(VIEW, directionalLightPos, res);
-			//loc = glGetUniformLocation(shader.getProgramIndex(),
-			//	"dirLight.position");
-			//glUniform4fv(loc, 1, res);
+			multMatrixPoint(VIEW, directionalLightPos, res);
+			loc = glGetUniformLocation(shader.getProgramIndex(),
+				"dirLight.position");
+			glUniform4fv(loc, 1, res);
 
 			pushMatrix(MODEL);
 			scale(MODEL, 1.0f, -1.0f, 1.0f);
@@ -1762,11 +1662,47 @@ void renderScene(void) {
 			glCullFace(GL_BACK);
 			popMatrix(MODEL);
 
-			//directionalLightPos[0] *= (-1.0f); //reset the light position
-			//directionalLightPos[1] *= (-1.0f);
-			//directionalLightPos[2] *= (-1.0f);  
-			//multMatrixPoint(VIEW, directionalLightPos, res);
-			//glUniform4fv(loc, 1, res);
+			directionalLightPos[1] *= (-1.0f);
+			multMatrixPoint(VIEW, directionalLightPos, res);
+			glUniform4fv(loc, 1, res);
+
+			for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+				spotlightPos[i][1] *= (-1.0f);
+				multMatrixPoint(VIEW, spotlightPos[i], res);
+				loc = glGetUniformLocation(shader.getProgramIndex(),
+					(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
+				glUniform4fv(loc, 1, res);
+
+				pushMatrix(MODEL);
+				scale(MODEL, 1.0f, -1.0f, 1.0f);
+				glCullFace(GL_FRONT);
+				draw_objects();
+				glCullFace(GL_BACK);
+				popMatrix(MODEL);
+
+				spotlightPos[i][1] *= (-1.0f);
+				multMatrixPoint(VIEW, spotlightPos[i], res);
+				glUniform4fv(loc, 1, res);
+			}
+
+			for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+				pointLightPos[i][1] *= (-1.0f);
+				multMatrixPoint(VIEW, pointLightPos[i], res);
+				loc = glGetUniformLocation(shader.getProgramIndex(),
+					(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
+				glUniform4fv(loc, 1, res);
+
+				pushMatrix(MODEL);
+				scale(MODEL, 1.0f, -1.0f, 1.0f);
+				glCullFace(GL_FRONT);
+				draw_objects();
+				glCullFace(GL_BACK);
+				popMatrix(MODEL);
+
+				pointLightPos[i][1] *= (-1.0f);
+				multMatrixPoint(VIEW, pointLightPos[i], res);
+				glUniform4fv(loc, 1, res);
+			}
 
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1779,8 +1715,8 @@ void renderScene(void) {
 			glDisable(GL_DEPTH_TEST); //To force the shadow geometry to be rendered even if behind the floor
 
 			//Dark the color stored in color buffer
-			glBlendFunc(GL_DST_COLOR, GL_ZERO);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+			//glBlendFunc(GL_DST_COLOR, GL_ZERO);
+			//glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
 
 			/*pushMatrix(MODEL);
 			multMatrix(MODEL, mat);
