@@ -1,25 +1,25 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(513,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (Exercise1.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   main.cpp
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(256,12): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(257,12): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(863,31): warning C4018: '<': signed/unsigned mismatch
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(969,49): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1012,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1013,18): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1015,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1016,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1038,38): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(993,25): warning C4101: 'alpha': unreferenced local variable
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1528,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1528,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1528,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1528,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1862,21): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1861,38): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1865,21): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1864,27): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2230,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2238,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2246,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-  Exercise1.vcxproj -> C:\Users\susanne\Documents\GitHub\Projeto-AVT\x64\Debug\Projeto-AVT.exe
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(256,12): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(257,12): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(862,31): warning C4018: '<': signed/unsigned mismatch
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(968,49): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1011,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1012,18): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1014,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1015,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1037,38): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(992,25): warning C4101: 'alpha': unreferenced local variable
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1527,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1527,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1527,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1527,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1889,21): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1888,38): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1892,21): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(1891,27): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(2257,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(2265,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\Exercise1\main.cpp(2273,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  Exercise1.vcxproj -> C:\Users\teres\OneDrive\facul\P1\Animação e Visualização\Projeto-AVT\x64\Debug\Projeto-AVT.exe
   0 File(s) copied

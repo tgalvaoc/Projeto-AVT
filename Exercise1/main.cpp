@@ -601,7 +601,6 @@ void checkCollisions() {
 		float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
 		float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
 
-		//cout << "\nRadius of : " << i << " :" << staticRocks[i].radius;
 		if ((minX <= roverMaxX && minX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
 			(maxX <= roverMaxX && maxX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
 			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
@@ -778,8 +777,8 @@ void checkCollisions() {
 
 			items.erase(items.begin() + i);
 			createItems(1);
-			points += 100;
-			if (points >= 1000 && livesCount < 5)
+			points += 200;
+			if (points % 1000 == 0 && livesCount < 5)
 				livesCount++;
 			break;
 		}
@@ -1154,7 +1153,7 @@ void draw_objects() {
 				
 				if (i == 2) { // cubemap
 					glUniform1i(texMode, 0);
-					loc = glGetUniformLocation(shader.getProgramIndex(), "cubemapactive");
+					loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
 					glUniform1i(loc, 1);
 					glUniform1i(texMode_uniformId, 0);
 					glActiveTexture(GL_TEXTURE4);
@@ -1557,29 +1556,57 @@ void renderScene(void) {
 		// Transparency
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+		
 		// load identity matrices
 		loadIdentity(VIEW);
 		loadIdentity(MODEL);
-
-
+		/*
 		// Render Skybox 
-		/*loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
+		glUniform1i(tex_cube_loc, 4);
+
+		loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
 		glUniform1i(loc, 1);
 
-		//it won't write anything to the zbuffer; all subsequently drawn scenery to be in front of the sky box.
-		glDepthMask(GL_FALSE);
+		//it won't write anything to the zbuffer; all subsequently drawn scenery to be in front of the sky box. 
+		glDepthMask(GL_FALSE); 
 		glFrontFace(GL_CW); // set clockwise vertex order to mean the front
-		// matrizes a enviar
+	
+		pushMatrix(MODEL);
+		pushMatrix(VIEW);  //se quiser anular a translação
 
+		//  Fica mais realista se não anular a translação da câmara 
+		// Cancel the translation movement of the camera - de acordo com o tutorial do Antons
+		mMatrix[VIEW][12] = 0.0f;
+		mMatrix[VIEW][13] = 0.0f;
+		mMatrix[VIEW][14] = 0.0f;
+	
+		scale(MODEL, 100.0f, 100.0f, 100.0f);
+		translate(MODEL, -0.5f, -0.5f, -0.5f);
+
+		// send matrices to OGL
+		glUniformMatrix4fv(model_uniformId, 1, GL_FALSE, mMatrix[MODEL]); //Transformação de modelação do cubo unitário para o "Big Cube"
+		computeDerivedMatrix(PROJ_VIEW_MODEL);
+		glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+		
+		/*
+		glUniform1i(tex_cube_loc, 11);
+		loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
+		glUniform1i(loc, 1);
+
+		glBindVertexArray(skyboxCube.meshes[0].vao);
+		glDrawElements(skyboxCube.meshes[0].type, skyboxCube.meshes[0].numIndexes, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+		popMatrix(MODEL);
+		popMatrix(VIEW);
+	 */
 		glFrontFace(GL_CCW); // restore counter clockwise vertex order to mean the front
 		glDepthMask(GL_TRUE);
-		*/
-
 
 		glUniform1i(texMap0, 4);
 		glUniform1i(texMap1, 5);
-
+		
 		// append view to mask or outside mask
 		if (i == 0) {
 			glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
@@ -2145,7 +2172,7 @@ GLuint setupShaders() {
 	diffMapCount_loc = glGetUniformLocation(shader.getProgramIndex(), "diffMapCount");
 	texMap0 = glGetUniformLocation(shader.getProgramIndex(), "texmap0");
 	texMap1 = glGetUniformLocation(shader.getProgramIndex(), "texmap1");
-	texMode = glGetUniformLocation(shader.getProgramIndex(), "texMode"); // multitex, one tex or o tex
+	texMode = glGetUniformLocation(shader.getProgramIndex(), "texMode"); // multitex, one tex or no tex
 	tex_cube_loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMap");
 	reflect_perFragment_uniformId = glGetUniformLocation(shader.getProgramIndex(), "reflect_perFrag"); //reflection vector calculated in the frag shader
 	model_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_Model");

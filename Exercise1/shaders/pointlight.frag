@@ -5,6 +5,7 @@
 
 uniform sampler2D texmap0;
 uniform sampler2D texmap1;
+uniform samplerCube cubeMap;
 
 uniform int texMode;
 
@@ -65,6 +66,8 @@ uniform bool billboard;
 uniform bool rover;
 uniform bool flare;
 uniform bool bumpmap;
+uniform bool cubeMapping;
+uniform bool skybox;
 
 uniform PointLight pointLights[NUMBER_POINT_LIGHTS];
 uniform SpotLight spotLights[NUMBER_SPOT_LIGHTS];
@@ -75,14 +78,20 @@ vec4 auxColorOut = { 0.0, 0.0, 0.0, 1.0};
 float dist;
 vec4 diff, auxSpec;
 
+uniform mat4 m_View;
+uniform int reflect_perFrag; //reflect vector calculated in the frag shader
 
 in Data {
 	vec4 pos;
 	vec3 normal;
 	vec3 eye;
 	vec3 lightDir;
+	vec3 reflected;
 	vec2 tex_coord;
+	vec3 skyboxTexCoord;
 } DataIn;
+
+const float reflect_factor = 0.9;
 
 void main() {
 
@@ -93,10 +102,10 @@ void main() {
 		//range based
 		dist = length(DataIn.pos);
 
-		vec4 texel, texel1, texel2; 
-		float intensity;
-		vec3 specSum = vec3(0.0);
-		vec3 n;
+	vec4 texel, texel1, texel2, cube_texel; 
+	float intensity;
+	vec3 specSum = vec3(0.0);
+	vec3 n;
 
 		if(normalMap)
 			n = normalize(2.0 * texture(texmap1, DataIn.tex_coord).rgb - 1.0);  //normal in tangent space
@@ -209,28 +218,49 @@ void main() {
 			else if(billboard){
 				texel = texture(texmap0, DataIn.tex_coord);
 	
-				if(texel.a == 0.0) discard;
-				else
-					auxColorOut += vec4(max(intensity*texel.rgb + specSum, 0.1*texel.rgb), texel.a);
-			}
-			else if(flare){
-				texel = texture(texmap0, DataIn.tex_coord);  //texel from element flare texture
-				if((texel.a == 0.0)  || (mat.diffuse.a == 0.0) ) discard;
-				else
-					auxColorOut = mat.diffuse * texel;
-			}
-			else if(bumpmap){
-				texel = texture(texmap0, DataIn.tex_coord);  // texel from stone.tga
-				auxColorOut = vec4((max(intensity*texel + auxSpec, 0.2*texel)).rgb, 1.0);
-			}
-			else{
-				texel = texture(texmap0, DataIn.tex_coord);
-				auxColorOut += vec4(max(intensity*texel.rgb + specSum, texel.rgb), texel.a);
-			}
+			if(texel.a == 0.0) discard;
+			else
+				auxColorOut += vec4(max(intensity*texel.rgb + specSum, 0.1*texel.rgb), texel.a);
 		}
-		if(!flare)
-			auxColorOut[3] = mat.diffuse.a;
-		if (fog_mode) {
+		else if(flare){
+			texel = texture(texmap0, DataIn.tex_coord);  //texel from element flare texture
+			if((texel.a == 0.0)  || (mat.diffuse.a == 0.0) ) discard;
+			else
+				auxColorOut = mat.diffuse * texel;
+		}
+		else if(bumpmap){
+			texel = texture(texmap0, DataIn.tex_coord);  // texel from stone.tga
+			auxColorOut = vec4((max(intensity*texel + auxSpec, 0.2*texel)).rgb, 1.0);
+		}
+		/*
+		else if(cubeMapping){ // Environmental cube mapping
+	
+			if(reflect_perFrag == 1) {  //reflected vector calculated here
+				vec3 reflected1 = vec3 (transpose(m_View) * vec4 (vec3(reflect(-e, n)), 0.0)); //reflection vector in world coord
+				reflected1.x= -reflected1.x;   
+				cube_texel = texture(cubeMap, reflected1);
+			}
+			else
+				cube_texel = texture(cubeMap, DataIn.reflected); //use interpolated reflected vector calculated in vertex shader
+
+			texel = texture(texmap1, DataIn.tex_coord);  // texel from lighwood.tga
+			vec4 aux_color = mix(texel, cube_texel, reflect_factor);
+			aux_color = max(intensity*aux_color + auxSpec, 0.1*aux_color);
+			colorOut = vec4(aux_color.rgb, 1.0); 
+			//colorOut = vec4(cube_texel.rgb, 1.0);
+		
+		}*/
+		else if(skybox){
+			//auxColorOut = texture(cubeMap, DataIn.skyboxTexCoord);
+		}
+		else{
+			texel = texture(texmap0, DataIn.tex_coord);
+			auxColorOut += vec4(max(intensity*texel.rgb + specSum, texel.rgb), texel.a);
+		}
+	}
+	if(!flare)
+		auxColorOut[3] = mat.diffuse.a;
+	if (fog_mode) {
 		
 			float fogAmount = exp( -dist*0.05 );
 			vec4 fogColor = vec4(0.5, 0.5, 0.5, 1);
