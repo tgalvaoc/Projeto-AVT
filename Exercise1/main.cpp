@@ -1727,11 +1727,12 @@ void renderScene(void) {
 
 			glClearStencil(0);
 
+
 			glStencilFunc(GL_NEVER, 0x1, 0x1);
+			loadIdentity(PROJECTION);
 			glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
 
 			// Fill stencil buffer with obj
-			loadIdentity(PROJECTION);
 			draw_rearview();
 
 			for (int i = 0; i < 2; i++) {
