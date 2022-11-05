@@ -1097,6 +1097,60 @@ static void draw_mirror(void)
 	popMatrix(MODEL);
 }
 
+static void draw_rearview(void)
+{
+	GLint loc;
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+	glUniform4fv(loc, 1, rearViewCam.mat.ambient);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+	glUniform4fv(loc, 1, rearViewCam.mat.diffuse);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+	glUniform4fv(loc, 1, rearViewCam.mat.specular);
+	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+	glUniform1f(loc, rearViewCam.mat.shininess);
+	pushMatrix(MODEL);
+	translate(MODEL, -0.5f, 0.0f, -0.5f);
+	rotate(MODEL, 270, 1, 0, 0);
+	computeDerivedMatrix(PROJ_VIEW_MODEL);
+	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+	computeNormalMatrix3x3();
+	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+	//glUniform1i(texMode_uniformId, 2);
+	glBindVertexArray(rearViewCam.vao);
+	glDrawElements(rearViewCam.type, rearViewCam.numIndexes, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	popMatrix(MODEL);
+}
+
+//static void draw_rearview(void)
+//{
+//	GLint loc;
+//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+//	glUniform4fv(loc, 1, mirror.mat.ambient);
+//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+//	glUniform4fv(loc, 1, mirror.mat.diffuse);
+//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+//	glUniform4fv(loc, 1, mirror.mat.specular);
+//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+//	glUniform1f(loc, mirror.mat.shininess);
+//	pushMatrix(MODEL);
+//	translate(MODEL, -0.5f, 0.0f, -0.5f);
+//	rotate(MODEL, 270, 1, 0, 0);
+//	computeDerivedMatrix(PROJ_VIEW_MODEL);
+//	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+//	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+//	computeNormalMatrix3x3();
+//	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+//
+//	//glUniform1i(texMode_uniformId, 2);
+//	glBindVertexArray(mirror.vao);
+//	glDrawElements(mirror.type, mirror.numIndexes, GL_UNSIGNED_INT, 0);
+//	glBindVertexArray(0);
+//	popMatrix(MODEL);
+//}
+
 void draw_objects() {
 	//desenha efetivamente os objetos
 	GLint loc;
@@ -1537,14 +1591,6 @@ void draw_objects() {
 }
 
 void renderScene(void) {
-	//TODO set two 2 when done with rear view cam part
-	for (int i = 0; i < 1; i++) {
-
-		int which_cam;
-		if (i == 1) {
-			which_cam = currentCamera;
-			currentCamera = 3; // rear view cam
-		}
 			
 		//desenha efetivamente os objetos
 		GLint loc;
@@ -1606,57 +1652,179 @@ void renderScene(void) {
 
 		glUniform1i(texMap0, 4);
 		glUniform1i(texMap1, 5);
-		
-		// append view to mask or outside mask
-		if (i == 0) {
-			glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
-		}
-		else {
-			glStencilFunc(GL_EQUAL, 0x1, 0x1);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		}
 
-		// ----------------------------------------------
+		if (!rear_view_cam_mode) {
+			// ----------------------------------------------
 		// set the camera using a function similar to gluLookAt
-		cameras[currentCamera].setProjection((float)WinX, (float)WinY);
-		cameras[currentCamera].cameraLookAt();
+			cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+			cameras[currentCamera].cameraLookAt();
 
-		// use our shader
+			// use our shader
 
-		glUseProgram(shader.getProgramIndex());
+			glUseProgram(shader.getProgramIndex());
 
-		loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
-		if (sun_mode)
-			glUniform1i(loc, 1);
-		else
-			glUniform1i(loc, 0);
-
-
-		loc = glGetUniformLocation(shader.getProgramIndex(), "point_lights_mode");
-		if (point_lights_mode)
-			glUniform1i(loc, 1);
-		else
-			glUniform1i(loc, 0);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
+			if (sun_mode)
+				glUniform1i(loc, 1);
+			else
+				glUniform1i(loc, 0);
 
 
-		loc = glGetUniformLocation(shader.getProgramIndex(), "spotlight_mode");
-		if (spotlight_mode)
-			glUniform1i(loc, 1);
-		else
-			glUniform1i(loc, 0);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "point_lights_mode");
+			if (point_lights_mode)
+				glUniform1i(loc, 1);
+			else
+				glUniform1i(loc, 0);
 
-		loc = glGetUniformLocation(shader.getProgramIndex(), "fog_mode");
-		if (fog_mode)
-			glUniform1i(loc, 1);
-		else
-			glUniform1i(loc, 0);
 
-		float res[4];
-		multMatrixPoint(VIEW, coneDir, res);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
-		glUniform4fv(loc, 1, res);
-		loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
-		glUniform1f(loc, 0.99f);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "spotlight_mode");
+			if (spotlight_mode)
+				glUniform1i(loc, 1);
+			else
+				glUniform1i(loc, 0);
+
+			loc = glGetUniformLocation(shader.getProgramIndex(), "fog_mode");
+			if (fog_mode)
+				glUniform1i(loc, 1);
+			else
+				glUniform1i(loc, 0);
+
+			float res[4];
+			multMatrixPoint(VIEW, coneDir, res);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
+			glUniform4fv(loc, 1, res);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
+			glUniform1f(loc, 0.99f);
+
+			if (!mirror_mode) {
+				//lightPos definido em World Coord so is converted to eye space
+
+				for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+					multMatrixPoint(VIEW, pointLightPos[i], res);
+					loc = glGetUniformLocation(shader.getProgramIndex(),
+						(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
+					glUniform4fv(loc, 1, res);
+				}
+
+				multMatrixPoint(VIEW, directionalLightPos, res);
+				loc = glGetUniformLocation(shader.getProgramIndex(),
+					"dirLight.position");
+				glUniform4fv(loc, 1, res);
+
+				for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+					multMatrixPoint(VIEW, spotlightPos[i], res);
+					loc = glGetUniformLocation(shader.getProgramIndex(),
+						(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
+					glUniform4fv(loc, 1, res);
+				}
+			}
+
+		}
+		
+
+		if (rear_view_cam_mode) {
+			glEnable(GL_STENCIL_TEST);
+			glClearStencil(0);
+			glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
+
+
+			glEnable(GL_DEPTH_TEST);
+
+			glEnable(GL_STENCIL_TEST);
+			glStencilFunc(GL_NEVER, 0x1, 0x1);
+			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+			// Fill stencil buffer with obj
+			draw_rearview();
+
+			for (int i = 0; i < 2; i++) {
+			// ----------------------------------------------
+			// set the camera using a function similar to gluLookAt
+				if (i == 1) {
+					cameras[3].setProjection((float)WinX, (float)WinY);
+					cameras[3].cameraLookAt();
+				}
+				else
+				{
+					cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+					cameras[currentCamera].cameraLookAt();
+				}
+
+				// use our shader
+
+				glUseProgram(shader.getProgramIndex());
+
+				loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
+				if (sun_mode)
+					glUniform1i(loc, 1);
+				else
+					glUniform1i(loc, 0);
+
+
+				loc = glGetUniformLocation(shader.getProgramIndex(), "point_lights_mode");
+				if (point_lights_mode)
+					glUniform1i(loc, 1);
+				else
+					glUniform1i(loc, 0);
+
+
+				loc = glGetUniformLocation(shader.getProgramIndex(), "spotlight_mode");
+				if (spotlight_mode)
+					glUniform1i(loc, 1);
+				else
+					glUniform1i(loc, 0);
+
+				loc = glGetUniformLocation(shader.getProgramIndex(), "fog_mode");
+				if (fog_mode)
+					glUniform1i(loc, 1);
+				else
+					glUniform1i(loc, 0);
+
+				float res[4];
+				multMatrixPoint(VIEW, coneDir, res);
+				loc = glGetUniformLocation(shader.getProgramIndex(), "coneDir");
+				glUniform4fv(loc, 1, res);
+				loc = glGetUniformLocation(shader.getProgramIndex(), "spotCosCutOff");
+				glUniform1f(loc, 0.99f);
+
+
+				if (i == 1) {
+					glStencilFunc(GL_EQUAL, 0x1, 0x1);
+					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+				}
+				else
+				{
+					glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
+				}
+
+
+				for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+					multMatrixPoint(VIEW, pointLightPos[i], res);
+					loc = glGetUniformLocation(shader.getProgramIndex(),
+						(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
+					glUniform4fv(loc, 1, res);
+				}
+
+				multMatrixPoint(VIEW, directionalLightPos, res);
+				loc = glGetUniformLocation(shader.getProgramIndex(),
+					"dirLight.position");
+				glUniform4fv(loc, 1, res);
+
+				for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+					multMatrixPoint(VIEW, spotlightPos[i], res);
+					loc = glGetUniformLocation(shader.getProgramIndex(),
+						(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
+					glUniform4fv(loc, 1, res);
+				}
+
+				draw_objects();
+
+			}
+
+			glDisable(GL_STENCIL_TEST);	
+
+		}
+		
 
 		// ----------------------------------------------
 		// reflection and shadowing
@@ -1777,26 +1945,6 @@ void renderScene(void) {
 			}
 		}
 		else {
-			//lightPos definido em World Coord so is converted to eye space
-
-			for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
-				multMatrixPoint(VIEW, pointLightPos[i], res);
-				loc = glGetUniformLocation(shader.getProgramIndex(),
-					(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
-				glUniform4fv(loc, 1, res);
-			}
-
-			multMatrixPoint(VIEW, directionalLightPos, res);
-			loc = glGetUniformLocation(shader.getProgramIndex(),
-				"dirLight.position");
-			glUniform4fv(loc, 1, res);
-
-			for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
-				multMatrixPoint(VIEW, spotlightPos[i], res);
-				loc = glGetUniformLocation(shader.getProgramIndex(),
-					(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
-				glUniform4fv(loc, 1, res);
-			}
 
 			draw_objects();
 		}
@@ -1845,11 +1993,6 @@ void renderScene(void) {
 		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glutSwapBuffers();
-
-		if (i == 1) {
-			currentCamera = which_cam;
-		}
-	}
 	
 	
 }
@@ -1859,20 +2002,6 @@ void renderScene(void) {
 // Reshape Callback Function
 //
 
-//void changeSize(int w, int h) {
-//
-//	float ratio;
-//	// Prevent a divide by zero, when window is too short
-//	if (h == 0)
-//		h = 1;
-//	// set the viewport to be the entire window
-//	glViewport(0, 0, w, h);
-//	// set the projection matrix
-//	ratio = (1.0f * w) / h;
-//	loadIdentity(PROJECTION);
-//	perspective(53.13f, ratio, 0.1f, 1000.0f);
-//}
-
 void changeSize(int w, int h) {
 
 	float ratio;
@@ -1881,44 +2010,7 @@ void changeSize(int w, int h) {
 		h = 1;
 	// set the viewport to be the entire window
 	glViewport(0, 0, w, h);
-
-	/* create a diamond shaped stencil area */
-	loadIdentity(PROJECTION);
-	if (w <= h)
-		ortho(-2.0, 2.0, -2.0 * (GLfloat)h / (GLfloat)w,
-			2.0 * (GLfloat)h / (GLfloat)w, -10, 10);
-	else
-		ortho(-2.0 * (GLfloat)w / (GLfloat)h,
-			2.0 * (GLfloat)w / (GLfloat)h, -2.0, 2.0, -10, 10);
-
-	// load identity matrices for Model-View
-	loadIdentity(VIEW);
-	loadIdentity(MODEL);
-
-	glUseProgram(shader.getProgramIndex());
-
-	//não vai ser preciso enviar o material pois o cubo não é desenhado
-
-	scale(MODEL, 50, 50, 50);
-	rotate(MODEL, 45.0f, 0.0, 0.0, 1.0);
-	translate(MODEL, 5.5f, 5.5f, -5.5f);
-	// send matrices to OGL
-	computeDerivedMatrix(PROJ_VIEW_MODEL);
-	//glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-	computeNormalMatrix3x3();
-	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
-
-	glClear(GL_STENCIL_BUFFER_BIT);
-
-	glStencilFunc(GL_NEVER, 0x1, 0x1);
-	glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
-
-	glBindVertexArray(rearViewCam.vao);
-	glDrawElements(rearViewCam.type, rearViewCam.numIndexes, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-
-	// set the perspective matrix
+	// set the projection matrix
 	ratio = (1.0f * w) / h;
 	loadIdentity(PROJECTION);
 	perspective(53.13f, ratio, 0.1f, 1000.0f);
@@ -2074,6 +2166,15 @@ void processKeys(unsigned char key, int xx, int yy)
 			reflect_perFragment = 0;
 			printf("Reflection vector calculated in the vertex shader\n");
 		}
+		break;
+	case 'y':
+	case 'Y':
+		if (pauseActive || gameOver)
+			return;
+		if (mirror_mode) {
+			return;
+		}
+		rear_view_cam_mode = !rear_view_cam_mode;
 		break;
 	}
 }
@@ -2728,7 +2829,7 @@ void init()
 	float spec1[] = { 0.3f, 0.3f, 0.3f, 1.0f };
 
 	// create geometry and VAO of the cube
-	rearViewCam = createCube();
+	rearViewCam = createQuad(500, 500);
 	memcpy(rearViewCam.mat.ambient, amb1, 4 * sizeof(float));
 	memcpy(rearViewCam.mat.diffuse, diff1, 4 * sizeof(float));
 	memcpy(rearViewCam.mat.specular, spec1, 4 * sizeof(float));
