@@ -1724,17 +1724,14 @@ void renderScene(void) {
 
 		if (rear_view_cam_mode) {
 			glEnable(GL_STENCIL_TEST);
+
 			glClearStencil(0);
-			glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
 
-
-			glEnable(GL_DEPTH_TEST);
-
-			glEnable(GL_STENCIL_TEST);
 			glStencilFunc(GL_NEVER, 0x1, 0x1);
-			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+			glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
 
 			// Fill stencil buffer with obj
+			loadIdentity(PROJECTION);
 			draw_rearview();
 
 			for (int i = 0; i < 2; i++) {
