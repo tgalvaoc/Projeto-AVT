@@ -1109,8 +1109,9 @@ static void draw_rearview(void)
 	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
 	glUniform1f(loc, rearViewCam.mat.shininess);
 	pushMatrix(MODEL);
-	translate(MODEL, -0.5f, 0.0f, -0.5f);
+	translate(MODEL, rover.position[0]-2.5f, rover.position[1]+3.5f, rover.position[2]-5.5f);
 	rotate(MODEL, 270, 1, 0, 0);
+	rotate(MODEL, 90, 0, 1, 0);
 	computeDerivedMatrix(PROJ_VIEW_MODEL);
 	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
 	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
@@ -1123,33 +1124,6 @@ static void draw_rearview(void)
 	glBindVertexArray(0);
 	popMatrix(MODEL);
 }
-
-//static void draw_rearview(void)
-//{
-//	GLint loc;
-//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-//	glUniform4fv(loc, 1, mirror.mat.ambient);
-//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-//	glUniform4fv(loc, 1, mirror.mat.diffuse);
-//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-//	glUniform4fv(loc, 1, mirror.mat.specular);
-//	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-//	glUniform1f(loc, mirror.mat.shininess);
-//	pushMatrix(MODEL);
-//	translate(MODEL, -0.5f, 0.0f, -0.5f);
-//	rotate(MODEL, 270, 1, 0, 0);
-//	computeDerivedMatrix(PROJ_VIEW_MODEL);
-//	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-//	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-//	computeNormalMatrix3x3();
-//	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
-//
-//	//glUniform1i(texMode_uniformId, 2);
-//	glBindVertexArray(mirror.vao);
-//	glDrawElements(mirror.type, mirror.numIndexes, GL_UNSIGNED_INT, 0);
-//	glBindVertexArray(0);
-//	popMatrix(MODEL);
-//}
 
 void draw_objects() {
 	//desenha efetivamente os objetos
@@ -1728,23 +1702,27 @@ void renderScene(void) {
 
 			glClearStencil(0);
 
-
+			glDisable(GL_STENCIL_TEST);
 			glStencilFunc(GL_NEVER, 0x1, 0x1);
 			loadIdentity(PROJECTION);
 			glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
 
 			// Fill stencil buffer with obj
 			draw_rearview();
+			glEnable(GL_STENCIL_TEST);
 
 			for (int i = 0; i < 2; i++) {
 			// ----------------------------------------------
 			// set the camera using a function similar to gluLookAt
 				if (i == 1) {
+					glStencilFunc(GL_EQUAL, 0x1, 0x1);
+					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 					cameras[3].setProjection((float)WinX, (float)WinY);
 					cameras[3].cameraLookAt();
 				}
 				else
 				{
+					glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
 					cameras[currentCamera].setProjection((float)WinX, (float)WinY);
 					cameras[currentCamera].cameraLookAt();
 				}
@@ -1783,16 +1761,6 @@ void renderScene(void) {
 				glUniform1f(loc, 0.99f);
 
 
-				if (i == 1) {
-					glStencilFunc(GL_EQUAL, 0x1, 0x1);
-					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-				}
-				else
-				{
-					glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
-				}
-
-
 				for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
 					multMatrixPoint(VIEW, pointLightPos[i], res);
 					loc = glGetUniformLocation(shader.getProgramIndex(),
@@ -1811,7 +1779,7 @@ void renderScene(void) {
 						(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
 					glUniform4fv(loc, 1, res);
 				}
-
+				draw_rearview();
 				draw_objects();
 
 			}
@@ -1830,7 +1798,7 @@ void renderScene(void) {
 			glEnable(GL_DEPTH_TEST);
 			float res[4];
 			float mat[16];
-			GLfloat plano_chao[4] = { 0,1,0,0 };
+			GLfloat floor[4] = { 0,1,0,0 };
 
 			if (cameras[currentCamera].position[1] > 0.0f) {
 
@@ -1909,7 +1877,7 @@ void renderScene(void) {
 
 				// Render the Shadows
 				glUniform1i(shadowMode, 1);
-				shadow_matrix(mat, plano_chao, directionalLightPos);
+				shadow_matrix(mat, floor, directionalLightPos);
 
 				glDisable(GL_DEPTH_TEST); //force the shadows to be rendered even if behind floor
 
@@ -2822,7 +2790,7 @@ void init()
 	float spec1[] = { 0.3f, 0.3f, 0.3f, 1.0f };
 
 	// create geometry and VAO of the cube
-	rearViewCam = createQuad(500, 500);
+	rearViewCam = createQuad(5, 8);
 	memcpy(rearViewCam.mat.ambient, amb1, 4 * sizeof(float));
 	memcpy(rearViewCam.mat.diffuse, diff1, 4 * sizeof(float));
 	memcpy(rearViewCam.mat.specular, spec1, 4 * sizeof(float));

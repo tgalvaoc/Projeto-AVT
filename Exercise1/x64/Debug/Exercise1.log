@@ -10,12 +10,12 @@ C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1014,37): warni
 C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1015,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
 C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1037,38): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
 C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(992,25): warning C4101: 'alpha': unreferenced local variable
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1581,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1581,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1581,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1581,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2351,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2359,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2367,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1555,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1555,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1555,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(1555,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2319,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2327,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\susanne\Documents\GitHub\Projeto-AVT\Exercise1\main.cpp(2335,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
   Exercise1.vcxproj -> C:\Users\susanne\Documents\GitHub\Projeto-AVT\x64\Debug\Projeto-AVT.exe
   0 File(s) copied
