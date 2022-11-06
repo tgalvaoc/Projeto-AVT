@@ -580,7 +580,7 @@ void updateRoverCamera() {
 	cameras[3].position[1] = 4;
 	cameras[3].position[2] = rover.position[2] - rover.direction[2] * 10;
 
-	std::copy(rover.position, rover.position + 3, cameras[3].target);
+	//std::copy(rover.position, rover.position + 3, cameras[3].target);
 }
 
 void checkCollisions() {
@@ -1099,26 +1099,15 @@ static void draw_mirror(void)
 
 static void draw_rearview(void)
 {
-	GLint loc;
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-	glUniform4fv(loc, 1, rearViewCam.mat.ambient);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-	glUniform4fv(loc, 1, rearViewCam.mat.diffuse);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-	glUniform4fv(loc, 1, rearViewCam.mat.specular);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-	glUniform1f(loc, rearViewCam.mat.shininess);
 	pushMatrix(MODEL);
-	translate(MODEL, rover.position[0]-2.5f, rover.position[1]+3.5f, rover.position[2]-5.5f);
-	rotate(MODEL, 270, 1, 0, 0);
-	rotate(MODEL, 90, 0, 1, 0);
+	translate(MODEL, 0.2, 0.0, 0);
+	scale(MODEL, 0.5, 0.5, 0.5);
 	computeDerivedMatrix(PROJ_VIEW_MODEL);
 	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
 	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
 	computeNormalMatrix3x3();
 	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
 
-	//glUniform1i(texMode_uniformId, 2);
 	glBindVertexArray(rearViewCam.vao);
 	glDrawElements(rearViewCam.type, rearViewCam.numIndexes, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
@@ -1696,24 +1685,22 @@ void renderScene(void) {
 		}
 		
 		if (rear_view_cam_mode) {
+			glEnable(GL_STENCIL_TEST);
+			loadIdentity(PROJECTION);
+
 			// use our shader
 			glUseProgram(shader.getProgramIndex());
-			glEnable(GL_STENCIL_TEST);
-
-			glClearStencil(0);
-
-			glDisable(GL_STENCIL_TEST);
 			glStencilFunc(GL_NEVER, 0x1, 0x1);
-			loadIdentity(PROJECTION);
+
 			glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
 
 			// Fill stencil buffer with obj
 			draw_rearview();
-			glEnable(GL_STENCIL_TEST);
+
 
 			for (int i = 0; i < 2; i++) {
-			// ----------------------------------------------
-			// set the camera using a function similar to gluLookAt
+				// ----------------------------------------------
+				// set the camera using a function similar to gluLookAt
 				if (i == 1) {
 					glStencilFunc(GL_EQUAL, 0x1, 0x1);
 					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -1779,14 +1766,13 @@ void renderScene(void) {
 						(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
 					glUniform4fv(loc, 1, res);
 				}
-				draw_rearview();
 				draw_objects();
-
 			}
 
-			glDisable(GL_STENCIL_TEST);	
+			glDisable(GL_STENCIL_TEST);
 
 		}
+
 		// ----------------------------------------------
 		// reflection and shadowing
 		else if (mirror_mode) {
@@ -2790,13 +2776,7 @@ void init()
 	float spec1[] = { 0.3f, 0.3f, 0.3f, 1.0f };
 
 	// create geometry and VAO of the cube
-	rearViewCam = createQuad(5, 8);
-	memcpy(rearViewCam.mat.ambient, amb1, 4 * sizeof(float));
-	memcpy(rearViewCam.mat.diffuse, diff1, 4 * sizeof(float));
-	memcpy(rearViewCam.mat.specular, spec1, 4 * sizeof(float));
-	memcpy(rearViewCam.mat.emissive, emissive, 4 * sizeof(float));
-	rearViewCam.mat.shininess = shininess;
-	rearViewCam.mat.texCount = texcount;
+	rearViewCam = createCube();
 
 	// some GL settings
 	glEnable(GL_BLEND);
