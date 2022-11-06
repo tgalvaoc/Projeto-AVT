@@ -1721,8 +1721,9 @@ void renderScene(void) {
 
 		}
 		
-
 		if (rear_view_cam_mode) {
+			// use our shader
+			glUseProgram(shader.getProgramIndex());
 			glEnable(GL_STENCIL_TEST);
 
 			glClearStencil(0);
@@ -1747,10 +1748,6 @@ void renderScene(void) {
 					cameras[currentCamera].setProjection((float)WinX, (float)WinY);
 					cameras[currentCamera].cameraLookAt();
 				}
-
-				// use our shader
-
-				glUseProgram(shader.getProgramIndex());
 
 				loc = glGetUniformLocation(shader.getProgramIndex(), "sun_mode");
 				if (sun_mode)
@@ -1822,11 +1819,9 @@ void renderScene(void) {
 			glDisable(GL_STENCIL_TEST);	
 
 		}
-		
-
 		// ----------------------------------------------
 		// reflection and shadowing
-		if (mirror_mode) {
+		else if (mirror_mode) {
 			glEnable(GL_STENCIL_TEST);
 			glClearStencil(0);
 			glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
