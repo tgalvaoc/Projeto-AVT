@@ -233,7 +233,7 @@ void createCameras() {
 	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 	cameras[1] = Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
-	cameras[3] = Camera(MOVING, 0.0f, 3.0f, -5.0f, 0.0f, 1.5f, 0.0f); //rear view camera
+	cameras[3] = Camera(MOVING, 0.0f, 0.0f, -5.0f, 0.0f, 0.0f, 0.0f); //rear view camera
 }
 
 int signal() {
@@ -576,11 +576,11 @@ void updateRoverCamera() {
 
 	std::copy(rover.position, rover.position + 3, cameras[2].target);
 
-	cameras[3].position[0] = rover.position[0] - rover.direction[0] * 10;
-	cameras[3].position[1] = 4;
+	cameras[3].position[0] = rover.position[0] - (rover.direction[0] * 10);
+	cameras[3].position[1] = 5;
 	cameras[3].position[2] = rover.position[2] + rover.direction[2] * 10;
 
-	//std::copy(rover.position, rover.position + 3, cameras[3].target);
+	std::copy(rover.position, rover.position + 3, cameras[3].target);
 }
 
 void checkCollisions() {
@@ -1100,7 +1100,7 @@ static void draw_mirror(void)
 static void draw_rearview(void)
 {
 	pushMatrix(MODEL);
-	translate(MODEL, 0.2, 0, 0);
+	translate(MODEL, -0.25, 0.5, 0);
 	scale(MODEL, 0.5, 0.5, 0.5);
 	computeDerivedMatrix(PROJ_VIEW_MODEL);
 	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
@@ -1115,6 +1115,7 @@ static void draw_rearview(void)
 }
 
 void draw_objects() {
+
 	//desenha efetivamente os objetos
 	GLint loc;
 	// Ground, Rocks --------------------------------------
@@ -1836,8 +1837,6 @@ void renderScene(void) {
 						popMatrix(MODEL);
 					}
 
-					
-
 					glDisable(GL_STENCIL_TEST);
 					glDisable(GL_BLEND);
 					glEnable(GL_DEPTH_TEST);
@@ -1894,10 +1893,11 @@ void renderScene(void) {
 			glEnable(GL_DEPTH_TEST);
 			glDisable(GL_STENCIL_TEST);
 			glDisable(GL_BLEND);
+
+			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
-		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-		glBindTexture(GL_TEXTURE_2D, 0);
 		glutSwapBuffers();
 }
 
@@ -2058,6 +2058,9 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'M':
 		if (pauseActive || gameOver)
 			return;
+		if (rear_view_cam_mode) {
+			return;
+		}
 		mirror_mode = !mirror_mode;
 		break;
 	case 'x':
