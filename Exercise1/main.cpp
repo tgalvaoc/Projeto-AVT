@@ -1519,7 +1519,7 @@ void draw_objects() {
 	}
 
 	// Flare Effect ---------------------------------------------------
-	if (flareEffect) {
+	if (flareEffect && sun_mode) {
 		glEnable(GL_BLEND);
 		loc = glGetUniformLocation(shader.getProgramIndex(), "flare");
 		glUniform1i(loc, 1);
@@ -2031,6 +2031,7 @@ void processKeys(unsigned char key, int xx, int yy)
 	case 'S':
 		if (gameOver)
 			return;
+
 		pauseActive = !pauseActive;
 		break;
 	case 'r':
@@ -2056,11 +2057,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'm':
 	case 'M':
-		if (pauseActive || gameOver)
+		if (pauseActive || gameOver || rear_view_cam_mode)
 			return;
-		if (rear_view_cam_mode) {
-			return;
-		}
+
 		mirror_mode = !mirror_mode;
 		break;
 	case 'x':
@@ -2076,11 +2075,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'y':
 	case 'Y':
-		if (pauseActive || gameOver)
+		if (pauseActive || gameOver || mirror_mode)
 			return;
-		if (mirror_mode) {
-			return;
-		}
+
 		rear_view_cam_mode = !rear_view_cam_mode;
 		break;
 	}
