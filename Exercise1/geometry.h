@@ -37,6 +37,16 @@ struct MyObject {
 	vector<MyMesh> meshes;
 };
 
+struct Rover {
+	float angle = 0.0f;
+	float speed = 0.0f;
+	float halfX = 0.0f;
+	float halfZ = 0.0f;
+	float direction[3] = { 0.0f, 0.0f, 0.0f };
+	float position[3] = { 0.0f, 0.0f, 0.0f };
+	MyObject object;
+};
+
 struct Pillar {
 	float position[3] = { 0.0f, 0.0f, 0.0f };
 	float radius = 0.0f;

@@ -29,7 +29,6 @@
 
 #include "flare.h"
 #include "Camera.h"
-#include "Rover.h"
 
 #include <list>
 #define _USE_MATH_DEFINES
@@ -50,14 +49,14 @@ extern float scaleFactor;
 
 int WindowHandle = 0;
 int WinX = 1280, WinY = 720;
+int currentW, currentH;
+
+#define frand()			((float)rand()/RAND_MAX)
 
 unsigned int FrameCount = 0;
 float delta = 0.015f;
 
 float alpha, beta, r;
-
-#define M_PI       3.14159265358979323846f
-#define frand()			((float)rand()/RAND_MAX)
 
 //shaders
 VSShaderLib shader;  //geometry
@@ -219,8 +218,8 @@ void initialState(bool livesReset) {
 
 
 	r = float(sqrt(pow(cameras[2].position[0], 2) + pow(cameras[2].position[1], 2) + pow(cameras[2].position[2], 2)));
-	alpha = float(acos(cameras[2].position[2] / r) * 180.0 / M_PI);
-	beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
+	alpha = AI_RAD_TO_DEG(acos(cameras[2].position[2] / r));
+	beta = AI_RAD_TO_DEG(atan(cameras[2].position[1] / cameras[2].position[0]));
 
 	for (int i = 0; i < staticRocks.size(); i++) {
 		staticRocks[i].position[0] = staticRocks[i].originalPos[0];
@@ -371,8 +370,8 @@ void initParticles(void) {
 	for (i = 0; i < 4; i++) {
 		for (j = 0; j < MAX_PARTICLES; j++) {
 			v = 0.8f * frand() + 0.2f;
-			phi = frand() * M_PI;
-			theta = 2.0f * frand() * M_PI;
+			phi = frand() * AI_MATH_PI;
+			theta = 2.0f * frand() * AI_MATH_PI;
 			switch (i) {
 			case 1: { // back wheel right
 				p.x = rover.position[0] + rover.direction[0] * 1.2f - 0.7f * rover.direction[2];
@@ -559,7 +558,6 @@ void updateSpotlight() {
 }
 
 void updateRoverPosition() {
-	rover.updateDirection();
 
 	rover.position[0] -= rover.direction[0] * rover.speed * delta;
 	rover.position[2] += rover.direction[2] * rover.speed * delta;
@@ -567,6 +565,13 @@ void updateRoverPosition() {
 	if (rover.speed != 0)
 		rover.speed += -2 * rover.speed * delta;
 
+}
+
+void updateRoverDirection() {
+	float pi = 3.1415f;
+	rover.direction[0] = float(cos((pi / 180) * rover.angle));
+	rover.direction[2] = float(sin((pi / 180) * rover.angle));
+	rover.direction[1] = 0.0f;
 }
 
 void updateRoverCamera() {
@@ -584,13 +589,31 @@ void updateRoverCamera() {
 }
 
 void checkCollisions() {
+	// corner_1 is right-top corner of unrotated rectangle, relative to m_Pos.
+	// corner_2 is right-bottom corner of unrotated rectangle, relative to m_Pos.
+	float corner_1_x = -rover.halfX;
+	float corner_2_x = rover.halfX; 
+	float corner_1_z = -rover.halfZ;
+	float corner_2_z = -rover.halfZ;
+	
+	float sin_o = sin(AI_DEG_TO_RAD(rover.angle));
+	float cos_o = cos(AI_DEG_TO_RAD(rover.angle));
 
-	float roverFactor = 2.0;
-	// TODO: 
-	float roverMaxX = rover.position[0] + roverFactor;
-	float roverMinX = rover.position[0] - roverFactor;
-	float roverMaxZ = rover.position[2] + roverFactor;
-	float roverMinZ = rover.position[2] - roverFactor;
+	// xformed_corner_1, xformed_corner_2 are points corner_1, corner_2 rotated by angle m_Orientation.
+	float xformed_corner_1_x = corner_1_z * sin_o + corner_1_x * cos_o;
+	float xformed_corner_2_x = corner_2_z * sin_o + corner_2_x * cos_o;
+	float xformed_corner_1_z = corner_1_z * cos_o - corner_1_x * sin_o;
+	float xformed_corner_2_z = corner_2_z * cos_o - corner_2_x * sin_o;
+
+	// ez, ex are extents (half-sizes) of the final AABB.
+	float ex = max(abs(xformed_corner_1_x), abs(xformed_corner_2_x)); 
+	float ez = max(abs(xformed_corner_1_z), abs(xformed_corner_2_z));
+
+	float roverMaxX = rover.position[0] + ex;
+	float roverMinX = rover.position[0] - ex;
+	float roverMaxZ = rover.position[2] + ez;
+	float roverMinZ = rover.position[2] - ez;
+
 
 	// collision with static rocks
 	isRoverHittingSomething = false;
@@ -601,10 +624,10 @@ void checkCollisions() {
 		float maxZ = staticRocks[i].position[2] + staticRocks[i].radius;
 		float minZ = staticRocks[i].position[2] - staticRocks[i].radius;
 
-		if ((minX <= roverMaxX && minX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && staticRocks[i].position[2] >= roverMinZ && staticRocks[i].position[2] <= roverMaxZ) ||
-			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(staticRocks[i].position[0] <= roverMaxX && staticRocks[i].position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+		if ((minX >= roverMinX && minX <= roverMaxX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(minX >= roverMinX && minX <= roverMaxX && maxZ >= roverMinZ && maxZ <= roverMaxZ) ||
+			(maxX >= roverMinX && maxX <= roverMaxX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(maxX >= roverMinX && maxX <= roverMaxX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
 			staticRocks[i].speed = abs(rover.speed * 0.01f / staticRocks[i].radius);
 
@@ -636,11 +659,61 @@ void checkCollisions() {
 		float maxZ = rock.position[2] + rock.radius;
 		float minZ = rock.position[2] - rock.radius;
 
+		float groundMaxX = landingSiteRover.position[0] + landingSiteRover.side / 2 + 0.5f;
+		float groundMinX = landingSiteRover.position[0] - landingSiteRover.side / 2 + 0.5f;
+		float groundMaxZ = landingSiteRover.position[2] + landingSiteRover.side / 2 + 0.5f;
+		float groundMinZ = landingSiteRover.position[2] - landingSiteRover.side / 2 + 0.5f;
+
+		// rolling rocks + landing site rover
+		if ((minX >= groundMinX && minX <= groundMaxX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(minX >= groundMinX && minX <= groundMaxX && maxZ >= groundMinZ && maxZ <= groundMaxZ) ||
+			(maxX >= groundMinX && maxX <= groundMaxX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(maxX >= groundMinX && maxX <= groundMaxX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
+
+		}
+
+		groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
+		groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
+		groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
+		groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
+		
+		// rolling rocks + landing site spaceship
+		if ((minX >= groundMinX && minX <= groundMaxX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(minX >= groundMinX && minX <= groundMaxX && maxZ >= groundMinZ && maxZ <= groundMaxZ) ||
+			(maxX >= groundMinX && maxX <= groundMaxX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(maxX >= groundMinX && maxX <= groundMaxX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
+
+		}
+
+		groundMaxX = aliensBase.position[0] + aliensBase.side / 2 + 0.5f;
+		groundMinX = aliensBase.position[0] - aliensBase.side / 2 + 0.5f;
+		groundMaxZ = aliensBase.position[2] + aliensBase.side / 2 + 0.5f;
+		groundMinZ = aliensBase.position[2] - aliensBase.side / 2 + 0.5f;
+
+		// rolling rocks + aliens base
+		if ((minX >= groundMinX && minX <= groundMaxX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(minX >= groundMinX && minX <= groundMaxX && maxZ >= groundMinZ && maxZ <= groundMaxZ) ||
+			(maxX >= groundMinX && maxX <= groundMaxX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
+			(maxX >= groundMinX && maxX <= groundMaxX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+
+			rollingRocks.erase(rollingRocks.begin() + i);
+			createRollingRocks(1);
+			break;
+		}
+
 		// rolling rocks + rover
-		if ((minX <= roverMaxX && minX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && rock.position[2] >= roverMinZ && rock.position[2] <= roverMaxZ) ||
-			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(rock.position[0] <= roverMaxX && rock.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+		if ((minX >= roverMinX && minX <= roverMaxX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(minX >= roverMinX && minX <= roverMaxX && maxZ >= roverMinZ && maxZ <= roverMaxZ) ||
+			(maxX >= roverMinX && maxX <= roverMaxX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(maxX >= roverMinX && maxX <= roverMaxX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
 
 			if (--livesCount <= 0) {
@@ -654,90 +727,47 @@ void checkCollisions() {
 				break;
 			}
 		}
+	}
 
-		float groundMaxX = landingSiteRover.position[0] + landingSiteRover.side / 2 + 0.5f;
-		float groundMinX = landingSiteRover.position[0] - landingSiteRover.side / 2 + 0.5f;
-		float groundMaxZ = landingSiteRover.position[2] + landingSiteRover.side / 2 + 0.5f;
-		float groundMinZ = landingSiteRover.position[2] - landingSiteRover.side / 2 + 0.5f;
+	float groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
+	float groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
+	float groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
+	float groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
 
-		// rolling rocks + landing site rover
-		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+	//rover + landing site spaceship
+	if ((roverMinX >= groundMinX && roverMinX <= groundMaxX && roverMinZ >= groundMinZ && roverMinZ <= groundMaxZ) ||
+		(roverMinX >= groundMinX && roverMinX <= groundMaxX && roverMaxZ >= groundMinZ && roverMaxZ <= groundMaxZ) ||
+		(roverMaxX >= groundMinX && roverMaxX <= groundMaxX && roverMinZ >= groundMinZ && roverMinZ <= groundMaxZ) ||
+		(roverMaxX >= groundMinX && roverMaxX <= groundMaxX && roverMaxZ >= groundMinZ && roverMaxZ <= groundMaxZ)) {
 
-			rollingRocks.erase(rollingRocks.begin() + i);
-			createRollingRocks(1);
-			break;
 
-		}
+		rover.position[0] += rover.direction[0] * rover.speed * delta;
+		rover.position[2] -= rover.direction[2] * rover.speed * delta;
+		rover.speed = 0;
 
-		// rolling rocks + landing site spaceship
-		groundMaxX = landingSiteSpaceship.position[0] + landingSiteSpaceship.side / 2 + 0.5f;
-		groundMinX = landingSiteSpaceship.position[0] - landingSiteSpaceship.side / 2 + 0.5f;
-		groundMaxZ = landingSiteSpaceship.position[2] + landingSiteSpaceship.side / 2 + 0.5f;
-		groundMinZ = landingSiteSpaceship.position[2] - landingSiteSpaceship.side / 2 + 0.5f;
+		isRoverHittingSomething = true;
+	}
 
-		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
+	groundMaxX = aliensBase.position[0] + aliensBase.side / 2 + 0.5f;
+	groundMinX = aliensBase.position[0] - aliensBase.side / 2 + 0.5f;
+	groundMaxZ = aliensBase.position[2] + aliensBase.side / 2 + 0.5f;
+	groundMinZ = aliensBase.position[2] - aliensBase.side / 2 + 0.5f;
 
-			rollingRocks.erase(rollingRocks.begin() + i);
-			createRollingRocks(1);
-			break;
+	//rover + aliensBase
+	if ((roverMinX >= groundMinX && roverMinX <= groundMaxX && roverMinZ >= groundMinZ && roverMinZ <= groundMaxZ) ||
+		(roverMinX >= groundMinX && roverMinX <= groundMaxX && roverMaxZ >= groundMinZ && roverMaxZ <= groundMaxZ) ||
+		(roverMaxX >= groundMinX && roverMaxX <= groundMaxX && roverMinZ >= groundMinZ && roverMinZ <= groundMaxZ) ||
+		(roverMaxX >= groundMinX && roverMaxX <= groundMaxX && roverMaxZ >= groundMinZ && roverMaxZ <= groundMaxZ)) {
 
-		}
 
-		//rover + landing site spaceship
-		if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
-			(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && landingSiteSpaceship.position[2] >= roverMinZ && landingSiteSpaceship.position[2] <= roverMaxZ) ||
-			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
-			(landingSiteSpaceship.position[0] <= roverMaxX && landingSiteSpaceship.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
+		rover.position[0] += rover.direction[0] * rover.speed * delta;
+		rover.position[2] -= rover.direction[2] * rover.speed * delta;
+		rover.speed = 0;
 
-			rover.position[0] += rover.direction[0] * rover.speed * delta;
-			rover.position[2] -= rover.direction[2] * rover.speed * delta;
-			rover.speed = 0;
-
-			isRoverHittingSomething = true;
-			break;
-		}
-
-		// rolling rocks + aliens base
-		groundMaxX = aliensBase.position[0] + aliensBase.side / 2 + 0.5f;
-		groundMinX = aliensBase.position[0] - aliensBase.side / 2 + 0.5f;
-		groundMaxZ = aliensBase.position[2] + aliensBase.side / 2 + 0.5f;
-		groundMinZ = aliensBase.position[2] - aliensBase.side / 2 + 0.5f;
-
-		if ((minX <= groundMaxX && minX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(maxX <= groundMaxX && maxX >= groundMinX && rock.position[2] >= groundMinZ && rock.position[2] <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && minZ >= groundMinZ && minZ <= groundMaxZ) ||
-			(rock.position[0] <= groundMaxX && rock.position[0] >= groundMinX && maxZ >= groundMinZ && maxZ <= groundMaxZ)) {
-
-			rollingRocks.erase(rollingRocks.begin() + i);
-			createRollingRocks(1);
-			break;
-
-		}
-
-		//rover + aliensBase
-		if ((groundMinX <= roverMaxX && groundMinX >= roverMinX && aliensBase.position[2] >= roverMinZ && aliensBase.position[2] <= roverMaxZ) ||
-			(groundMaxX <= roverMaxX && groundMaxX >= roverMinX && aliensBase.position[2] >= roverMinZ && aliensBase.position[2] <= roverMaxZ) ||
-			(aliensBase.position[0] <= roverMaxX && aliensBase.position[0] >= roverMinX && groundMinZ >= roverMinZ && groundMinZ <= roverMaxZ) ||
-			(aliensBase.position[0] <= roverMaxX && aliensBase.position[0] >= roverMinX && groundMaxZ >= roverMinZ && groundMaxZ <= roverMaxZ)) {
-
-			rover.position[0] += rover.direction[0] * rover.speed * delta;
-			rover.position[2] -= rover.direction[2] * rover.speed * delta;
-			rover.speed = 0;
-
-			isRoverHittingSomething = true;
-			break;
-		}
-
+		isRoverHittingSomething = true;
 	}
 
 	// collision with pillars
-	isRoverHittingSomething = false;
 	for each (Pillar pillar in pillars) {
 
 		float maxX = pillar.position[0] + pillar.radius;
@@ -745,10 +775,10 @@ void checkCollisions() {
 		float maxZ = pillar.position[2] + pillar.radius;
 		float minZ = pillar.position[2] - pillar.radius;
 
-		if ((minX <= roverMaxX && minX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
-			(maxX <= roverMaxX && maxX >= roverMinX && pillar.position[2] >= roverMinZ && pillar.position[2] <= roverMaxZ) ||
-			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
-			(pillar.position[0] <= roverMaxX && pillar.position[0] >= roverMinX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
+		if ((minX >= roverMinX && minX <= roverMaxX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(minX >= roverMinX && minX <= roverMaxX && maxZ >= roverMinZ && maxZ <= roverMaxZ) ||
+			(maxX >= roverMinX && maxX <= roverMaxX && minZ >= roverMinZ && minZ <= roverMaxZ) ||
+			(maxX >= roverMinX && maxX <= roverMaxX && maxZ >= roverMinZ && maxZ <= roverMaxZ)) {
 
 			rover.position[0] += rover.direction[0] * rover.speed * delta;
 			rover.position[2] -= rover.direction[2] * rover.speed * delta;
@@ -758,7 +788,6 @@ void checkCollisions() {
 			break;
 		}
 	}
-
 
 	// collision with items
 	for (int i = 0; i < items.size(); i++) {
@@ -783,7 +812,6 @@ void checkCollisions() {
 			break;
 		}
 	}
-
 }
 
 
@@ -793,9 +821,10 @@ void animate(int value) {
 
 		checkCollisions();
 
+		updateRoverDirection();
 		updateRoverPosition();
 		updateSpotlight();
-		//updateRollingRocks();
+		updateRollingRocks();
 		updateStaticRocks();
 		updateItems();
 
@@ -1120,9 +1149,7 @@ void draw_objects() {
 	GLint loc;
 	// Ground, Rocks --------------------------------------
 	myObjects.clear();
-	if (!mirror_mode) {
-		myObjects.push_back(landingSiteRover.ground);
-	}
+	myObjects.push_back(landingSiteRover.ground);
 	myObjects.push_back(landingSiteSpaceship.ground);
 	myObjects.push_back(skyboxCube);
 
@@ -1513,7 +1540,6 @@ void draw_objects() {
 		glBindVertexArray(0);
 
 		popMatrix(MODEL);
-
 		popMatrix(MODEL);
 	}
 
@@ -1554,7 +1580,6 @@ void draw_objects() {
 }
 
 void renderScene(void) {
-			
 		//desenha efetivamente os objetos
 		GLint loc;
 
@@ -1562,13 +1587,8 @@ void renderScene(void) {
 		//glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		int rear_view_counter;
-		if (rear_view_cam_mode) {
-			rear_view_counter = 2;
-		}
-		else {
-			rear_view_counter = 1;
-		}
+		int rear_view_counter = ((rear_view_cam_mode) ? 2 : 1);
+
 		for (int i = 0; i < rear_view_counter; i++) {
 
 			// Transparency
@@ -1637,7 +1657,7 @@ void renderScene(void) {
 			if (!rear_view_cam_mode) {
 				// ----------------------------------------------
 			// set the camera using a function similar to gluLookAt
-				cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+				cameras[currentCamera].setProjection(currentW, currentH);
 				cameras[currentCamera].cameraLookAt();
 			}
 			else if (i == 0) {
@@ -1653,7 +1673,7 @@ void renderScene(void) {
 				// Fill stencil buffer with obj
 				draw_rearview();
 				glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
-				cameras[currentCamera].setProjection((float)WinX, (float)WinY);
+				cameras[currentCamera].setProjection(currentW, currentH);
 				cameras[currentCamera].cameraLookAt();
 			}
 			else if (i == 1)
@@ -1671,7 +1691,7 @@ void renderScene(void) {
 				draw_rearview();
 				glStencilFunc(GL_EQUAL, 0x1, 0x1);
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-				cameras[3].setProjection((float)WinX, (float)WinY);
+				cameras[3].setProjection(currentW, currentH);
 				cameras[3].cameraLookAt();
 			}
 
@@ -1915,17 +1935,15 @@ void renderScene(void) {
 //
 
 void changeSize(int w, int h) {
-
-	float ratio;
 	// Prevent a divide by zero, when window is too short
 	if (h == 0)
 		h = 1;
+	currentW = w;
+	currentH = h;
 	// set the viewport to be the entire window
 	glViewport(0, 0, w, h);
-	// set the projection matrix
-	ratio = (1.0f * w) / h;
-	loadIdentity(PROJECTION);
-	perspective(53.13f, ratio, 0.1f, 1000.0f);
+	cameras[currentCamera].setProjection(currentW, currentH);
+
 }
 
 
@@ -1952,7 +1970,7 @@ void processKeys(unsigned char key, int xx, int yy)
 			initParticles();
 		
 		rover.speed += 0.8f;
-		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
+		beta = AI_RAD_TO_DEG(atan(cameras[2].position[1] / cameras[2].position[0]));
 		isGoingForward = true;
 		break;
 	case 'a':
@@ -1967,7 +1985,7 @@ void processKeys(unsigned char key, int xx, int yy)
 			initParticles();
 
 		rover.speed -= 0.8f;
-		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
+		beta = AI_RAD_TO_DEG(atan(cameras[2].position[1] / cameras[2].position[0]));
 		isGoingForward = false;
 		break;
 	case 'o':
@@ -2138,9 +2156,9 @@ void processMouseMotion(int xx, int yy)
 		else if (betaAux < -85.0f)
 			betaAux = -85.0f;
 
-		cameras[2].position[0] = rover.position[0] + cos((M_PI / 180) * alphaAux) * 10;
-		cameras[2].position[1] = rover.position[1] + cos((M_PI / 180) * betaAux) * 10;
-		cameras[2].position[2] = rover.position[2] - sin((M_PI / 180) * alphaAux) * 10;
+		cameras[2].position[0] = rover.position[0] + cos(AI_DEG_TO_RAD(alphaAux)) * 10;
+		cameras[2].position[1] = rover.position[1] + cos(AI_DEG_TO_RAD(betaAux)) * 10;
+		cameras[2].position[2] = rover.position[2] - sin(AI_DEG_TO_RAD(alphaAux)) * 10;
 
 		std::copy(rover.position, rover.position + 3, cameras[2].target);
 	}
@@ -2413,9 +2431,9 @@ void createRover() {
 	roverObj.meshes.push_back(wheel3);
 	roverObj.meshes.push_back(wheel4);
 
-	rover = Rover(roverObj);
-	rover.updateDirection();
-	updateSpotlight();
+	rover.object = roverObj;
+	rover.halfX = 2;
+	rover.halfZ = 1;
 }
 
 void createStaticRocks() {
@@ -2659,7 +2677,6 @@ void createAliens() {
 
 void init()
 {
-
 	// wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -2699,6 +2716,9 @@ void init()
 
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
+
+	currentW = WinX;
+	currentH = WinY;
 
 	createGround();
 	createPillars();

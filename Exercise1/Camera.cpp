@@ -24,14 +24,15 @@ Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val,
 
 void Camera::setProjection(float w, float h) {
 	float factor = 3.0f;
+	float ratio = w / h;
 	switch (this->type) {
 	case MOVING:
 		loadIdentity(PROJECTION);
-		perspective(53.13f, w / h, 0.1f, 1000000.0f);
+		perspective(53.13f, ratio, 0.1f, 1000000.0f);
 		break;
 	case PERSPECTIVE:
 		loadIdentity(PROJECTION);
-		perspective(53.13f, w / h, 0.1f, 1000000.0f);
+		perspective(53.13f, ratio, 0.1f, 1000.0f);
 		break;
 	case ORTHOGONAL:
 		loadIdentity(PROJECTION);
