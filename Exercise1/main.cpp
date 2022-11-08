@@ -586,7 +586,7 @@ void updateRoverCamera() {
 void checkCollisions() {
 
 	float roverFactor = 2.0;
-
+	// TODO: 
 	float roverMaxX = rover.position[0] + roverFactor;
 	float roverMinX = rover.position[0] - roverFactor;
 	float roverMaxZ = rover.position[2] + roverFactor;
@@ -795,7 +795,7 @@ void animate(int value) {
 
 		updateRoverPosition();
 		updateSpotlight();
-		updateRollingRocks();
+		//updateRollingRocks();
 		updateStaticRocks();
 		updateItems();
 
@@ -1153,7 +1153,7 @@ void draw_objects() {
 				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}
-			else if (i > 2 && i <= staticRocks.size() + 1) { // static rocks
+			else if (i > 2 && i <= staticRocks.size() + 2) { // static rocks
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
 				glUniform1i(texMap0, 4);
@@ -1166,25 +1166,22 @@ void draw_objects() {
 				}
 				glUniform1i(texMode, 1);
 			}
-			else {
+			else if (i == 2) { // cubemap
 				glUniform1i(texMode, 0);
-				
-				if (i == 2) { // cubemap
-					glUniform1i(texMode, 0);
-					loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
-					glUniform1i(loc, 1);
-					glUniform1i(texMode_uniformId, 0);
-					glActiveTexture(GL_TEXTURE4);
-					glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
+				loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
+				glUniform1i(loc, 1);
+				//glUniform1i(texMode_uniformId, 0);
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
 
-					glUniform1i(tex_cube_loc, 4); //  Environmental cube mapping
+				glUniform1i(tex_cube_loc, 4); //  Environmental cube mapping
 					
-					if (!reflect_perFragment)
-						glUniform1i(reflect_perFragment_uniformId, 0); //reflected vector calculated in the vertex shader
-					else
-						glUniform1i(reflect_perFragment_uniformId, 1); //reflected vector calculated in the fragment shader
-				}
+				if (!reflect_perFragment)
+					glUniform1i(reflect_perFragment_uniformId, 0); //reflected vector calculated in the vertex shader
+				else
+					glUniform1i(reflect_perFragment_uniformId, 1); //reflected vector calculated in the fragment shader
 			}
+			
 			// send the material
 			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
 			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
@@ -1217,6 +1214,8 @@ void draw_objects() {
 			loc = glGetUniformLocation(shader.getProgramIndex(), "bumpmap");
 			glUniform1i(loc, 0);
 			loc = glGetUniformLocation(shader.getProgramIndex(), "cubemapactive");
+			glUniform1i(loc, 0);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
 			glUniform1i(loc, 0);
 
 			popMatrix(MODEL);
@@ -1579,7 +1578,7 @@ void renderScene(void) {
 			// load identity matrices
 			loadIdentity(VIEW);
 			loadIdentity(MODEL);
-			/*
+			
 			// Render Skybox
 			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
@@ -1609,19 +1608,27 @@ void renderScene(void) {
 			computeDerivedMatrix(PROJ_VIEW_MODEL);
 			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
 
-			/*
-			glUniform1i(tex_cube_loc, 11);
+			
+			glUniform1i(tex_cube_loc, 4);
 			loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
 			glUniform1i(loc, 1);
+
+			//loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
+			//glUniform1i(loc, 1);
 
 			glBindVertexArray(skyboxCube.meshes[0].vao);
 			glDrawElements(skyboxCube.meshes[0].type, skyboxCube.meshes[0].numIndexes, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 			popMatrix(MODEL);
 			popMatrix(VIEW);
-		 */
+		 
 			glFrontFace(GL_CCW); // restore counter clockwise vertex order to mean the front
 			glDepthMask(GL_TRUE);
+
+			//loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
+			//glUniform1i(loc, 0);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
+			glUniform1i(loc, 0);
 
 			glUniform1i(texMap0, 4);
 			glUniform1i(texMap1, 5);
@@ -1897,7 +1904,8 @@ void renderScene(void) {
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
-
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+		//glBindTexture(GL_TEXTURE_2D, 0);
 		glutSwapBuffers();
 }
 
@@ -1940,7 +1948,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		if (isRoverHittingSomething && isGoingForward)
 			return;
 
-		initParticles();
+		if (rover.speed < 3)
+			initParticles();
+		
 		rover.speed += 0.8f;
 		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
 		isGoingForward = true;
@@ -1953,7 +1963,9 @@ void processKeys(unsigned char key, int xx, int yy)
 		if (isRoverHittingSomething && !isGoingForward)
 			return;
 
-		initParticles();
+		if (abs(rover.speed) < 3)
+			initParticles();
+
 		rover.speed -= 0.8f;
 		beta = float(atan(cameras[2].position[1] / cameras[2].position[0]) * 180.0 / M_PI);
 		isGoingForward = false;
@@ -2515,7 +2527,8 @@ void createCubeSkybox() {
 	MyMesh amesh = createCube();
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, -5, 0, 8);
+	myScale(amesh.meshTransform, 2, 2, 2);
+	myTranslate(amesh.meshTransform, 0, 0, 15);
 
 	skyboxCube.meshes.push_back(amesh);
 }

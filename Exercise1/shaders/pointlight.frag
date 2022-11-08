@@ -92,7 +92,7 @@ in Data {
 } DataIn;
 
 const float reflect_factor = 0.9;
-
+/*
 void main() {
 
 	if(shadowMode)
@@ -102,10 +102,10 @@ void main() {
 		//range based
 		dist = length(DataIn.pos);
 
-	vec4 texel, texel1, texel2, cube_texel; 
-	float intensity;
-	vec3 specSum = vec3(0.0);
-	vec3 n;
+		vec4 texel, texel1, texel2, cube_texel; 
+		float intensity;
+		vec3 specSum = vec3(0.0);
+		vec3 n;
 
 		if(normalMap)
 			n = normalize(2.0 * texture(texmap1, DataIn.tex_coord).rgb - 1.0);  //normal in tangent space
@@ -114,7 +114,7 @@ void main() {
 	
 		vec3 l = normalize(DataIn.lightDir);
 		vec3 e = normalize(DataIn.eye);
-
+		
 		if(mat.texCount == 0) {
 			diff = mat.diffuse;
 			auxSpec = mat.specular;
@@ -132,7 +132,6 @@ void main() {
 				auxSpec = mat.specular;
 		}
 	
-
 		if(sun_mode){
 		
 			vec3 spec = vec3(0.0);
@@ -197,7 +196,7 @@ void main() {
 				}
 			}
 		}
-
+		
 		if (texMode == 2){ // multitexturing for ground
 			texel = texture(texmap0, DataIn.tex_coord * 40);  // texel from mars_texture.tga
 			texel1 = texture(texmap1, DataIn.tex_coord * 40);  // texel from rock_texture.tga
@@ -232,27 +231,6 @@ void main() {
 			texel = texture(texmap0, DataIn.tex_coord);  // texel from stone.tga
 			auxColorOut = vec4((max(intensity*texel + auxSpec, 0.2*texel)).rgb, 1.0);
 		}
-		/*
-		else if(cubeMapping){ // Environmental cube mapping
-	
-			if(reflect_perFrag == 1) {  //reflected vector calculated here
-				vec3 reflected1 = vec3 (transpose(m_View) * vec4 (vec3(reflect(-e, n)), 0.0)); //reflection vector in world coord
-				reflected1.x= -reflected1.x;   
-				cube_texel = texture(cubeMap, reflected1);
-			}
-			else
-				cube_texel = texture(cubeMap, DataIn.reflected); //use interpolated reflected vector calculated in vertex shader
-
-			texel = texture(texmap1, DataIn.tex_coord);  // texel from lighwood.tga
-			vec4 aux_color = mix(texel, cube_texel, reflect_factor);
-			aux_color = max(intensity*aux_color + auxSpec, 0.1*aux_color);
-			colorOut = vec4(aux_color.rgb, 1.0); 
-			//colorOut = vec4(cube_texel.rgb, 1.0);
-		
-		}*/
-		else if(skybox){
-			//auxColorOut = texture(cubeMap, DataIn.skyboxTexCoord);
-		}
 		else{
 			texel = texture(texmap0, DataIn.tex_coord);
 			auxColorOut += vec4(max(intensity*texel.rgb + specSum, texel.rgb), texel.a);
@@ -262,11 +240,119 @@ void main() {
 		auxColorOut[3] = mat.diffuse.a;
 	if (fog_mode) {
 		
-			float fogAmount = exp( -dist*0.05 );
-			vec4 fogColor = vec4(0.5, 0.5, 0.5, 1);
-			colorOut = mix(fogColor, auxColorOut, fogAmount);
+		float fogAmount = exp( -dist*0.05 );
+		vec4 fogColor = vec4(0.5, 0.5, 0.5, 1);
+		colorOut = mix(fogColor, auxColorOut, fogAmount);
+	}
+	else
+		colorOut = auxColorOut;
+	}
+}*/
+// 3D Sampler Part
+
+void main() {
+
+	
+
+	//range based
+	dist = length(DataIn.pos);
+
+	vec4 texel, texel1, texel2, cube_texel; 
+	float intensity;
+	vec3 specSum = vec3(0.0);
+		
+	vec3 n = normalize(DataIn.normal);
+	
+	vec3 l = normalize(DataIn.lightDir);
+	vec3 e = normalize(DataIn.eye);
+		
+	
+	diff = mat.diffuse;
+	auxSpec = mat.specular;
+	
+
+	if(sun_mode){
+		
+		vec3 spec = vec3(0.0);
+		vec3 lightDir = vec3(dirLight.position - DataIn.pos);
+		//vec3 n = normalize(DataIn.normal);
+		vec3 l = normalize(lightDir);
+		vec3 e = normalize(DataIn.eye);
+
+		intensity = max(dot(n,l), 0.0);
+	
+		if (intensity > 0.0) {
+			vec3 h = normalize(l + e);
+			float intSpec = max(dot(h,n), 0.0);
+			spec = auxSpec.rgb * pow(intSpec, mat.shininess);
+			specSum += spec;
+		}
+		auxColorOut += vec4(max(intensity * diff.rgb + 0.3 * spec, mat.ambient.rgb)*0.8, diff.a);
+	}
+	if(point_lights_mode){
+		for(int i = 0; i < NUMBER_POINT_LIGHTS; i++){
+			vec3 spec = vec3(0.0);
+			vec3 lightDir = vec3(pointLights[i].position - DataIn.pos);
+			//vec3 n = normalize(DataIn.normal);
+			vec3 l = normalize(lightDir);
+			vec3 e = normalize(DataIn.eye);
+
+			intensity = max(dot(n,l), 0.0);
+	
+			if (intensity > 0.0) {
+				vec3 h = normalize(l + e);
+				float intSpec = max(dot(h,n), 0.0);
+				spec = auxSpec.rgb * pow(intSpec, mat.shininess);
+				specSum += spec;
+			}
+			auxColorOut += vec4(max(intensity * diff.rgb + spec, mat.ambient.rgb)/6, diff.a);
+
+		}
+	}
+	if (spotlight_mode) {
+		float att = 0.1;
+		float spotExp = 60.0;
+
+		for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+			vec3 spec = vec3(0.0);
+			vec3 lightDir = vec3(spotLights[i].position - DataIn.pos);
+			//vec3 n = normalize(DataIn.normal);
+			vec3 l = normalize(lightDir);
+			vec3 e = normalize(DataIn.eye);
+			vec3 sd = normalize(vec3(-coneDir));
+			float spotCos = dot(sd, l);
+
+			if(spotCos > spotCosCutOff)  {
+				att = pow(spotCos, spotExp);
+				intensity = max(dot(n,l), 0.0) * att;
+				if (intensity > 0.0) {
+					vec3 h = normalize(l + e);
+					float intSpec = max(dot(h,n), 0.0);
+					spec = auxSpec.rgb * pow(intSpec, mat.shininess) * att;
+					specSum += spec;
+					auxColorOut +=  vec4(0.2*max(intensity * diff.rgb + spec, mat.ambient.rgb), diff.a);
+				}
+			}
+		}
+	}
+
+	if(skybox)
+		colorOut = texture(cubeMap, DataIn.skyboxTexCoord);
+	else if(cubeMapping) {
+		if(reflect_perFrag == 1) {  //reflected vector calculated here
+			vec3 reflected1 = vec3 (transpose(m_View) * vec4 (vec3(reflect(-e, n)), 0.0)); //reflection vector in world coord
+			reflected1.x= -reflected1.x;   
+			cube_texel = texture(cubeMap, reflected1);
 		}
 		else
-			colorOut = auxColorOut;
+			cube_texel = texture(cubeMap, DataIn.reflected); //use interpolated reflected vector calculated in vertex shader
+
+		//texel = texture(texmap1, DataIn.tex_coord);
+		vec4 aux_color = mix(texel, cube_texel, reflect_factor);
+		aux_color = max(intensity*aux_color + auxSpec, 0.1*aux_color);
+		colorOut = vec4(aux_color.rgb, 1.0); 
+		//colorOut = vec4(cube_texel.rgb, 1.0);
+	} else {
+		colorOut = vec4(0.2*max(intensity * diff.rgb + auxSpec.rgb, mat.ambient.rgb), diff.a);
 	}
 }
