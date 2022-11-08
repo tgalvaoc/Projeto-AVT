@@ -1172,6 +1172,7 @@ void draw_objects() {
 		for (int objId = 0; objId < meshes.size(); objId++) {
 
 			if (i == 0 && objId == 0 && multitexture_mode) {
+				glUniform1i(texMode, 2);
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
 				glUniform1i(texMap0, 4);
@@ -1181,6 +1182,7 @@ void draw_objects() {
 				glUniform1i(texMode, 2);
 			}
 			else if (i > 2 && i <= staticRocks.size() + 2) { // static rocks
+				glUniform1i(texMode, 1);
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
 				glUniform1i(texMap0, 4);
@@ -1193,8 +1195,8 @@ void draw_objects() {
 				}
 				glUniform1i(texMode, 1);
 			}
-			else if (i == 2) { // cubemap
-				glUniform1i(texMode, 0);
+			else if ((i == 2 && !mirror_mode) || (i == 1 && mirror_mode)) { // cubemap
+				glUniform1i(texMode, 1);
 				loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
 				glUniform1i(loc, 1);
 				//glUniform1i(texMode_uniformId, 0);
@@ -1202,11 +1204,14 @@ void draw_objects() {
 				glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
 
 				glUniform1i(tex_cube_loc, 4); //  Environmental cube mapping
-					
+
 				if (!reflect_perFragment)
 					glUniform1i(reflect_perFragment_uniformId, 0); //reflected vector calculated in the vertex shader
 				else
 					glUniform1i(reflect_perFragment_uniformId, 1); //reflected vector calculated in the fragment shader
+			}
+			else {
+				glUniform1i(texMode, 0);
 			}
 			
 			// send the material
@@ -1227,7 +1232,6 @@ void draw_objects() {
 			glUniformMatrix4fv(view_uniformId, 1, GL_FALSE, mMatrix[VIEW]);
 			computeDerivedMatrix(PROJ_VIEW_MODEL);
 			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-			glUniformMatrix4fv(model_uniformId, 1, GL_FALSE, mMatrix[MODEL]); //Transformação de modelação do cubo unitário para o "Big Cube"
 			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
 			computeNormalMatrix3x3();
 			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
@@ -1602,6 +1606,7 @@ void renderScene(void) {
 			// Render Skybox
 			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
+
 			glUniform1i(tex_cube_loc, 4);
 
 			loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
@@ -1628,10 +1633,6 @@ void renderScene(void) {
 			computeDerivedMatrix(PROJ_VIEW_MODEL);
 			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
 
-			
-			glUniform1i(tex_cube_loc, 4);
-			loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
-			glUniform1i(loc, 1);
 
 			//loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
 			//glUniform1i(loc, 1);
@@ -1650,8 +1651,8 @@ void renderScene(void) {
 			loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
 			glUniform1i(loc, 0);
 
-			glUniform1i(texMap0, 4);
-			glUniform1i(texMap1, 5);
+			//glUniform1i(texMap0, 4);
+			//glUniform1i(texMap1, 5);
 
 
 			if (!rear_view_cam_mode) {
@@ -2110,6 +2111,15 @@ void processKeys(unsigned char key, int xx, int yy)
 
 		rear_view_cam_mode = !rear_view_cam_mode;
 		break;
+	case 'e':
+	case 'E':
+		if (pauseActive || gameOver || mirror_mode)
+			return;
+		if (reflect_perFragment == 0) // Reflection vector calculated in the fragment shader
+			reflect_perFragment = 1;
+		else // Reflection vector calculated in the vertex shader
+			reflect_perFragment = 0;
+		break;
 	}
 }
 
@@ -2191,11 +2201,11 @@ GLuint setupShaders() {
 
 	glLinkProgram(shader.getProgramIndex());
 	printf("InfoLog for Model Rendering Shader\n%s\n\n", shaderText.getAllInfoLogs().c_str());
-
+	/*
 	if (!shader.isProgramValid()) {
 		printf("GLSL Model Program Not Valid!\n");
 		exit(1);
-	}
+	}*/
 
 	texMode_uniformId = glGetUniformLocation(shader.getProgramIndex(), "texModeVert"); // different modes of texturing
 	pvm_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_pvm");

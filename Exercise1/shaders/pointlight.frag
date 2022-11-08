@@ -92,7 +92,7 @@ in Data {
 } DataIn;
 
 const float reflect_factor = 0.9;
-/*
+
 void main() {
 
 	if(shadowMode)
@@ -231,6 +231,23 @@ void main() {
 			texel = texture(texmap0, DataIn.tex_coord);  // texel from stone.tga
 			auxColorOut = vec4((max(intensity*texel + auxSpec, 0.2*texel)).rgb, 1.0);
 		}
+		else if(skybox)
+			colorOut = texture(cubeMap, DataIn.skyboxTexCoord);
+		else if(cubeMapping) {
+			if(reflect_perFrag == 1) {  //reflected vector calculated here
+				vec3 reflected1 = vec3 (transpose(m_View) * vec4 (vec3(reflect(-e, n)), 0.0)); //reflection vector in world coord
+				reflected1.x= -reflected1.x;   
+				cube_texel = texture(cubeMap, reflected1);
+			}
+			else
+				cube_texel = texture(cubeMap, DataIn.reflected); //use interpolated reflected vector calculated in vertex shader
+
+			texel = texture(texmap0, DataIn.tex_coord);
+			vec4 aux_color = mix(texel, cube_texel, reflect_factor);
+			aux_color = max(intensity*aux_color + auxSpec, 0.1*aux_color);
+			colorOut = vec4(aux_color.rgb, 1.0); 
+			//colorOut = vec4(cube_texel.rgb, 1.0);
+		}
 		else{
 			texel = texture(texmap0, DataIn.tex_coord);
 			auxColorOut += vec4(max(intensity*texel.rgb + specSum, texel.rgb), texel.a);
@@ -247,9 +264,9 @@ void main() {
 	else
 		colorOut = auxColorOut;
 	}
-}*/
+}
 // 3D Sampler Part
-
+/*
 void main() {
 
 	
@@ -355,4 +372,4 @@ void main() {
 	} else {
 		colorOut = vec4(0.2*max(intensity * diff.rgb + auxSpec.rgb, mat.ambient.rgb), diff.a);
 	}
-}
+}*/
