@@ -588,8 +588,8 @@ void updateRoverCamera() {
 }
 
 void checkCollisions() {
-	// corner_1 is right-top corner of unrotated rectangle, relative to m_Pos.
-	// corner_2 is right-bottom corner of unrotated rectangle, relative to m_Pos.
+	// corner_1 is right-top corner of unrotated rectangle, relative to rover position.
+	// corner_2 is right-bottom corner of unrotated rectangle, relative to rover position.
 	float corner_1_x = -rover.halfX;
 	float corner_2_x = rover.halfX; 
 	float corner_1_z = -rover.halfZ;
@@ -598,7 +598,7 @@ void checkCollisions() {
 	float sin_o = sin(AI_DEG_TO_RAD(rover.angle));
 	float cos_o = cos(AI_DEG_TO_RAD(rover.angle));
 
-	// xformed_corner_1, xformed_corner_2 are points corner_1, corner_2 rotated by angle m_Orientation.
+	// xformed_corner_1, xformed_corner_2 are points corner_1, corner_2 rotated by angle rover angle.
 	float xformed_corner_1_x = corner_1_z * sin_o + corner_1_x * cos_o;
 	float xformed_corner_2_x = corner_2_z * sin_o + corner_2_x * cos_o;
 	float xformed_corner_1_z = corner_1_z * cos_o - corner_1_x * sin_o;
@@ -808,7 +808,6 @@ void checkCollisions() {
 			createItems(1);
 			points += 200;
 			if (points % 1000 == 0 && livesCount < 5) {
-				PlaySound("gameover.wav", NULL, SND_ASYNC | SND_FILENAME);
 				livesCount++;
 			}
 			break;
@@ -1235,16 +1234,6 @@ void draw_objects() {
 
 		for (int objId = 0; objId < meshes.size(); objId++) {
 
-		/*	if (i == 0 && objId == 0 && multitexture_mode) {
-				glUniform1i(texMode, 2);
-				glActiveTexture(GL_TEXTURE4);
-				glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
-				glUniform1i(texMap0, 4);
-				glActiveTexture(GL_TEXTURE5);
-				glBindTexture(GL_TEXTURE_2D, TextureArray[1]);
-				glUniform1i(texMap1, 5);
-				glUniform1i(texMode, 2);
-			}*/
 			if ((i > 0 && i <= staticRocks.size() && !mirror_mode && !shadow_mode) ||
 				(i > 0 && i <= staticRocks.size())) { // static rocks
 				glUniform1i(texMode, 1);
@@ -2175,6 +2164,8 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'r':
 	case'R':
+
+		PlaySound("mars.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
 		gameOver = false;
 		pauseActive = false;
 		initialState(true);
@@ -2316,11 +2307,11 @@ GLuint setupShaders() {
 
 	glLinkProgram(shader.getProgramIndex());
 	printf("InfoLog for Model Rendering Shader\n%s\n\n", shaderText.getAllInfoLogs().c_str());
-	/*
+	
 	if (!shader.isProgramValid()) {
 		printf("GLSL Model Program Not Valid!\n");
 		exit(1);
-	}*/
+	}
 
 	texMode_uniformId = glGetUniformLocation(shader.getProgramIndex(), "texModeVert"); // different modes of texturing
 	pvm_uniformId = glGetUniformLocation(shader.getProgramIndex(), "m_pvm");
@@ -2803,7 +2794,6 @@ void createAliens() {
 void init()
 {
 	// wireframe
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	/* Initialization of DevIL */
 	if (ilGetInteger(IL_VERSION_NUM) < IL_VERSION)
@@ -2860,7 +2850,6 @@ void init()
 	createCubeSkybox();
 
 	particleMesh = createQuad(0.03f, 0.01f);
-	//particleMesh.mat.texCount = 3; // attribute for texture
 
 	// create geometry and VAO of the quad for flare elements
 	flareMesh = createQuad(1, 1);

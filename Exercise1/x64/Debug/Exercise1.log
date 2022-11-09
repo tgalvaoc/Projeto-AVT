@@ -4,29 +4,29 @@ C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(257,12): 
 C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(258,12): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
 C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(375,18): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
 C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(376,27): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(893,31): warning C4018: '<': signed/unsigned mismatch
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(997,49): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1040,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1041,18): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1043,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1044,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1066,38): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1021,25): warning C4101: 'alpha': unreferenced local variable
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1636,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1636,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1636,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1636,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1714,52): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1714,42): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1730,52): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1730,42): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1748,40): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1748,30): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1829,11): warning C4101: 'mat': unreferenced local variable
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2054,49): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2054,39): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2417,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2425,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2433,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(892,31): warning C4018: '<': signed/unsigned mismatch
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(996,49): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1039,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1040,18): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1042,37): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1043,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1065,38): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1020,25): warning C4101: 'alpha': unreferenced local variable
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1625,104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1625,71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1625,54): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1625,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1703,52): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1703,42): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1719,52): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1719,42): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1737,40): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1737,30): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(1818,11): warning C4101: 'mat': unreferenced local variable
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2043,49): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2043,39): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2408,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2416,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\Exercise1\main.cpp(2424,34): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
   Exercise1.vcxproj -> C:\Users\camil\OneDrive\IST\AVT\Projeto\Projeto-AVT\x64\Debug\Projeto-AVT.exe
   0 File(s) copied
