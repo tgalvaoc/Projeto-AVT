@@ -91,6 +91,7 @@ MyMesh flareMesh;
 // mirror
 MyMesh mirror;
 bool mirror_mode = false;
+bool shadow_mode = false;
 
 // rear view camera object
 MyMesh rearViewCam;
@@ -1151,7 +1152,9 @@ void draw_objects() {
 	GLint loc;
 	// Ground, Rocks --------------------------------------
 	myObjects.clear();
-	myObjects.push_back(landingSiteRover.ground);
+	if (!mirror_mode && !shadow_mode) {
+		myObjects.push_back(landingSiteRover.ground);
+	}
 	myObjects.push_back(landingSiteSpaceship.ground);
 	myObjects.push_back(skyboxCube);
 
@@ -1196,7 +1199,7 @@ void draw_objects() {
 					glUniform1i(texMap1, 5);
 				}
 			}
-			else if ((i == 2 && !mirror_mode) || (i == 1 && mirror_mode)) { // cubemap
+			else if ((i == 2 && !mirror_mode && !shadow_mode) || (i == 1 && mirror_mode && !shadow_mode)) { // cubemap
 				glUniform1i(texMode, 1);
 				loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
 				glUniform1i(loc, 1);
@@ -1745,10 +1748,12 @@ void renderScene(void) {
 					glUniform4fv(loc, 1, res);
 				}
 
-				multMatrixPoint(VIEW, directionalLightPos, res);
-				loc = glGetUniformLocation(shader.getProgramIndex(),
-					"dirLight.position");
-				glUniform4fv(loc, 1, res);
+				if (!shadow_mode) {
+					multMatrixPoint(VIEW, directionalLightPos, res);
+					loc = glGetUniformLocation(shader.getProgramIndex(),
+						"dirLight.position");
+					glUniform4fv(loc, 1, res);
+				}
 
 				for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
 					multMatrixPoint(VIEW, spotlightPos[i], res);
@@ -1757,11 +1762,13 @@ void renderScene(void) {
 					glUniform4fv(loc, 1, res);
 				}
 
-				draw_objects();
+				if (!shadow_mode) {
+					draw_objects();
+				}
 			}
 
 			// ----------------------------------------------
-			// reflection and shadowing
+			// reflection
 			if (mirror_mode && !rear_view_cam_mode) {
 				glEnable(GL_STENCIL_TEST);
 				glClearStencil(0);
@@ -1782,7 +1789,7 @@ void renderScene(void) {
 					// Fill stencil buffer our ground obj
 					draw_mirror();
 
-					glUniform1i(shadowMode, 0);
+					//glUniform1i(shadowMode, 0);
 
 					glStencilFunc(GL_EQUAL, 0x1, 0x1);
 					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -1848,38 +1855,77 @@ void renderScene(void) {
 					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 					draw_mirror();
 
-					if (sun_mode) {
-						// Render the Shadows
-						glUniform1i(shadowMode, 1);
-					
-						shadow_matrix(mat, floor, directionalLightPos);
-
-						glDisable(GL_DEPTH_TEST); //force the shadows to be rendered even if behind floor
-
-					//darken color stored in color buf
-						glBlendFunc(GL_DST_COLOR, GL_ZERO);
-						glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
-
-						pushMatrix(MODEL);
-						multMatrix(MODEL, mat);
-						draw_objects();
-						popMatrix(MODEL);
-					}
-
 					glDisable(GL_STENCIL_TEST);
 					glDisable(GL_BLEND);
 					glEnable(GL_DEPTH_TEST);
 
 					//render the geometry
-					glUniform1i(shadowMode, 0);
+					//glUniform1i(shadowMode, 0);
 					draw_objects();
 				}
 				else {
 					//Camera behind floor hence render only opaque objects
-					glUniform1i(shadowMode, 0);
+					//glUniform1i(shadowMode, 0);
 					draw_mirror();
 					draw_objects();
 				}
+			}
+
+			// ----------------------------------------------
+			// shadow
+			if (shadow_mode && !rear_view_cam_mode) {
+				glEnable(GL_DEPTH_TEST);
+				float res[4];
+				float mat[16];
+				GLfloat floor[4] = { 0,1,0,0 };
+
+
+				glEnable(GL_STENCIL_TEST);
+				glClearStencil(0);
+				glStencilFunc(GL_NEVER, 0x1, 0x1);
+				glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+				// Fill stencil buffer our ground obj
+				draw_mirror();
+
+				glUniform1i(shadowMode, 0);
+
+				glStencilFunc(GL_EQUAL, 0x1, 0x1);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+				
+				loc = glGetUniformLocation(shader.getProgramIndex(),
+					"dirLight.position");
+				multMatrixPoint(VIEW, directionalLightPos, res);
+				glUniform4fv(loc, 1, res);
+
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				draw_mirror();
+
+				// Render the Shadows
+				glUniform1i(shadowMode, 1);
+					
+				shadow_matrix(mat, floor, directionalLightPos);
+
+				glDisable(GL_DEPTH_TEST); //force the shadows to be rendered even if behind floor
+
+			//darken color stored in color buf
+				glBlendFunc(GL_DST_COLOR, GL_ZERO);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+
+				pushMatrix(MODEL);
+				multMatrix(MODEL, mat);
+				draw_objects();
+				popMatrix(MODEL);
+
+				glDisable(GL_STENCIL_TEST);
+				glDisable(GL_BLEND);
+				glEnable(GL_DEPTH_TEST);
+
+				//render the geometry
+				glUniform1i(shadowMode, 0);
+				draw_objects();
 			}
 
 			// Text -------------------------------------------------
@@ -2107,19 +2153,26 @@ void processKeys(unsigned char key, int xx, int yy)
 		break;
 	case 'y':
 	case 'Y':
-		if (pauseActive || gameOver || mirror_mode)
+		if (pauseActive || gameOver || mirror_mode || shadow_mode)
 			return;
 
 		rear_view_cam_mode = !rear_view_cam_mode;
 		break;
 	case 'e':
 	case 'E':
-		if (pauseActive || gameOver || mirror_mode)
+		if (pauseActive || gameOver || mirror_mode || shadow_mode)
 			return;
 		if (reflect_perFragment == 0) // Reflection vector calculated in the fragment shader
 			reflect_perFragment = 1;
 		else // Reflection vector calculated in the vertex shader
 			reflect_perFragment = 0;
+		break;
+	case 'w':
+	case 'W':
+		if (pauseActive || gameOver || rear_view_cam_mode)
+			return;
+
+		shadow_mode = !shadow_mode;
 		break;
 	}
 }
