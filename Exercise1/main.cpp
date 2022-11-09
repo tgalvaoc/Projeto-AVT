@@ -221,10 +221,12 @@ void initialState(bool livesReset) {
 	alpha = AI_RAD_TO_DEG(acos(cameras[2].position[2] / r));
 	beta = AI_RAD_TO_DEG(atan(cameras[2].position[1] / cameras[2].position[0]));
 
-	for (int i = 0; i < staticRocks.size(); i++) {
-		staticRocks[i].position[0] = staticRocks[i].originalPos[0];
-		staticRocks[i].position[1] = staticRocks[i].originalPos[1];
-		staticRocks[i].position[2] = staticRocks[i].originalPos[2];
+	if (livesReset) {
+		for (int i = 0; i < staticRocks.size(); i++) {
+			staticRocks[i].position[0] = staticRocks[i].originalPos[0];
+			staticRocks[i].position[1] = staticRocks[i].originalPos[1];
+			staticRocks[i].position[2] = staticRocks[i].originalPos[2];
+		}
 	}
 }
 
@@ -1193,7 +1195,6 @@ void draw_objects() {
 					glBindTexture(GL_TEXTURE_2D, TextureArray[7]);
 					glUniform1i(texMap1, 5);
 				}
-				glUniform1i(texMode, 1);
 			}
 			else if ((i == 2 && !mirror_mode) || (i == 1 && mirror_mode)) { // cubemap
 				glUniform1i(texMode, 1);
@@ -2449,7 +2450,7 @@ void createRover() {
 void createStaticRocks() {
 
 	MyMesh amesh;
-	StaticRock rock;
+	StaticRock rock, rock2, rock3, rock4, rock5, rock6;
 	
 	rock.radius = 4.0f;
 	rock.originalPos[0] = 20.0f;
@@ -2467,85 +2468,85 @@ void createStaticRocks() {
 	rock.object.meshes.push_back(amesh);
 	staticRocks.push_back(rock);
 
-	rock.radius = 1.0f;
-	rock.originalPos[0] = -15.0f;
-	rock.originalPos[1] = 0.2f;
-	rock.originalPos[2] = -15.0f;
-	rock.position[0] = -15.0f;
-	rock.position[1] = 0.2f;
-	rock.position[2] = -15.0f;
-	rock.speed = 0.0f;
-	amesh = createSphere(rock.radius, 10);
-	setIdentityMatrix(rock.object.objectTransform, 4);
+	rock2.radius = 1.0f;
+	rock2.originalPos[0] = -15.0f;
+	rock2.originalPos[1] = 0.2f;
+	rock2.originalPos[2] = -15.0f;
+	rock2.position[0] = -15.0f;
+	rock2.position[1] = 0.2f;
+	rock2.position[2] = -15.0f;
+	rock2.speed = 0.0f;
+	amesh = createSphere(rock2.radius, 10);
+	setIdentityMatrix(rock2.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
-	rock.object.meshes.push_back(amesh);
-	staticRocks.push_back(rock);
+	myTranslate(amesh.meshTransform, rock2.position[0], rock2.position[1], rock2.position[2]);
+	rock2.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock2);
 
-	rock.radius = 3.0f;
-	rock.originalPos[0] = -10.0f;
-	rock.originalPos[1] = 0.2f;
-	rock.originalPos[2] = 15.0f;
-	rock.position[0] = -10.0f;
-	rock.position[1] = 0.2f;
-	rock.position[2] = 15.0f;
-	rock.speed = 0.0f;
-	amesh = createSphere(rock.radius, 10);
-	setIdentityMatrix(rock.object.objectTransform, 4);
+	rock3.radius = 3.0f;
+	rock3.originalPos[0] = -10.0f;
+	rock3.originalPos[1] = 0.2f;
+	rock3.originalPos[2] = 15.0f;
+	rock3.position[0] = -10.0f;
+	rock3.position[1] = 0.2f;
+	rock3.position[2] = 15.0f;
+	rock3.speed = 0.0f;
+	amesh = createSphere(rock3.radius, 10);
+	setIdentityMatrix(rock3.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
-	rock.object.meshes.push_back(amesh);
-	staticRocks.push_back(rock);
+	myTranslate(amesh.meshTransform, rock3.position[0], rock3.position[1], rock3.position[2]);
+	rock3.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock3);
 
-	rock.radius = 3.0f;
-	rock.originalPos[0] = -16.0f;
-	rock.originalPos[1] = 0.2f;
-	rock.originalPos[2] = 3.0f;
-	rock.position[0] = -16.0f;
-	rock.position[1] = 0.2f;
-	rock.position[2] = 3.0f;
-	rock.speed = 0.0f;
-	amesh = createSphere(rock.radius, 10);
-	setIdentityMatrix(rock.object.objectTransform, 4);
+	rock4.radius = 3.0f;
+	rock4.originalPos[0] = -16.0f;
+	rock4.originalPos[1] = 0.2f;
+	rock4.originalPos[2] = 3.0f;
+	rock4.position[0] = -16.0f;
+	rock4.position[1] = 0.2f;
+	rock4.position[2] = 3.0f;
+	rock4.speed = 0.0f;
+	amesh = createSphere(rock4.radius, 10);
+	setIdentityMatrix(rock4.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
-	rock.object.meshes.push_back(amesh);
-	staticRocks.push_back(rock);
+	myTranslate(amesh.meshTransform, rock4.position[0], rock4.position[1], rock4.position[2]);
+	rock4.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock4);
 
-	rock.radius = 6.0f;
-	rock.originalPos[0] = -15.0f;
-	rock.originalPos[1] = 0.2f;
-	rock.originalPos[2] = 50.0f;
-	rock.position[0] = -15.0f;
-	rock.position[1] = 0.2f;
-	rock.position[2] = 50.0f;
-	rock.speed = 0.0f;
-	amesh = createSphere(rock.radius, 10);
-	setIdentityMatrix(rock.object.objectTransform, 4);
+	rock5.radius = 6.0f;
+	rock5.originalPos[0] = -15.0f;
+	rock5.originalPos[1] = 0.2f;
+	rock5.originalPos[2] = 50.0f;
+	rock5.position[0] = -15.0f;
+	rock5.position[1] = 0.2f;
+	rock5.position[2] = 50.0f;
+	rock5.speed = 0.0f;
+	amesh = createSphere(rock5.radius, 10);
+	setIdentityMatrix(rock5.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
-	rock.object.meshes.push_back(amesh);
-	staticRocks.push_back(rock);
+	myTranslate(amesh.meshTransform, rock5.position[0], rock5.position[1], rock5.position[2]);
+	rock5.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock5);
 
-	rock.radius = 10.0f;
-	rock.originalPos[0] = 37.0f;
-	rock.originalPos[1] = 0.2f;
-	rock.originalPos[2] = -50.0f;
-	rock.position[0] = 37.0f;
-	rock.position[1] = 0.2f;
-	rock.position[2] = -50.0f;
-	rock.speed = 0.0f;
-	amesh = createSphere(rock.radius, 10);
-	setIdentityMatrix(rock.object.objectTransform, 4);
+	rock6.radius = 10.0f;
+	rock6.originalPos[0] = 37.0f;
+	rock6.originalPos[1] = 0.2f;
+	rock6.originalPos[2] = -50.0f;
+	rock6.position[0] = 37.0f;
+	rock6.position[1] = 0.2f;
+	rock6.position[2] = -50.0f;
+	rock6.speed = 0.0f;
+	amesh = createSphere(rock6.radius, 10);
+	setIdentityMatrix(rock6.object.objectTransform, 4);
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
-	myTranslate(amesh.meshTransform, rock.position[0], rock.position[1], rock.position[2]);
-	rock.object.meshes.push_back(amesh);
-	staticRocks.push_back(rock);
+	myTranslate(amesh.meshTransform, rock6.position[0], rock6.position[1], rock6.position[2]);
+	rock6.object.meshes.push_back(amesh);
+	staticRocks.push_back(rock6);
 
 }
 
@@ -2705,8 +2706,8 @@ void init()
 	Texture2D_Loader(TextureArray, "textures/particle.tga", 3);
 	Texture2D_Loader(TextureArray, "textures/flagPortugal.tga", 4);
 	Texture2D_Loader(TextureArray, "textures/flagAustria.tga", 5);
-	Texture2D_Loader(TextureArray, "textures/RockBaseTex.jpg", 6);
-	Texture2D_Loader(TextureArray, "textures/RockNormalTex.jpg", 7);
+	Texture2D_Loader(TextureArray, "textures/RockBaseTex.tga", 6);
+	Texture2D_Loader(TextureArray, "textures/RockNormalTex.tga", 7);
 	Texture2D_Loader(TextureArray, "textures/standing.tga", 8);
 	Texture2D_Loader(TextureArray, "textures/pointing.tga", 9);
 	Texture2D_Loader(TextureArray, "textures/together.tga", 10);

@@ -107,7 +107,7 @@ void main() {
 		vec3 specSum = vec3(0.0);
 		vec3 n;
 
-		if(normalMap)
+		if(bumpmap)
 			n = normalize(2.0 * texture(texmap1, DataIn.tex_coord).rgb - 1.0);  //normal in tangent space
 		else
 			n = normalize(DataIn.normal);
@@ -219,7 +219,7 @@ void main() {
 	
 			if(texel.a == 0.0) discard;
 			else
-				auxColorOut += vec4(max(intensity*texel.rgb + specSum, 0.1*texel.rgb), texel.a);
+				auxColorOut += 0.3* vec4(max(intensity*texel.rgb + specSum, 0.1*texel.rgb), texel.a);
 		}
 		else if(flare){
 			texel = texture(texmap0, DataIn.tex_coord);  //texel from element flare texture
@@ -229,7 +229,7 @@ void main() {
 		}
 		else if(bumpmap){
 			texel = texture(texmap0, DataIn.tex_coord);  // texel from stone.tga
-			auxColorOut = vec4((max(intensity*texel + auxSpec, 0.2*texel)).rgb, 1.0);
+			auxColorOut += vec4((max(intensity*texel.rgb*0.7 + specSum, 0.07*texel.rgb)), texel.a);
 		}
 		else if(skybox)
 			colorOut = texture(cubeMap, DataIn.skyboxTexCoord);
