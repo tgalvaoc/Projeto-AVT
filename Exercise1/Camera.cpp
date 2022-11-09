@@ -23,7 +23,7 @@ Camera::Camera(CameraType camType, float x, float y, float z, float targetX_val,
 }
 
 void Camera::setProjection(float w, float h) {
-	float factor = 3.0f;
+	float factor = 25.0f;
 	float ratio = w / h;
 	switch (this->type) {
 	case MOVING:
@@ -36,7 +36,7 @@ void Camera::setProjection(float w, float h) {
 		break;
 	case ORTHOGONAL:
 		loadIdentity(PROJECTION);
-		ortho(-16 * factor, 16 * factor, -9 * factor, 9 * factor, -1.0f, 1000000.0f);
+		ortho(-w / factor, w / factor, -h / factor, h / factor, -1.0f, 1000000.0f);
 		break;
 	}
 

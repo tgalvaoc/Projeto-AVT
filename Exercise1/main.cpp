@@ -161,7 +161,6 @@ char s[32];
 #define NUMBER_SPOT_LIGHTS 2
 #define MAX_PARTICLES 50
 
-//float directionalLightPos[4] = { -5.0f, 2.0f, 1.0f, 1.0f };
 float directionalLightPos[4] = { 1000.0f, 1000.0f, 1.0f, 1.0f };
 float pointLightPos[NUMBER_POINT_LIGHTS][4] = { {-5.0f, 8.0f, -5.0f, 1.0f}, {-5.0f, 8.0f, 5.0f, 1.0f},
 	{5.0f, 8.0f, -5.0f, 1.0f}, {5.0f, 8.0f, 5.0f, 1.0f}, {-5.0f, 8.0f, 0.0f, 1.0f},
@@ -401,9 +400,7 @@ void initParticles(void) {
 				break;
 			}
 			}
-			//p.x = rover.position[0] + rover.direction[0] * 2;
-			//p.y = rover.position[1] + 0.75;
-			//p.z = rover.position[2] - rover.direction[2] * 2;
+
 			p.vx = v * cos(theta) * sin(phi);
 			p.vy = v * cos(phi);
 			p.vz = v * sin(theta) * sin(phi);
@@ -431,7 +428,6 @@ void updateParticles()
 	/* Método de Euler de integração de eq. diferenciais ordinárias
 	h represents the time step; dv/dt = a; dx/dt = v; initial values of x and v */
 
-	//h = 0.125f;
 	h = 0.033f;
 
 	for (i = 0; i < particles.size(); i++) {
@@ -946,8 +942,6 @@ void aiRecursive_render(const aiScene* sc, const aiNode* nd)
 		aiRecursive_render(sc, nd->mChildren[n]);
 	}
 	popMatrix(MODEL);
-	//glUniform1i(normalMap_loc, false);   //GLSL normalMap variable initialized to 0
-	//glUniform1i(specularMap_loc, false);
 	glUniform1ui(diffMapCount_loc, 0);
 }
 
@@ -1167,7 +1161,8 @@ void draw_objects() {
 
 
 	for (int i = 0; i < myObjects.size(); i++) {
-
+		if (i == 2)
+			continue;
 		vector<MyMesh> meshes = myObjects[i].meshes;
 
 		pushMatrix(MODEL);
@@ -1186,7 +1181,8 @@ void draw_objects() {
 				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}
-			else if (i > 2 && i <= staticRocks.size() + 2) { // static rocks
+			else if ((i > 2 && i <= staticRocks.size() + 2 && !mirror_mode && !shadow_mode) ||
+				(i > 1 && i <= staticRocks.size() + 1)) { // static rocks
 				glUniform1i(texMode, 1);
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
@@ -1203,7 +1199,6 @@ void draw_objects() {
 				glUniform1i(texMode, 1);
 				loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
 				glUniform1i(loc, 1);
-				//glUniform1i(texMode_uniformId, 0);
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
 
@@ -1326,7 +1321,6 @@ void draw_objects() {
 	updateParticles();
 
 	// draw fireworks particles
-	//objId = 6;  //quad for particle
 
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, TextureArray[3]);  //particle.tga 
@@ -1592,7 +1586,6 @@ void renderScene(void) {
 		GLint loc;
 
 		FrameCount++;
-		//glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		int rear_view_counter = ((rear_view_cam_mode) ? 2 : 1);
@@ -1638,9 +1631,6 @@ void renderScene(void) {
 			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
 
 
-			//loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
-			//glUniform1i(loc, 1);
-
 			glBindVertexArray(skyboxCube.meshes[0].vao);
 			glDrawElements(skyboxCube.meshes[0].type, skyboxCube.meshes[0].numIndexes, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
@@ -1650,13 +1640,8 @@ void renderScene(void) {
 			glFrontFace(GL_CCW); // restore counter clockwise vertex order to mean the front
 			glDepthMask(GL_TRUE);
 
-			//loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
-			//glUniform1i(loc, 0);
 			loc = glGetUniformLocation(shader.getProgramIndex(), "skybox");
 			glUniform1i(loc, 0);
-
-			//glUniform1i(texMap0, 4);
-			//glUniform1i(texMap1, 5);
 
 
 			if (!rear_view_cam_mode) {
@@ -1789,7 +1774,6 @@ void renderScene(void) {
 					// Fill stencil buffer our ground obj
 					draw_mirror();
 
-					//glUniform1i(shadowMode, 0);
 
 					glStencilFunc(GL_EQUAL, 0x1, 0x1);
 					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -1860,12 +1844,10 @@ void renderScene(void) {
 					glEnable(GL_DEPTH_TEST);
 
 					//render the geometry
-					//glUniform1i(shadowMode, 0);
 					draw_objects();
 				}
 				else {
 					//Camera behind floor hence render only opaque objects
-					//glUniform1i(shadowMode, 0);
 					draw_mirror();
 					draw_objects();
 				}
@@ -1972,8 +1954,6 @@ void renderScene(void) {
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-		//glBindTexture(GL_TEXTURE_2D, 0);
 		glutSwapBuffers();
 }
 

@@ -90,4 +90,8 @@
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="NewFile.txt" />
+    <Text Include="NewFile1.txt" />
+  </ItemGroup>
 </Project>
