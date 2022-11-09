@@ -7,5 +7,9 @@ No que toca às colisões faltou criar uma AABB para o rover (estamos a utilizar
 
 
 Melhorias Assignment 2:
-Resize done
-Collision with aabb
+Resize done.
+Collision with aabb.
+Even though its not working, the code for skybox and cubemapping is implemented.
+Music :).
+Shadow(W) and reflexion(M) separate.
+Mirrored flor(M) now with previous colors and textures.

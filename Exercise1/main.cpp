@@ -31,6 +31,7 @@
 #include "Camera.h"
 
 #include <list>
+#include <playsoundapi.h>
 #define _USE_MATH_DEFINES
 
 using namespace std;
@@ -717,6 +718,7 @@ void checkCollisions() {
 			if (--livesCount <= 0) {
 				livesCount = 0;
 				gameOver = true;
+				PlaySound("gameover.wav", NULL, SND_ASYNC | SND_FILENAME);
 			}
 			else {
 				initialState(false);
@@ -805,8 +807,10 @@ void checkCollisions() {
 			items.erase(items.begin() + i);
 			createItems(1);
 			points += 200;
-			if (points % 1000 == 0 && livesCount < 5)
+			if (points % 1000 == 0 && livesCount < 5) {
+				PlaySound("gameover.wav", NULL, SND_ASYNC | SND_FILENAME);
 				livesCount++;
+			}
 			break;
 		}
 	}
@@ -1222,8 +1226,7 @@ void draw_objects() {
 
 
 	for (int i = 0; i < myObjects.size(); i++) {
-		if (i == 2)
-			continue;
+		
 		vector<MyMesh> meshes = myObjects[i].meshes;
 
 		pushMatrix(MODEL);
@@ -1242,8 +1245,8 @@ void draw_objects() {
 				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}*/
-			if ((i > 0 && i <= staticRocks.size() + 2 && !mirror_mode && !shadow_mode) ||
-				(i > 0 && i <= staticRocks.size() + 1)) { // static rocks
+			if ((i > 0 && i <= staticRocks.size() && !mirror_mode && !shadow_mode) ||
+				(i > 0 && i <= staticRocks.size())) { // static rocks
 				glUniform1i(texMode, 1);
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
@@ -2014,8 +2017,10 @@ void renderScene(void) {
 
 			if (pauseActive)
 				RenderText(shaderText, "PAUSE", float(WinX / 2 - 80), float(WinY / 2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
-			if (gameOver)
+			if (gameOver) {
 				RenderText(shaderText, "GAME OVER", float(WinX / 2 - 150), float(WinY / 2 + 220), 1.0f, 0.8f, 0.8f, 0.8f);
+				RenderText(shaderText, "(Press R)", float(WinX / 2 - 100), float(WinY / 2 + 150), 1.0f, 0.8f, 0.8f, 0.8f);
+			}
 
 
 			glBindTextureUnit(0, 0);
@@ -2666,7 +2671,7 @@ void createCubeSkybox() {
 	setMeshColor(&amesh, 0.35f, 0.20f, 0.05f, 1.0f);
 	setIdentityMatrix(amesh.meshTransform, 4);
 	myScale(amesh.meshTransform, 2, 2, 2);
-	myTranslate(amesh.meshTransform, 0, 0, 15);
+	myTranslate(amesh.meshTransform, 8, 0, 18);
 
 	skyboxCube.meshes.push_back(amesh);
 }
@@ -2837,9 +2842,11 @@ void init()
 	/// Initialization of freetype library with font_name file
 	freeType_init(font_name);
 
+
+	PlaySound("mars.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
+
 	currentW = WinX;
 	currentH = WinY;
-
 	createGround();
 	createPillars();
 	createStaticRocks();
