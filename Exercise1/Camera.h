@@ -2,7 +2,7 @@
 
 #include <vector>
 
-enum CameraType { ORTHOGONAL, PERSPECTIVE, MOVING, };
+enum CameraType { ORTHOGONAL, PERSPECTIVE, MOVING, REAR};
 
 class Camera {
 public:

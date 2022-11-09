@@ -89,7 +89,6 @@ GLuint FlareTextureArray[5];
 MyMesh flareMesh;
 
 // mirror
-MyMesh mirror;
 bool mirror_mode = false;
 bool shadow_mode = false;
 
@@ -234,7 +233,7 @@ void createCameras() {
 	cameras[0] = Camera(ORTHOGONAL, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 	cameras[1] = Camera(PERSPECTIVE, 1.0f, 60.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 	cameras[2] = Camera(MOVING, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f);
-	cameras[3] = Camera(MOVING, 0.0f, 0.0f, -5.0f, 0.0f, 0.0f, 0.0f); //rear view camera
+	cameras[3] = Camera(REAR, 0.0f, 0.0f, -5.0f, 0.0f, 0.0f, 0.0f); //rear view camera
 }
 
 int signal() {
@@ -1096,33 +1095,6 @@ void renderFlare(FLARE_DEF* flare, int lx, int ly, int* m_viewport) {  //lx, ly 
 	glDisable(GL_BLEND);
 }
 
-static void draw_mirror(void)
-{
-	GLint loc;
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
-	glUniform4fv(loc, 1, mirror.mat.ambient);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
-	glUniform4fv(loc, 1, mirror.mat.diffuse);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
-	glUniform4fv(loc, 1, mirror.mat.specular);
-	loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
-	glUniform1f(loc, mirror.mat.shininess);
-	pushMatrix(MODEL);
-	translate(MODEL, -0.5f, 0.0f, -0.5f);
-	rotate(MODEL, 270, 1, 0, 0);
-	computeDerivedMatrix(PROJ_VIEW_MODEL);
-	glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
-	glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
-	computeNormalMatrix3x3();
-	glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
-
-	//glUniform1i(texMode_uniformId, 2);
-	glBindVertexArray(mirror.vao);
-	glDrawElements(mirror.type, mirror.numIndexes, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-	popMatrix(MODEL);
-}
-
 static void draw_rearview(void)
 {
 	pushMatrix(MODEL);
@@ -1140,24 +1112,14 @@ static void draw_rearview(void)
 	popMatrix(MODEL);
 }
 
-void draw_objects() {
-
+void draw_ground() {
 	//desenha efetivamente os objetos
 	GLint loc;
-	// Ground, Rocks --------------------------------------
+	// Ground --------------------------------------
 	myObjects.clear();
-	if (!mirror_mode && !shadow_mode) {
-		myObjects.push_back(landingSiteRover.ground);
-	}
-	myObjects.push_back(landingSiteSpaceship.ground);
-	myObjects.push_back(skyboxCube);
 
-	for (int j = 0; j < staticRocks.size(); j++)
-		myObjects.push_back(staticRocks[j].object);
-	for (int j = 0; j < rollingRocks.size(); j++)
-		myObjects.push_back(rollingRocks[j].object);
-	for (int j = 0; j < items.size(); j++)
-		myObjects.push_back(items[j].object);
+	myObjects.push_back(landingSiteRover.ground);
+	myObjects.push_back(landingSiteSpaceship.ground);
 
 
 	for (int i = 0; i < myObjects.size(); i++) {
@@ -1181,8 +1143,107 @@ void draw_objects() {
 				glUniform1i(texMap1, 5);
 				glUniform1i(texMode, 2);
 			}
-			else if ((i > 2 && i <= staticRocks.size() + 2 && !mirror_mode && !shadow_mode) ||
-				(i > 1 && i <= staticRocks.size() + 1)) { // static rocks
+			else if ((i == 2 && !mirror_mode && !shadow_mode) || (i == 1 && mirror_mode && !shadow_mode)) { // cubemap
+				glUniform1i(texMode, 1);
+				loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
+				glUniform1i(loc, 1);
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, TextureArray[11]);
+
+				glUniform1i(tex_cube_loc, 4); //  Environmental cube mapping
+
+				if (!reflect_perFragment)
+					glUniform1i(reflect_perFragment_uniformId, 0); //reflected vector calculated in the vertex shader
+				else
+					glUniform1i(reflect_perFragment_uniformId, 1); //reflected vector calculated in the fragment shader
+			}
+			else {
+				glUniform1i(texMode, 0);
+			}
+
+			if (mirror_mode) {
+				meshes[objId].mat.diffuse[3] = 0.8f;
+			}
+			// send the material
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.ambient");
+			glUniform4fv(loc, 1, meshes[objId].mat.ambient);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.diffuse");
+			glUniform4fv(loc, 1, meshes[objId].mat.diffuse);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.specular");
+			glUniform4fv(loc, 1, meshes[objId].mat.specular);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "mat.shininess");
+			glUniform1f(loc, meshes[objId].mat.shininess);
+			pushMatrix(MODEL);
+
+			multMatrix(MODEL, meshes[objId].meshTransform);
+
+
+			// send matrices to OGL
+			glUniformMatrix4fv(view_uniformId, 1, GL_FALSE, mMatrix[VIEW]);
+			computeDerivedMatrix(PROJ_VIEW_MODEL);
+			glUniformMatrix4fv(vm_uniformId, 1, GL_FALSE, mCompMatrix[VIEW_MODEL]);
+			glUniformMatrix4fv(pvm_uniformId, 1, GL_FALSE, mCompMatrix[PROJ_VIEW_MODEL]);
+			computeNormalMatrix3x3();
+			glUniformMatrix3fv(normal_uniformId, 1, GL_FALSE, mNormal3x3);
+
+			// Render mesh
+
+			glBindVertexArray(meshes[objId].vao);
+			glDrawElements(meshes[objId].type, meshes[objId].numIndexes, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+
+			loc = glGetUniformLocation(shader.getProgramIndex(), "bumpmap");
+			glUniform1i(loc, 0);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "cubemapactive");
+			glUniform1i(loc, 0);
+			loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
+			glUniform1i(loc, 0);
+
+			popMatrix(MODEL);
+		}
+		popMatrix(MODEL);
+	}
+}
+
+void draw_objects() {
+
+	//desenha efetivamente os objetos
+	GLint loc;
+	// Ground, Rocks --------------------------------------
+	myObjects.clear();
+	myObjects.push_back(skyboxCube);
+
+	for (int j = 0; j < staticRocks.size(); j++)
+		myObjects.push_back(staticRocks[j].object);
+	for (int j = 0; j < rollingRocks.size(); j++)
+		myObjects.push_back(rollingRocks[j].object);
+	for (int j = 0; j < items.size(); j++)
+		myObjects.push_back(items[j].object);
+
+
+	for (int i = 0; i < myObjects.size(); i++) {
+		if (i == 2)
+			continue;
+		vector<MyMesh> meshes = myObjects[i].meshes;
+
+		pushMatrix(MODEL);
+
+		multMatrix(MODEL, myObjects[i].objectTransform);
+
+		for (int objId = 0; objId < meshes.size(); objId++) {
+
+		/*	if (i == 0 && objId == 0 && multitexture_mode) {
+				glUniform1i(texMode, 2);
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_2D, TextureArray[0]);
+				glUniform1i(texMap0, 4);
+				glActiveTexture(GL_TEXTURE5);
+				glBindTexture(GL_TEXTURE_2D, TextureArray[1]);
+				glUniform1i(texMap1, 5);
+				glUniform1i(texMode, 2);
+			}*/
+			if ((i > 0 && i <= staticRocks.size() + 2 && !mirror_mode && !shadow_mode) ||
+				(i > 0 && i <= staticRocks.size() + 1)) { // static rocks
 				glUniform1i(texMode, 1);
 				glActiveTexture(GL_TEXTURE4);
 				glBindTexture(GL_TEXTURE_2D, TextureArray[6]);
@@ -1195,7 +1256,7 @@ void draw_objects() {
 					glUniform1i(texMap1, 5);
 				}
 			}
-			else if ((i == 2 && !mirror_mode && !shadow_mode) || (i == 1 && mirror_mode && !shadow_mode)) { // cubemap
+			else if ((i == 0 && !mirror_mode && !shadow_mode)) { // cubemap
 				glUniform1i(texMode, 1);
 				loc = glGetUniformLocation(shader.getProgramIndex(), "cubeMapping");
 				glUniform1i(loc, 1);
@@ -1723,7 +1784,7 @@ void renderScene(void) {
 			glUniform1f(loc, 0.99f);
 
 			// draw lights and object if mirror_mode is false
-			if (!mirror_mode) {
+			if (!mirror_mode && !shadow_mode) {
 				//lightPos definido em World Coord so is converted to eye space
 
 				for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
@@ -1733,12 +1794,12 @@ void renderScene(void) {
 					glUniform4fv(loc, 1, res);
 				}
 
-				if (!shadow_mode) {
-					multMatrixPoint(VIEW, directionalLightPos, res);
-					loc = glGetUniformLocation(shader.getProgramIndex(),
-						"dirLight.position");
-					glUniform4fv(loc, 1, res);
-				}
+				
+				multMatrixPoint(VIEW, directionalLightPos, res);
+				loc = glGetUniformLocation(shader.getProgramIndex(),
+					"dirLight.position");
+				glUniform4fv(loc, 1, res);
+				
 
 				for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
 					multMatrixPoint(VIEW, spotlightPos[i], res);
@@ -1746,10 +1807,10 @@ void renderScene(void) {
 						(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
 					glUniform4fv(loc, 1, res);
 				}
-
-				if (!shadow_mode) {
-					draw_objects();
-				}
+				
+				draw_ground();
+				draw_objects();
+			
 			}
 
 			// ----------------------------------------------
@@ -1772,7 +1833,7 @@ void renderScene(void) {
 					glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
 					// Fill stencil buffer our ground obj
-					draw_mirror();
+					draw_ground();
 
 
 					glStencilFunc(GL_EQUAL, 0x1, 0x1);
@@ -1837,7 +1898,7 @@ void renderScene(void) {
 
 					glEnable(GL_BLEND);
 					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-					draw_mirror();
+					draw_ground();
 
 					glDisable(GL_STENCIL_TEST);
 					glDisable(GL_BLEND);
@@ -1848,7 +1909,7 @@ void renderScene(void) {
 				}
 				else {
 					//Camera behind floor hence render only opaque objects
-					draw_mirror();
+					draw_ground();
 					draw_objects();
 				}
 			}
@@ -1868,12 +1929,27 @@ void renderScene(void) {
 				glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
 				// Fill stencil buffer our ground obj
-				draw_mirror();
+				draw_ground();
 
 				glUniform1i(shadowMode, 0);
 
 				glStencilFunc(GL_EQUAL, 0x1, 0x1);
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+				for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+					multMatrixPoint(VIEW, pointLightPos[i], res);
+					loc = glGetUniformLocation(shader.getProgramIndex(),
+						(const GLchar*)("pointLights[" + to_string(i) + "].position").c_str());
+					glUniform4fv(loc, 1, res);
+				}
+
+
+				for (int i = 0; i < NUMBER_SPOT_LIGHTS; i++) {
+					multMatrixPoint(VIEW, spotlightPos[i], res);
+					loc = glGetUniformLocation(shader.getProgramIndex(),
+						(const GLchar*)("spotLights[" + to_string(i) + "].position").c_str());
+					glUniform4fv(loc, 1, res);
+				}
 
 				
 				loc = glGetUniformLocation(shader.getProgramIndex(),
@@ -1883,7 +1959,7 @@ void renderScene(void) {
 
 				glEnable(GL_BLEND);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				draw_mirror();
+				draw_ground();
 
 				// Render the Shadows
 				glUniform1i(shadowMode, 1);
@@ -2787,22 +2863,6 @@ void init()
 	initialState(true);
 	glutTimerFunc(0, animate, 0);
 
-	// mirror object
-	float amb2[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-	float diff2[] = { 0.99f, 0.99f, 0.99f, 1.0f };
-	float diff3[] = { 0.99f, 0.99f, 0.99f, 0.30f };
-	float spec2[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-	float emissive[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	float shininess = 100.0f;
-	int texcount = 0;
-
-	mirror = createQuad(1000, 1000);
-	memcpy(mirror.mat.ambient, amb2, 4 * sizeof(float));
-	memcpy(mirror.mat.diffuse, diff3, 4 * sizeof(float));
-	memcpy(mirror.mat.specular, spec2, 4 * sizeof(float));
-	memcpy(mirror.mat.emissive, emissive, 4 * sizeof(float));
-	mirror.mat.shininess = shininess;
-	mirror.mat.texCount = texcount;
 
 	// rear view camera object
 	float amb1[] = { 0.3f, 0.0f, 0.0f, 1.0f };

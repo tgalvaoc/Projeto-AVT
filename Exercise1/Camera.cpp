@@ -38,6 +38,10 @@ void Camera::setProjection(float w, float h) {
 		loadIdentity(PROJECTION);
 		ortho(-w / factor, w / factor, -h / factor, h / factor, -1.0f, 1000000.0f);
 		break;
+	case REAR:
+		loadIdentity(PROJECTION);
+		perspective(53.13f, ratio, 0.1f, 1000000.0f);
+		break;
 	}
 
 }
